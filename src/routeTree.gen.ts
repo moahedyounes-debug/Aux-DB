@@ -25,6 +25,7 @@ import { Route as CustomDashboardRouteImport } from './routes/custom-dashboard'
 import { Route as CostsRouteImport } from './routes/costs'
 import { Route as ControlPanelRouteImport } from './routes/control-panel'
 import { Route as CommerceComplaintsRouteImport } from './routes/commerce-complaints'
+import { Route as CityBreakdownRouteImport } from './routes/city-breakdown'
 import { Route as CityRouteImport } from './routes/city'
 import { Route as CallCenterRouteImport } from './routes/call-center'
 import { Route as AscPerformanceRouteImport } from './routes/asc-performance'
@@ -112,6 +113,11 @@ const CommerceComplaintsRoute = CommerceComplaintsRouteImport.update({
   path: '/commerce-complaints',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CityBreakdownRoute = CityBreakdownRouteImport.update({
+  id: '/city-breakdown',
+  path: '/city-breakdown',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CityRoute = CityRouteImport.update({
   id: '/city',
   path: '/city',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
   '/city': typeof CityRoute
+  '/city-breakdown': typeof CityBreakdownRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
   '/control-panel': typeof ControlPanelRoute
   '/costs': typeof CostsRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
   '/city': typeof CityRoute
+  '/city-breakdown': typeof CityBreakdownRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
   '/control-panel': typeof ControlPanelRoute
   '/costs': typeof CostsRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
   '/city': typeof CityRoute
+  '/city-breakdown': typeof CityBreakdownRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
   '/control-panel': typeof ControlPanelRoute
   '/costs': typeof CostsRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/asc-performance'
     | '/call-center'
     | '/city'
+    | '/city-breakdown'
     | '/commerce-complaints'
     | '/control-panel'
     | '/costs'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/asc-performance'
     | '/call-center'
     | '/city'
+    | '/city-breakdown'
     | '/commerce-complaints'
     | '/control-panel'
     | '/costs'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/asc-performance'
     | '/call-center'
     | '/city'
+    | '/city-breakdown'
     | '/commerce-complaints'
     | '/control-panel'
     | '/costs'
@@ -298,6 +310,7 @@ export interface RootRouteChildren {
   AscPerformanceRoute: typeof AscPerformanceRoute
   CallCenterRoute: typeof CallCenterRoute
   CityRoute: typeof CityRoute
+  CityBreakdownRoute: typeof CityBreakdownRoute
   CommerceComplaintsRoute: typeof CommerceComplaintsRoute
   ControlPanelRoute: typeof ControlPanelRoute
   CostsRoute: typeof CostsRoute
@@ -430,6 +443,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommerceComplaintsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/city-breakdown': {
+      id: '/city-breakdown'
+      path: '/city-breakdown'
+      fullPath: '/city-breakdown'
+      preLoaderRoute: typeof CityBreakdownRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/city': {
       id: '/city'
       path: '/city'
@@ -482,6 +502,7 @@ const rootRouteChildren: RootRouteChildren = {
   AscPerformanceRoute: AscPerformanceRoute,
   CallCenterRoute: CallCenterRoute,
   CityRoute: CityRoute,
+  CityBreakdownRoute: CityBreakdownRoute,
   CommerceComplaintsRoute: CommerceComplaintsRoute,
   ControlPanelRoute: ControlPanelRoute,
   CostsRoute: CostsRoute,
