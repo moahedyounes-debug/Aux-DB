@@ -165,6 +165,76 @@ export interface InstallationSummary {
   byBranch: { branch: string; count: number; pending: number }[];
   tickets: InstallationTicket[];
 }
+// ---------------- Warranty Payments ----------------
+// Warranty payout is derived from completed repair tickets.
+// Rate per product line (SAR) — adjust these to match the real warranty tariff.
+export const WARRANTY_RATES: { match: string; rate: number }[] = [
+  { match: "split", rate: 180 },
+  { match: "cassette", rate: 260 },
+  { match: "duct", rate: 320 },
+  { match: "floor", rate: 220 },
+  { match: "window", rate: 140 },
+  { match: "vrf", rate: 420 },
+  { match: "chiller", rate: 520 },
+  { match: "portable", rate: 120 },
+];
+export const WARRANTY_DEFAULT_RATE = 180;
+// SLA-miss deduction (percent) applied to claims completed above the 72h target.
+export const WARRANTY_SLA_DEDUCTION_PCT = 15;
+
+export type WarrantyStatus = "paid" | "approved" | "submitted";
+export interface WarrantyClaim {
+  ticket: string;
+  branch: string;
+  city: string;
+  productLine: string;
+  createdAt: string;
+  completedAt: string;
+  serviceHours: number;
+  status: WarrantyStatus;
+  gross: number;
+  deduction: number;
+  net: number;
+}
+export interface WarrantyBranchRow {
+  branch: string;
+  claims: number;
+  paid: number;
+  approved: number;
+  submitted: number;
+  gross: number;
+  deduction: number;
+  net: number;
+}
+export interface WarrantyMonthRow {
+  month: string;
+  label: string;
+  claims: number;
+  gross: number;
+  deduction: number;
+  net: number;
+}
+export interface WarrantyProductRow {
+  product: string;
+  rate: number;
+  claims: number;
+  net: number;
+}
+export interface WarrantySummary {
+  totalClaims: number;
+  paid: number;
+  approved: number;
+  submitted: number;
+  gross: number;
+  deduction: number;
+  net: number;
+  paidRate: number;
+  avgClaim: number;
+  byBranch: WarrantyBranchRow[];
+  byMonth: WarrantyMonthRow[];
+  byProduct: WarrantyProductRow[];
+  recentClaims: WarrantyClaim[];
+}
 export interface Snapshot {
   total: number;
   pending: number;
@@ -189,6 +259,7 @@ export interface KpiData {
   callCenter: CallCenterSummary;
   cities: CityKpi[];
   installation: InstallationSummary;
+  warranty: WarrantySummary;
   error?: string;
 }
 
@@ -317,6 +388,17 @@ function aggregate(rows: string[][]): KpiData {
     }
   >();
 
+  // Warranty accumulators (repair tickets only, populated inside the loop)
+  const warrantyClaims: WarrantyClaim[] = [];
+  const warrantyByBranch = new Map<string, WarrantyBranchRow>();
+  const warrantyByMonth = new Map<string, WarrantyMonthRow>();
+  const warrantyByProduct = new Map<string, WarrantyProductRow>();
+  let warrGross = 0;
+  let warrDeduction = 0;
+  let warrPaid = 0;
+  let warrApproved = 0;
+  let warrSubmitted = 0;
+
   // Prep last 30 days buckets
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
@@ -431,6 +513,90 @@ function aggregate(rows: string[][]): KpiData {
     else bs.pending++;
     if (under48) bs.c48++;
     if (under72) bs.c72++;
+
+    // ---------------- Warranty claim per repair ticket ----------------
+    {
+      const productLine = String(row[COL.productLine] ?? "").trim() || "Other";
+      const pl = productLine.toLowerCase();
+      const rate =
+        WARRANTY_RATES.find((r) => pl.includes(r.match))?.rate ?? WARRANTY_DEFAULT_RATE;
+      const gross = rate;
+      let status: WarrantyStatus;
+      let deduction = 0;
+      if (!done) {
+        status = "submitted";
+      } else if (under72) {
+        status = "paid";
+      } else {
+        status = "approved";
+        deduction = Math.round((gross * WARRANTY_SLA_DEDUCTION_PCT) / 100);
+      }
+      const net = gross - deduction;
+      warrGross += gross;
+      warrDeduction += deduction;
+      if (status === "paid") warrPaid++;
+      else if (status === "approved") warrApproved++;
+      else warrSubmitted++;
+
+      let br = warrantyByBranch.get(branch);
+      if (!br) {
+        br = { branch, claims: 0, paid: 0, approved: 0, submitted: 0, gross: 0, deduction: 0, net: 0 };
+        warrantyByBranch.set(branch, br);
+      }
+      br.claims++;
+      br.gross += gross;
+      br.deduction += deduction;
+      br.net += net;
+      if (status === "paid") br.paid++;
+      else if (status === "approved") br.approved++;
+      else br.submitted++;
+
+      const claimDate = done ? parseDate(row[COL.completionTime]) ?? created : created;
+      if (claimDate) {
+        const ym = claimDate.toISOString().slice(0, 7);
+        let mr = warrantyByMonth.get(ym);
+        if (!mr) {
+          mr = {
+            month: ym,
+            label: claimDate.toLocaleString("en-US", { month: "short" }),
+            claims: 0,
+            gross: 0,
+            deduction: 0,
+            net: 0,
+          };
+          warrantyByMonth.set(ym, mr);
+        }
+        mr.claims++;
+        mr.gross += gross;
+        mr.deduction += deduction;
+        mr.net += net;
+      }
+
+      let pr = warrantyByProduct.get(productLine);
+      if (!pr) {
+        pr = { product: productLine, rate, claims: 0, net: 0 };
+        warrantyByProduct.set(productLine, pr);
+      }
+      pr.claims++;
+      pr.net += net;
+
+      warrantyClaims.push({
+        ticket: String(row[COL.ticket] ?? "").trim(),
+        branch,
+        city: cityEarly,
+        productLine,
+        createdAt: created ? created.toISOString().slice(0, 10) : "—",
+        completedAt:
+          done && parseDate(row[COL.completionTime])
+            ? parseDate(row[COL.completionTime])!.toISOString().slice(0, 10)
+            : "—",
+        serviceHours: isNaN(hrs) ? 0 : hrs,
+        status,
+        gross,
+        deduction,
+        net,
+      });
+    }
 
     // City aggregation from Location column: "Region/City/District"
     const locRaw = String(row[COL.location] ?? "").trim();
@@ -733,6 +899,30 @@ function aggregate(rows: string[][]): KpiData {
     tickets: installationTickets,
   };
 
+  // Warranty summary
+  const warrNet = warrGross - warrDeduction;
+  const warrTotal = warrPaid + warrApproved + warrSubmitted;
+  warrantyClaims.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const warranty: WarrantySummary = {
+    totalClaims: warrTotal,
+    paid: warrPaid,
+    approved: warrApproved,
+    submitted: warrSubmitted,
+    gross: warrGross,
+    deduction: warrDeduction,
+    net: warrNet,
+    paidRate: warrTotal > 0 ? Math.round((warrPaid / warrTotal) * 1000) / 10 : 0,
+    avgClaim: warrTotal > 0 ? Math.round(warrNet / warrTotal) : 0,
+    byBranch: Array.from(warrantyByBranch.values())
+      .sort((a, b) => b.net - a.net)
+      .slice(0, 20),
+    byMonth: Array.from(warrantyByMonth.values())
+      .sort((a, b) => (a.month < b.month ? -1 : 1))
+      .slice(-12),
+    byProduct: Array.from(warrantyByProduct.values()).sort((a, b) => b.net - a.net),
+    recentClaims: warrantyClaims.slice(0, 200),
+  };
+
   const branches: BranchKpi[] = Array.from(branchStats.entries())
     .map(([branch, s]) => ({
       branch,
@@ -759,6 +949,7 @@ function aggregate(rows: string[][]): KpiData {
     callCenter,
     cities,
     installation,
+    warranty,
   };
 }
 
@@ -816,6 +1007,21 @@ export const getSheetsKpi = createServerFn({ method: "GET" }).handler(async (): 
         byCity: [],
         byBranch: [],
         tickets: [],
+      },
+      warranty: {
+        totalClaims: 0,
+        paid: 0,
+        approved: 0,
+        submitted: 0,
+        gross: 0,
+        deduction: 0,
+        net: 0,
+        paidRate: 0,
+        avgClaim: 0,
+        byBranch: [],
+        byMonth: [],
+        byProduct: [],
+        recentClaims: [],
       },
       error: msg,
     };
