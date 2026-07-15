@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   ResponsiveContainer,
   BarChart,
@@ -7,16 +8,14 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
-  Line,
-  ComposedChart,
+  Cell,
 } from "recharts";
-import { CalendarDays, Activity, TrendingDown, TrendingUp } from "lucide-react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { CalendarCheck2, Clock, Users, Send, UserX } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/daily-operations")({
   loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
@@ -26,12 +25,12 @@ export const Route = createFileRoute("/daily-operations")({
       {
         name: "description",
         content:
-          "Day-by-day operational load: incoming tickets, completions, backlog and reschedules over the last 30 days.",
+          "Today's pending work queue: visits scheduled for today, aging distribution, reschedule reasons, per-branch pivot and alerts.",
       },
       { property: "og:title", content: "Daily Operations — AUX ASC Dashboard" },
       {
         property: "og:description",
-        content: "30-day operational load view.",
+        content: "Pending-tickets work queue with branch pivot and alerts.",
       },
     ],
   }),
@@ -39,18 +38,70 @@ export const Route = createFileRoute("/daily-operations")({
 });
 
 const fmt = new Intl.NumberFormat("en-US");
+const AGING_COLORS: Record<string, string> = {
+  "≤ 12 Hours": "var(--color-success)",
+  "≤ 24 Hours": "var(--color-chart-2)",
+  "≤ 48 Hours": "var(--color-warning)",
+  "≤ 72 Hours": "var(--color-destructive)",
+  "> 72 Hours": "var(--color-foreground)",
+};
+
+function AgingBar({ label, count, max }: { label: string; count: number; max: number }) {
+  const pct = max > 0 ? Math.max(2, (count / max) * 100) : 0;
+  return (
+    <div className="grid grid-cols-[110px_1fr_40px] items-center gap-3 py-1.5">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <div className="h-2.5 rounded-full bg-muted/60 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${count > 0 ? pct : 0}%`, background: AGING_COLORS[label] ?? "var(--color-chart-1)" }}
+        />
+      </div>
+      <span className="text-xs font-medium text-end tabular-nums">{count}</span>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const s = status.toLowerCase();
+  const tone = s.includes("completed")
+    ? "bg-success/15 text-success"
+    : s.includes("not assigned")
+      ? "bg-destructive/15 text-destructive"
+      : s.includes("change of appointment")
+        ? "bg-primary/15 text-primary"
+        : s.includes("accepted")
+          ? "bg-warning/15 text-warning"
+          : "bg-muted text-muted-foreground";
+  return (
+    <span className={cn("inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium", tone)}>
+      {status}
+    </span>
+  );
+}
+
+function AgingBadge({ bucket }: { bucket: string }) {
+  const s = bucket;
+  const tone = s === "≤ 12 Hours"
+    ? "bg-success/15 text-success"
+    : s === "≤ 24 Hours"
+      ? "bg-primary/15 text-primary"
+      : s === "≤ 48 Hours"
+        ? "bg-warning/15 text-warning"
+        : s === "≤ 72 Hours"
+          ? "bg-destructive/15 text-destructive"
+          : "bg-foreground/10 text-foreground";
+  return (
+    <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium", tone)}>
+      {bucket}
+    </span>
+  );
+}
 
 function DailyOpsPage() {
   const { data } = useSuspenseQuery(kpiQueryOptions);
-  const DAILY = data.daily;
-  const totalIn = DAILY.reduce((s, d) => s + d.incoming, 0);
-  const totalDone = DAILY.reduce((s, d) => s + d.completed, 0);
-  const totalPending = DAILY.reduce((s, d) => s + d.pending, 0);
-  const avgDaily = DAILY.length ? totalIn / DAILY.length : 0;
-  const last7 = DAILY.slice(-7).reduce((s, d) => s + d.incoming, 0) / 7;
-  const prev7 = DAILY.slice(-14, -7).reduce((s, d) => s + d.incoming, 0) / 7;
-  const wowDelta = prev7 > 0 ? ((last7 - prev7) / prev7) * 100 : 0;
-  const trendUp = wowDelta >= 0;
+  const p = data.pending;
+  const maxAging = Math.max(1, ...p.aging.map((a) => a.count));
 
   const tooltipStyle = {
     background: "var(--color-popover)",
@@ -61,88 +112,290 @@ function DailyOpsPage() {
   } as const;
 
   return (
-    <DashboardLayout
-      title="Daily Operations"
-      subtitle="Last 30 days of ticket flow"
-    >
-      <section
-        aria-label="Daily KPIs"
-        className="grid gap-4 grid-cols-2 lg:grid-cols-4"
-      >
-        <KpiCard label="Incoming (30d)" value={fmt.format(totalIn)} icon={CalendarDays} tone="primary" />
-        <KpiCard label="Completed (30d)" value={fmt.format(totalDone)} icon={Activity} tone="success" />
-        <KpiCard label="Pending (30d)" value={fmt.format(totalPending)} icon={TrendingDown} tone="warning" />
+    <DashboardLayout title="Daily Operations" subtitle="Today's Work Queue">
+      <section aria-label="Today KPIs" className="grid gap-4 grid-cols-2 lg:grid-cols-5">
         <KpiCard
-          label="WoW Change"
-          value={`${trendUp ? "+" : ""}${wowDelta.toFixed(1)}%`}
-          hint={`Avg ${avgDaily.toFixed(0)} / day`}
-          icon={trendUp ? TrendingUp : TrendingDown}
-          tone={trendUp ? "success" : "destructive"}
+          label="Today's Visits"
+          value={fmt.format(p.todayVisits)}
+          hint="Rescheduled to today"
+          icon={CalendarCheck2}
+          tone="primary"
+        />
+        <KpiCard
+          label="Total Pending"
+          value={fmt.format(p.totalPending)}
+          hint="Completion Result blank"
+          icon={Clock}
+          tone="warning"
+        />
+        <KpiCard
+          label="Active Workers"
+          value={fmt.format(p.activeWorkers)}
+          hint="On today's schedule"
+          icon={Users}
+          tone="primary"
+        />
+        <KpiCard
+          label="Dispatched (not accepted)"
+          value={fmt.format(p.dispatched)}
+          hint="Status = Dispatched Work"
+          icon={Send}
+          tone="warning"
+        />
+        <KpiCard
+          label="No Worker Assigned"
+          value={fmt.format(p.unassigned)}
+          hint="Worker Name = blank"
+          icon={UserX}
+          tone="destructive"
         />
       </section>
 
       <div className="mt-6 grid gap-5 grid-cols-1 xl:grid-cols-2">
-        <ChartCard
-          title="Incoming vs Completed"
-          subtitle="30-day daily flow"
-          className="xl:col-span-2"
-        >
-          <ResponsiveContainer width="100%" height={320}>
-            <ComposedChart data={DAILY} margin={{ top: 10, right: 16, bottom: 0, left: -8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis
-                dataKey="date"
-                stroke="var(--color-muted-foreground)"
-                fontSize={11}
-                tickFormatter={(d: string) => d.slice(5)}
-              />
-              <YAxis stroke="var(--color-muted-foreground)" fontSize={12} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar
-                dataKey="incoming"
-                name="Incoming"
-                fill="var(--color-chart-1)"
-                radius={[4, 4, 0, 0]}
-              />
-              <Line
-                type="monotone"
-                dataKey="completed"
-                name="Completed"
-                stroke="var(--color-chart-5)"
-                strokeWidth={2.5}
-                dot={{ r: 2 }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
+        <ChartCard title="Aging Distribution (Pending)" subtitle="Bucketed by ticket age">
+          <div className="pt-2">
+            {p.aging.map((a) => (
+              <AgingBar key={a.bucket} label={a.bucket} count={a.count} max={maxAging} />
+            ))}
+          </div>
         </ChartCard>
 
-        <ChartCard
-          title="Rescheduled per day"
-          subtitle="Reschedule volume — lower is better"
-          className="xl:col-span-2"
-        >
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={DAILY} margin={{ top: 10, right: 16, bottom: 0, left: -8 }}>
+        <ChartCard title="Reschedule Reasons" subtitle="Top reasons for pending tickets">
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={p.reasons.slice(0, 6)} margin={{ top: 10, right: 16, bottom: 0, left: -8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis
-                dataKey="date"
+                dataKey="reason"
                 stroke="var(--color-muted-foreground)"
                 fontSize={11}
-                tickFormatter={(d: string) => d.slice(5)}
+                tickFormatter={(v: string) => (v.length > 14 ? v.slice(0, 12) + "…" : v)}
               />
               <YAxis stroke="var(--color-muted-foreground)" fontSize={12} />
               <Tooltip contentStyle={tooltipStyle} />
-              <Bar
-                dataKey="rescheduled"
-                name="Rescheduled"
-                fill="var(--color-chart-3)"
-                radius={[4, 4, 0, 0]}
-              />
+              <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                {p.reasons.slice(0, 6).map((r, i) => (
+                  <Cell key={r.reason} fill={i === 0 ? "var(--color-destructive)" : "var(--color-primary)"} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
       </div>
+
+      <section className="mt-6">
+        <ChartCard
+          title="Today's Visits (from Rescheduling date)"
+          subtitle={`${p.todayTickets.length} tickets`}
+          exportRows={p.todayTickets.map((t) => ({
+            Ticket: t.ticket,
+            Branch: t.branch,
+            Worker: t.worker,
+            Status: t.status,
+            Aging: t.ageBucket,
+            Reason: t.reason,
+            Date: t.appointedDate,
+            Remark: t.remark,
+          }))}
+        >
+          <PendingTable rows={p.todayTickets} emptyLabel="No visits scheduled for today." />
+        </ChartCard>
+      </section>
+
+      <section className="mt-6">
+        <ChartCard
+          title="All Pending Tickets"
+          subtitle={`${p.tickets.length} tickets`}
+          exportRows={p.tickets.map((t) => ({
+            Ticket: t.ticket,
+            Branch: t.branch,
+            Worker: t.worker,
+            Status: t.status,
+            Aging: t.ageBucket,
+            Reason: t.reason,
+            Date: t.appointedDate,
+            Remark: t.remark,
+          }))}
+        >
+          <PendingTable rows={p.tickets} emptyLabel="No pending tickets." limit={50} />
+        </ChartCard>
+      </section>
+
+      <section className="mt-6">
+        <ChartCard
+          title="Pending Summary — Pivot (Branch × Aging)"
+          subtitle={`Pending by Service Center & Aging · ${p.totalPending} Pending`}
+          exportRows={p.branchPivot.map((r) => ({
+            Branch: r.branch,
+            "≤12H": r.b12,
+            "≤24H": r.b24,
+            "≤48H": r.b48,
+            "≤72H": r.b72,
+            ">72H": r.over72,
+            Total: r.total,
+          }))}
+        >
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                  <th className="py-2 pr-4 text-start">Branch</th>
+                  <th className="py-2 pr-4 text-end">≤ 12H</th>
+                  <th className="py-2 pr-4 text-end">≤ 24H</th>
+                  <th className="py-2 pr-4 text-end">≤ 48H</th>
+                  <th className="py-2 pr-4 text-end">≤ 72H</th>
+                  <th className="py-2 pr-4 text-end">&gt; 72H</th>
+                  <th className="py-2 pr-4 text-end">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {p.branchPivot.map((r) => (
+                  <tr key={r.branch} className="border-b border-border/60 last:border-0">
+                    <td className="py-2 pr-4 font-medium text-foreground">{r.branch}</td>
+                    <td className="py-2 pr-4 text-end tabular-nums text-muted-foreground">{r.b12 || ""}</td>
+                    <td className="py-2 pr-4 text-end tabular-nums text-muted-foreground">{r.b24 || ""}</td>
+                    <td className="py-2 pr-4 text-end tabular-nums text-muted-foreground">{r.b48 || ""}</td>
+                    <td className="py-2 pr-4 text-end tabular-nums text-muted-foreground">{r.b72 || ""}</td>
+                    <td className="py-2 pr-4 text-end tabular-nums text-muted-foreground">{r.over72 || ""}</td>
+                    <td className="py-2 pr-4 text-end tabular-nums font-semibold">{r.total}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </ChartCard>
+      </section>
+
+      <section className="mt-6">
+        <ChartCard
+          title="Branch Alerts — Pending Notification"
+          subtitle="Admin Only"
+          exportRows={p.branchAlerts.map((r) => ({
+            Branch: r.branch,
+            Pending: r.pending,
+            "No Reason": r.noReason,
+            "Visit Today": r.visitToday ? "Yes" : "No",
+          }))}
+        >
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                  <th className="py-2 pr-4 text-start">Branch</th>
+                  <th className="py-2 pr-4 text-end">Pending</th>
+                  <th className="py-2 pr-4 text-end">No Reason</th>
+                  <th className="py-2 pr-4 text-center">Visit Today</th>
+                  <th className="py-2 pr-4 text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {p.branchAlerts.map((r) => (
+                  <tr key={r.branch} className="border-b border-border/60 last:border-0">
+                    <td className="py-2.5 pr-4 font-medium text-foreground">{r.branch}</td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums">{r.pending}</td>
+                    <td className={cn(
+                      "py-2.5 pr-4 text-end tabular-nums font-semibold",
+                      r.noReason > 0 ? "text-destructive" : "text-muted-foreground",
+                    )}>{r.noReason}</td>
+                    <td className="py-2.5 pr-4 text-center">
+                      <span className={cn(
+                        "inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium",
+                        r.visitToday ? "bg-success/15 text-success" : "bg-muted text-muted-foreground",
+                      )}>
+                        {r.visitToday ? "Yes" : "No"}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-4 text-end">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 rounded-md bg-success px-3 py-1.5 text-xs font-medium text-success-foreground hover:opacity-90 transition-opacity"
+                        onClick={() =>
+                          alert(
+                            `Alert queued for ${r.branch}\nPending: ${r.pending}\nNo reason: ${r.noReason}`,
+                          )
+                        }
+                      >
+                        <Send className="h-3.5 w-3.5" /> Send Alert
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </ChartCard>
+      </section>
     </DashboardLayout>
+  );
+}
+
+function PendingTable({
+  rows,
+  emptyLabel,
+  limit,
+}: {
+  rows: import("@/lib/aux/sheets.functions").PendingTicket[];
+  emptyLabel: string;
+  limit?: number;
+}) {
+  const view = limit ? rows.slice(0, limit) : rows;
+  if (view.length === 0) {
+    return <p className="text-sm text-muted-foreground py-6 text-center">{emptyLabel}</p>;
+  }
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full text-sm">
+        <thead>
+          <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+            <th className="py-2 pr-4 text-start">Ticket #</th>
+            <th className="py-2 pr-4 text-start">Branch</th>
+            <th className="py-2 pr-4 text-start">Worker</th>
+            <th className="py-2 pr-4 text-start">Ticket Status</th>
+            <th className="py-2 pr-4 text-start">Aging</th>
+            <th className="py-2 pr-4 text-start">Reason</th>
+            <th className="py-2 pr-4 text-start">Date</th>
+            <th className="py-2 pr-4 text-start">Remark</th>
+            <th className="py-2 pr-4 text-start">Parts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {view.map((t) => (
+            <tr key={t.ticket} className="border-b border-border/60 last:border-0 align-middle">
+              <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">{t.ticket}</td>
+              <td className="py-2.5 pr-4">{t.branch}</td>
+              <td className="py-2.5 pr-4">
+                {t.unassigned ? (
+                  <span className="inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium bg-destructive/15 text-destructive">
+                    Not Assigned
+                  </span>
+                ) : (
+                  t.worker
+                )}
+              </td>
+              <td className="py-2.5 pr-4">
+                <StatusBadge status={t.status} />
+              </td>
+              <td className="py-2.5 pr-4"><AgingBadge bucket={t.ageBucket} /></td>
+              <td className="py-2.5 pr-4 text-muted-foreground">{t.reason}</td>
+              <td className="py-2.5 pr-4 tabular-nums">
+                {t.appointedDate !== "—" ? (
+                  <span className="inline-flex rounded-md bg-warning/15 text-warning px-2 py-0.5 text-[11px] font-medium">
+                    {t.appointedDate}
+                  </span>
+                ) : (
+                  "—"
+                )}
+              </td>
+              <td className="py-2.5 pr-4 text-muted-foreground max-w-[220px] truncate">{t.remark}</td>
+              <td className="py-2.5 pr-4 text-muted-foreground">{t.parts}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {limit && rows.length > limit && (
+        <p className="text-xs text-muted-foreground text-center py-2">
+          Showing first {limit} of {rows.length} — export CSV for the full list.
+        </p>
+      )}
+    </div>
   );
 }
