@@ -22,6 +22,7 @@ import { Route as InstallationAnalysisRouteImport } from './routes/installation-
 import { Route as DistrictsMapRouteImport } from './routes/districts-map'
 import { Route as DeepInsightsRouteImport } from './routes/deep-insights'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
+import { Route as CostsRouteImport } from './routes/costs'
 import { Route as CityRouteImport } from './routes/city'
 import { Route as CallEventsRouteImport } from './routes/call-events'
 import { Route as CallCenterAssignmentRouteImport } from './routes/call-center-assignment'
@@ -94,6 +95,11 @@ const DailyOperationsRoute = DailyOperationsRouteImport.update({
   path: '/daily-operations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CostsRoute = CostsRouteImport.update({
+  id: '/costs',
+  path: '/costs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CityRoute = CityRouteImport.update({
   id: '/city',
   path: '/city',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/call-center-assignment': typeof CallCenterAssignmentRoute
   '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
+  '/costs': typeof CostsRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/call-center-assignment': typeof CallCenterAssignmentRoute
   '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
+  '/costs': typeof CostsRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
@@ -175,6 +183,7 @@ export interface FileRoutesById {
   '/call-center-assignment': typeof CallCenterAssignmentRoute
   '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
+  '/costs': typeof CostsRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/call-center-assignment'
     | '/call-events'
     | '/city'
+    | '/costs'
     | '/daily-operations'
     | '/deep-insights'
     | '/districts-map'
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/call-center-assignment'
     | '/call-events'
     | '/city'
+    | '/costs'
     | '/daily-operations'
     | '/deep-insights'
     | '/districts-map'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/call-center-assignment'
     | '/call-events'
     | '/city'
+    | '/costs'
     | '/daily-operations'
     | '/deep-insights'
     | '/districts-map'
@@ -262,6 +274,7 @@ export interface RootRouteChildren {
   CallCenterAssignmentRoute: typeof CallCenterAssignmentRoute
   CallEventsRoute: typeof CallEventsRoute
   CityRoute: typeof CityRoute
+  CostsRoute: typeof CostsRoute
   DailyOperationsRoute: typeof DailyOperationsRoute
   DeepInsightsRoute: typeof DeepInsightsRoute
   DistrictsMapRoute: typeof DistrictsMapRoute
@@ -370,6 +383,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DailyOperationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/costs': {
+      id: '/costs'
+      path: '/costs'
+      fullPath: '/costs'
+      preLoaderRoute: typeof CostsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/city': {
       id: '/city'
       path: '/city'
@@ -422,6 +442,7 @@ const rootRouteChildren: RootRouteChildren = {
   CallCenterAssignmentRoute: CallCenterAssignmentRoute,
   CallEventsRoute: CallEventsRoute,
   CityRoute: CityRoute,
+  CostsRoute: CostsRoute,
   DailyOperationsRoute: DailyOperationsRoute,
   DeepInsightsRoute: DeepInsightsRoute,
   DistrictsMapRoute: DistrictsMapRoute,
