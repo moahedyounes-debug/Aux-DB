@@ -12,12 +12,14 @@ import {
   ComposedChart,
 } from "recharts";
 import { CalendarDays, Activity, TrendingDown, TrendingUp } from "lucide-react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
-import { DAILY } from "@/lib/aux/mock-data";
+import { kpiQueryOptions } from "@/lib/aux/queries";
 
 export const Route = createFileRoute("/daily-operations")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
   head: () => ({
     meta: [
       { title: "Daily Operations — AUX ASC Dashboard" },
@@ -39,13 +41,15 @@ export const Route = createFileRoute("/daily-operations")({
 const fmt = new Intl.NumberFormat("en-US");
 
 function DailyOpsPage() {
+  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const DAILY = data.daily;
   const totalIn = DAILY.reduce((s, d) => s + d.incoming, 0);
   const totalDone = DAILY.reduce((s, d) => s + d.completed, 0);
   const totalPending = DAILY.reduce((s, d) => s + d.pending, 0);
-  const avgDaily = totalIn / DAILY.length;
+  const avgDaily = DAILY.length ? totalIn / DAILY.length : 0;
   const last7 = DAILY.slice(-7).reduce((s, d) => s + d.incoming, 0) / 7;
   const prev7 = DAILY.slice(-14, -7).reduce((s, d) => s + d.incoming, 0) / 7;
-  const wowDelta = ((last7 - prev7) / prev7) * 100;
+  const wowDelta = prev7 > 0 ? ((last7 - prev7) / prev7) * 100 : 0;
   const trendUp = wowDelta >= 0;
 
   const tooltipStyle = {

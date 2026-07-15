@@ -13,12 +13,14 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
-import { MONTHLY } from "@/lib/aux/mock-data";
+import { kpiQueryOptions } from "@/lib/aux/queries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/monthly-trends")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
   head: () => ({
     meta: [
       { title: "Monthly Trends — AUX ASC Dashboard" },
@@ -47,6 +49,8 @@ const METRICS = [
 type MetricKey = (typeof METRICS)[number]["key"];
 
 function MonthlyTrendsPage() {
+  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const MONTHLY = data.monthly;
   const [visible, setVisible] = useState<Record<MetricKey, boolean>>({
     total: true,
     completed: true,

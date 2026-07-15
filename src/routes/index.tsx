@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   Ticket,
   Clock3,
@@ -25,15 +26,12 @@ import {
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { ChartCard } from "@/components/dashboard/ChartCard";
-import {
-  MONTHLY,
-  PENDING_BY_REASON,
-  TARGETS,
-  currentSnapshot,
-} from "@/lib/aux/mock-data";
+import { TARGETS } from "@/lib/aux/mock-data";
+import { kpiQueryOptions } from "@/lib/aux/queries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
   head: () => ({
     meta: [
       { title: "KPI Overview — AUX ASC Dashboard" },
@@ -64,8 +62,11 @@ function fmtPct(n: number) {
 }
 
 function Index() {
-  const snap = useMemo(currentSnapshot, []);
-  const pendingRate = (snap.pending / snap.total) * 100;
+  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const snap = data.snapshot;
+  const MONTHLY = data.monthly;
+  const PENDING_BY_REASON = data.pendingByReason;
+  const pendingRate = snap.total > 0 ? (snap.pending / snap.total) * 100 : 0;
   const [mode, setMode] = useState<TimeMode>("percent");
   const [filter, setFilter] = useState<KpiFilter>("all");
 
@@ -194,7 +195,7 @@ function Index() {
                 ))}
               </div>
             }
-            footer="Source: mock data — swap in Google Sheets loader when wired."
+            footer={`Source: Google Sheets · ${data.rowCount.toLocaleString()} tickets · updated ${new Date(data.fetchedAt).toLocaleTimeString()}${data.error ? ` · error: ${data.error}` : ""}`}
           >
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={MONTHLY} margin={{ top: 10, right: 16, bottom: 0, left: -8 }}>
@@ -270,7 +271,7 @@ function Index() {
           </ChartCard>
         )}
 
-        {showPendingCharts && (
+        {showPendingCharts && PENDING_BY_REASON.length > 0 && (
           <ChartCard
             title="Pending by Reason"
             subtitle="Why open tickets are still open"
