@@ -602,6 +602,29 @@ function aggregate(rows: string[][]): KpiData {
     tickets: callCenterTickets,
   };
 
+  const cities: CityKpi[] = Array.from(cityMap.values())
+    .map((c) => {
+      let topProduct = "—";
+      let max = 0;
+      for (const [p, n] of c.products) {
+        if (n > max) {
+          max = n;
+          topProduct = p;
+        }
+      }
+      return {
+        city: c.city,
+        region: c.region,
+        total: c.total,
+        completed: c.completed,
+        pending: c.pending,
+        rate48h: c.completed > 0 ? Math.round((c.c48 / c.completed) * 1000) / 10 : 0,
+        rate72h: c.completed > 0 ? Math.round((c.c72 / c.completed) * 1000) / 10 : 0,
+        topProduct,
+      };
+    })
+    .sort((a, b) => b.total - a.total);
+
   const branches: BranchKpi[] = Array.from(branchStats.entries())
     .map(([branch, s]) => ({
       branch,
