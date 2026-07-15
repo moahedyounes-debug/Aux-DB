@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WhatsappRouteImport } from './routes/whatsapp'
 import { Route as WarrantyPaymentsRouteImport } from './routes/warranty-payments'
 import { Route as TicketRepairHistoryRouteImport } from './routes/ticket-repair-history'
 import { Route as SparePartsRouteImport } from './routes/spare-parts'
@@ -37,6 +38,11 @@ import { Route as ActivityLogRouteImport } from './routes/activity-log'
 import { Route as AccessRouteImport } from './routes/access'
 import { Route as IndexRouteImport } from './routes/index'
 
+const WhatsappRoute = WhatsappRouteImport.update({
+  id: '/whatsapp',
+  path: '/whatsapp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WarrantyPaymentsRoute = WarrantyPaymentsRouteImport.update({
   id: '/warranty-payments',
   path: '/warranty-payments',
@@ -201,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/spare-parts': typeof SparePartsRoute
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
   '/warranty-payments': typeof WarrantyPaymentsRoute
+  '/whatsapp': typeof WhatsappRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -230,6 +237,7 @@ export interface FileRoutesByTo {
   '/spare-parts': typeof SparePartsRoute
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
   '/warranty-payments': typeof WarrantyPaymentsRoute
+  '/whatsapp': typeof WhatsappRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -260,6 +268,7 @@ export interface FileRoutesById {
   '/spare-parts': typeof SparePartsRoute
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
   '/warranty-payments': typeof WarrantyPaymentsRoute
+  '/whatsapp': typeof WhatsappRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -291,6 +300,7 @@ export interface FileRouteTypes {
     | '/spare-parts'
     | '/ticket-repair-history'
     | '/warranty-payments'
+    | '/whatsapp'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -320,6 +330,7 @@ export interface FileRouteTypes {
     | '/spare-parts'
     | '/ticket-repair-history'
     | '/warranty-payments'
+    | '/whatsapp'
   id:
     | '__root__'
     | '/'
@@ -349,6 +360,7 @@ export interface FileRouteTypes {
     | '/spare-parts'
     | '/ticket-repair-history'
     | '/warranty-payments'
+    | '/whatsapp'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -379,10 +391,18 @@ export interface RootRouteChildren {
   SparePartsRoute: typeof SparePartsRoute
   TicketRepairHistoryRoute: typeof TicketRepairHistoryRoute
   WarrantyPaymentsRoute: typeof WarrantyPaymentsRoute
+  WhatsappRoute: typeof WhatsappRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/whatsapp': {
+      id: '/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/whatsapp'
+      preLoaderRoute: typeof WhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/warranty-payments': {
       id: '/warranty-payments'
       path: '/warranty-payments'
@@ -603,6 +623,7 @@ const rootRouteChildren: RootRouteChildren = {
   SparePartsRoute: SparePartsRoute,
   TicketRepairHistoryRoute: TicketRepairHistoryRoute,
   WarrantyPaymentsRoute: WarrantyPaymentsRoute,
+  WhatsappRoute: WhatsappRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
