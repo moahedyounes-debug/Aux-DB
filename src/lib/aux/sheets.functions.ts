@@ -167,18 +167,89 @@ export interface InstallationSummary {
 }
 // ---------------- Warranty Payments ----------------
 // Warranty payout is derived from completed repair tickets.
-// Rate per product line (SAR) — adjust these to match the real warranty tariff.
-export const WARRANTY_RATES: { match: string; rate: number }[] = [
-  { match: "split", rate: 180 },
-  { match: "cassette", rate: 260 },
-  { match: "duct", rate: 320 },
-  { match: "floor", rate: 220 },
-  { match: "window", rate: 140 },
-  { match: "vrf", rate: 420 },
-  { match: "chiller", rate: 520 },
-  { match: "portable", rate: 120 },
+// Rate per job tier (SAR) — matches the official warranty tariff:
+//  220 : صيانة بدون قطع غيار أو فحص أو تنظيف
+//  300 : قطع غيار لا تأخذ وقتاً في تبديلها
+//  330 : قطع غيار تتطلب جهداً ووقتاً (لوحة داخلية / خارجية)
+//  410 : تغيير كومبريسور / إيفابوريتور / تعبئة فريون (مع أو بدون لحام)
+export type WarrantyTier = "T220" | "T300" | "T330" | "T410";
+export interface WarrantyTierDef {
+  tier: WarrantyTier;
+  rate: number;
+  label: string;
+  description: string;
+  // keywords (Arabic + English, lowercased) scanned in Maintenance Instructions / Remark / Completion Result
+  keywords: string[];
+}
+export const WARRANTY_TIERS: WarrantyTierDef[] = [
+  {
+    tier: "T410",
+    rate: 410,
+    label: "Compressor / Evaporator / Freon",
+    description: "تغيير كومبريسور، إيفابوريتور، تعبئة فريون مع أو بدون لحام",
+    keywords: [
+      "كومبريسور", "ضاغط", "compressor",
+      "ايفابوريتور", "إيفابوريتور", "مبخر", "evaporator",
+      "فريون", "freon", "gas charge", "شحن غاز", "تعبئة غاز", "تعبئة فريون",
+      "لحام", "welding", "brazing",
+      "كوندنسر", "condenser",
+    ],
+  },
+  {
+    tier: "T330",
+    rate: 330,
+    label: "Main Board (Indoor / Outdoor)",
+    description: "قطع غيار تتطلب جهداً ووقتاً — لوحة داخلية أو خارجية",
+    keywords: [
+      "لوحة", "بوردة", "board", "pcb", "main board", "mainboard",
+      "لوحة داخلية", "لوحة خارجية", "لوحه", "كنترول بورد", "control board",
+      "power board", "display board",
+    ],
+  },
+  {
+    tier: "T300",
+    rate: 300,
+    label: "Quick Parts Swap",
+    description: "قطع غيار لا تأخذ وقتاً في تبديلها",
+    keywords: [
+      "مروحة", "fan", "motor", "موتور", "محرك",
+      "مكثف", "كباستور", "capacitor",
+      "ريليه", "relay", "كونتاكتور", "contactor",
+      "حساس", "sensor", "ثيرموستات", "thermostat",
+      "ريموت", "remote", "شاشة", "display",
+      "فلتر", "filter", "صمام", "valve",
+      "قطعة غيار", "قطع غيار", "spare part", "spare parts", "استبدال",
+    ],
+  },
+  {
+    tier: "T220",
+    rate: 220,
+    label: "Service (No Parts)",
+    description: "صيانة بدون قطع غيار أو فحص أو تنظيف",
+    keywords: [
+      "بدون قطع", "no parts",
+      "صيانة", "maintenance",
+      "تشغيل", "reset", "إعادة تشغيل",
+      "برمجة", "programming",
+      "معايرة", "calibration",
+    ],
+  },
 ];
-export const WARRANTY_DEFAULT_RATE = 180;
+export const WARRANTY_DEFAULT_RATE = 220; // fallback = صيانة بدون قطع غيار
+// Back-compat export (kept so any external code still importing WARRANTY_RATES works)
+export const WARRANTY_RATES = WARRANTY_TIERS.map((t) => ({
+  match: t.label.toLowerCase(),
+  rate: t.rate,
+}));
+
+// Classify a ticket into a warranty tier by scanning the free-text fields.
+export function classifyWarrantyTier(text: string): WarrantyTierDef {
+  const t = text.toLowerCase();
+  for (const tier of WARRANTY_TIERS) {
+    if (tier.keywords.some((kw) => t.includes(kw.toLowerCase()))) return tier;
+  }
+  return WARRANTY_TIERS[WARRANTY_TIERS.length - 1]; // default T220
+}
 // SLA-miss deduction (percent) applied to claims completed above the 72h target.
 export const WARRANTY_SLA_DEDUCTION_PCT = 15;
 
@@ -188,6 +259,8 @@ export interface WarrantyClaim {
   branch: string;
   city: string;
   productLine: string;
+  tier: WarrantyTier;
+  tierLabel: string;
   createdAt: string;
   completedAt: string;
   serviceHours: number;
