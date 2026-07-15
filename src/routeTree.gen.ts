@@ -30,6 +30,7 @@ import { Route as ControlPanelRouteImport } from './routes/control-panel'
 import { Route as CommerceComplaintsRouteImport } from './routes/commerce-complaints'
 import { Route as CityBreakdownRouteImport } from './routes/city-breakdown'
 import { Route as CityRouteImport } from './routes/city'
+import { Route as CallEventsRouteImport } from './routes/call-events'
 import { Route as CallCenterRouteImport } from './routes/call-center'
 import { Route as AscPerformanceRouteImport } from './routes/asc-performance'
 import { Route as ActivityLogRouteImport } from './routes/activity-log'
@@ -141,6 +142,11 @@ const CityRoute = CityRouteImport.update({
   path: '/city',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CallEventsRoute = CallEventsRouteImport.update({
+  id: '/call-events',
+  path: '/call-events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CallCenterRoute = CallCenterRouteImport.update({
   id: '/call-center',
   path: '/call-center',
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/activity-log': typeof ActivityLogRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
+  '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
   '/city-breakdown': typeof CityBreakdownRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/activity-log': typeof ActivityLogRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
+  '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
   '/city-breakdown': typeof CityBreakdownRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/activity-log': typeof ActivityLogRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
+  '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
   '/city-breakdown': typeof CityBreakdownRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
     | '/activity-log'
     | '/asc-performance'
     | '/call-center'
+    | '/call-events'
     | '/city'
     | '/city-breakdown'
     | '/commerce-complaints'
@@ -288,6 +298,7 @@ export interface FileRouteTypes {
     | '/activity-log'
     | '/asc-performance'
     | '/call-center'
+    | '/call-events'
     | '/city'
     | '/city-breakdown'
     | '/commerce-complaints'
@@ -316,6 +327,7 @@ export interface FileRouteTypes {
     | '/activity-log'
     | '/asc-performance'
     | '/call-center'
+    | '/call-events'
     | '/city'
     | '/city-breakdown'
     | '/commerce-complaints'
@@ -345,6 +357,7 @@ export interface RootRouteChildren {
   ActivityLogRoute: typeof ActivityLogRoute
   AscPerformanceRoute: typeof AscPerformanceRoute
   CallCenterRoute: typeof CallCenterRoute
+  CallEventsRoute: typeof CallEventsRoute
   CityRoute: typeof CityRoute
   CityBreakdownRoute: typeof CityBreakdownRoute
   CommerceComplaintsRoute: typeof CommerceComplaintsRoute
@@ -517,6 +530,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/call-events': {
+      id: '/call-events'
+      path: '/call-events'
+      fullPath: '/call-events'
+      preLoaderRoute: typeof CallEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/call-center': {
       id: '/call-center'
       path: '/call-center'
@@ -561,6 +581,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivityLogRoute: ActivityLogRoute,
   AscPerformanceRoute: AscPerformanceRoute,
   CallCenterRoute: CallCenterRoute,
+  CallEventsRoute: CallEventsRoute,
   CityRoute: CityRoute,
   CityBreakdownRoute: CityBreakdownRoute,
   CommerceComplaintsRoute: CommerceComplaintsRoute,
