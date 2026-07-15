@@ -15,7 +15,9 @@ const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
 // AB Reasons Supplemented · AC Maintenance Instructions · AD Mileage · AE Consultation Type
 const COL = {
   ticket: 0,
+  productLine: 1,
   serviceProvider: 2,
+  location: 5,
   workerName: 7,
   serviceType: 8,
   ticketStatus: 12,
@@ -127,6 +129,16 @@ export interface CallCenterSummary {
   byBranch: { branch: string; count: number }[];
   tickets: CallCenterTicket[];
 }
+export interface CityKpi {
+  city: string;
+  region: string;
+  total: number;
+  completed: number;
+  pending: number;
+  rate48h: number;
+  rate72h: number;
+  topProduct: string;
+}
 export interface Snapshot {
   total: number;
   pending: number;
@@ -149,6 +161,7 @@ export interface KpiData {
   branches: BranchKpi[];
   pending: PendingSummary;
   callCenter: CallCenterSummary;
+  cities: CityKpi[];
   error?: string;
 }
 
@@ -252,6 +265,21 @@ function aggregate(rows: string[][]): KpiData {
   const ccBranchMap = new Map<string, number>();
   let ccCompleted = 0;
 
+  // City breakdown
+  const cityMap = new Map<
+    string,
+    {
+      city: string;
+      region: string;
+      total: number;
+      completed: number;
+      pending: number;
+      c48: number;
+      c72: number;
+      products: Map<string, number>;
+    }
+  >();
+
   // Prep last 30 days buckets
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
@@ -319,6 +347,36 @@ function aggregate(rows: string[][]): KpiData {
     else bs.pending++;
     if (under48) bs.c48++;
     if (under72) bs.c72++;
+
+    // City aggregation from Location column: "Region/City/District"
+    const locRaw = String(row[COL.location] ?? "").trim();
+    if (locRaw) {
+      const locParts = locRaw.split(/[\/,>·|]/).map((p) => p.trim()).filter(Boolean);
+      const region = locParts[0] ?? "—";
+      const city = locParts[1] ?? locParts[0] ?? "Unknown";
+      const cityKey = `${region}||${city}`;
+      let cs = cityMap.get(cityKey);
+      if (!cs) {
+        cs = {
+          city,
+          region,
+          total: 0,
+          completed: 0,
+          pending: 0,
+          c48: 0,
+          c72: 0,
+          products: new Map(),
+        };
+        cityMap.set(cityKey, cs);
+      }
+      cs.total++;
+      if (done) cs.completed++;
+      else cs.pending++;
+      if (under48) cs.c48++;
+      if (under72) cs.c72++;
+      const prod = String(row[COL.productLine] ?? "").trim();
+      if (prod) cs.products.set(prod, (cs.products.get(prod) ?? 0) + 1);
+    }
 
     if (done) completed++;
     else {
@@ -544,6 +602,29 @@ function aggregate(rows: string[][]): KpiData {
     tickets: callCenterTickets,
   };
 
+  const cities: CityKpi[] = Array.from(cityMap.values())
+    .map((c) => {
+      let topProduct = "—";
+      let max = 0;
+      for (const [p, n] of c.products) {
+        if (n > max) {
+          max = n;
+          topProduct = p;
+        }
+      }
+      return {
+        city: c.city,
+        region: c.region,
+        total: c.total,
+        completed: c.completed,
+        pending: c.pending,
+        rate48h: c.completed > 0 ? Math.round((c.c48 / c.completed) * 1000) / 10 : 0,
+        rate72h: c.completed > 0 ? Math.round((c.c72 / c.completed) * 1000) / 10 : 0,
+        topProduct,
+      };
+    })
+    .sort((a, b) => b.total - a.total);
+
   const branches: BranchKpi[] = Array.from(branchStats.entries())
     .map(([branch, s]) => ({
       branch,
@@ -568,6 +649,7 @@ function aggregate(rows: string[][]): KpiData {
     branches,
     pending: pendingSummary,
     callCenter,
+    cities,
   };
 }
 
@@ -614,6 +696,7 @@ export const getSheetsKpi = createServerFn({ method: "GET" }).handler(async (): 
         branchAlerts: [],
       },
       callCenter: { total: 0, pending: 0, completed: 0, byType: [], byBranch: [], tickets: [] },
+      cities: [],
       error: msg,
     };
   }

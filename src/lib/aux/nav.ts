@@ -53,7 +53,7 @@ export const NAV_PAGES: NavPage[] = [
   { path: "/installation-analysis", label: "Installation Analysis", icon: Hammer },
   { path: "/asc-performance", label: "ASC Performance", icon: Building2, active: true },
   { path: "/rejected-returned", label: "Rejected / Returned", icon: Undo2 },
-  { path: "/city", label: "City Breakdown", icon: MapPin },
+  { path: "/city", label: "City Breakdown", icon: MapPin, active: true },
   { path: "/districts-map", label: "Districts Map", icon: MapPin },
   { path: "/warranty-payments", label: "Warranty Payments", icon: Wallet },
   { path: "/costs", label: "Cost Center", icon: Coins },
