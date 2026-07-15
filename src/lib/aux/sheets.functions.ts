@@ -17,6 +17,7 @@ const COL = {
   ticket: 0,
   serviceProvider: 2,
   workerName: 7,
+  serviceType: 8,
   ticketStatus: 12,
   orderCreation: 14,
   ticketSource: 16,
@@ -108,6 +109,24 @@ export interface PendingSummary {
   branchPivot: PendingBranchPivot[];
   branchAlerts: BranchAlert[];
 }
+export interface CallCenterTicket {
+  ticket: string;
+  branch: string;
+  serviceType: string;
+  status: string;
+  reason: string;
+  createdAt: string;
+  completed: boolean;
+  worker: string;
+}
+export interface CallCenterSummary {
+  total: number;
+  pending: number;
+  completed: number;
+  byType: { type: string; count: number }[];
+  byBranch: { branch: string; count: number }[];
+  tickets: CallCenterTicket[];
+}
 export interface Snapshot {
   total: number;
   pending: number;
@@ -129,6 +148,7 @@ export interface KpiData {
   pendingAging: { bucket: string; count: number }[];
   branches: BranchKpi[];
   pending: PendingSummary;
+  callCenter: CallCenterSummary;
   error?: string;
 }
 
@@ -226,6 +246,12 @@ function aggregate(rows: string[][]): KpiData {
   let pendingNoReason = 0;
   let rescheduledAll = 0;
 
+  // Call center bucket (non-Repair service types — handled by agents, not ASC)
+  const callCenterTickets: CallCenterTicket[] = [];
+  const ccTypeMap = new Map<string, number>();
+  const ccBranchMap = new Map<string, number>();
+  let ccCompleted = 0;
+
   // Prep last 30 days buckets
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
@@ -245,12 +271,36 @@ function aggregate(rows: string[][]): KpiData {
 
   for (const row of rows) {
     if (!row || !row[COL.ticket]) continue;
-    total++;
+
+    const rawServiceType = String(row[COL.serviceType] ?? "").trim();
+    const serviceTypeLower = rawServiceType.toLowerCase();
+    const isRepair = serviceTypeLower === "repair" || serviceTypeLower.includes("repair") && !serviceTypeLower.includes("easy");
 
     const created = parseDate(row[COL.orderCreation]);
     const done = isCompleted(row);
     const status = String(row[COL.ticketStatus] ?? "").trim();
     const branch = normalizeBranch(String(row[COL.serviceProvider] ?? ""));
+
+    // Non-repair (Consultation / Easy repair / etc.) — handled by call center, not ASC.
+    if (!isRepair) {
+      const label = rawServiceType || "Unknown";
+      ccTypeMap.set(label, (ccTypeMap.get(label) ?? 0) + 1);
+      ccBranchMap.set(branch, (ccBranchMap.get(branch) ?? 0) + 1);
+      if (done) ccCompleted++;
+      callCenterTickets.push({
+        ticket: String(row[COL.ticket] ?? "").trim(),
+        branch,
+        serviceType: label,
+        status: status || "—",
+        reason: String(row[COL.rescheduleReason] ?? "").trim() || "—",
+        createdAt: created ? created.toISOString().slice(0, 10) : "—",
+        completed: done,
+        worker: String(row[COL.workerName] ?? "").trim() || "—",
+      });
+      continue;
+    }
+
+    total++;
     const resched = isTruthy(row[COL.rescheduling]);
     if (resched) rescheduledAll++;
 
@@ -478,6 +528,22 @@ function aggregate(rows: string[][]): KpiData {
     branchAlerts: Array.from(branchAlertMap.values()).sort((a, b) => b.pending - a.pending),
   };
 
+  // Sort call center by newest first
+  callCenterTickets.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const callCenter: CallCenterSummary = {
+    total: callCenterTickets.length,
+    pending: callCenterTickets.filter((t) => !t.completed).length,
+    completed: ccCompleted,
+    byType: Array.from(ccTypeMap.entries())
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count),
+    byBranch: Array.from(ccBranchMap.entries())
+      .map(([branch, count]) => ({ branch, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15),
+    tickets: callCenterTickets,
+  };
+
   const branches: BranchKpi[] = Array.from(branchStats.entries())
     .map(([branch, s]) => ({
       branch,
@@ -501,6 +567,7 @@ function aggregate(rows: string[][]): KpiData {
     pendingAging,
     branches,
     pending: pendingSummary,
+    callCenter,
   };
 }
 
@@ -546,6 +613,7 @@ export const getSheetsKpi = createServerFn({ method: "GET" }).handler(async (): 
         branchPivot: [],
         branchAlerts: [],
       },
+      callCenter: { total: 0, pending: 0, completed: 0, byType: [], byBranch: [], tickets: [] },
       error: msg,
     };
   }
