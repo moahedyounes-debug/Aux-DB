@@ -33,6 +33,7 @@ import { Route as CallEventsRouteImport } from './routes/call-events'
 import { Route as CallCenterAssignmentRouteImport } from './routes/call-center-assignment'
 import { Route as CallCenterRouteImport } from './routes/call-center'
 import { Route as AscPerformanceRouteImport } from './routes/asc-performance'
+import { Route as ActivityLogRouteImport } from './routes/activity-log'
 import { Route as IndexRouteImport } from './routes/index'
 
 const WhatsappRoute = WhatsappRouteImport.update({
@@ -155,6 +156,11 @@ const AscPerformanceRoute = AscPerformanceRouteImport.update({
   path: '/asc-performance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ActivityLogRoute = ActivityLogRouteImport.update({
+  id: '/activity-log',
+  path: '/activity-log',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -163,6 +169,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/activity-log': typeof ActivityLogRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
   '/call-center-assignment': typeof CallCenterAssignmentRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/activity-log': typeof ActivityLogRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
   '/call-center-assignment': typeof CallCenterAssignmentRoute
@@ -218,6 +226,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/activity-log': typeof ActivityLogRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
   '/call-center-assignment': typeof CallCenterAssignmentRoute
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/activity-log'
     | '/asc-performance'
     | '/call-center'
     | '/call-center-assignment'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/activity-log'
     | '/asc-performance'
     | '/call-center'
     | '/call-center-assignment'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/activity-log'
     | '/asc-performance'
     | '/call-center'
     | '/call-center-assignment'
@@ -329,6 +341,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActivityLogRoute: typeof ActivityLogRoute
   AscPerformanceRoute: typeof AscPerformanceRoute
   CallCenterRoute: typeof CallCenterRoute
   CallCenterAssignmentRoute: typeof CallCenterAssignmentRoute
@@ -525,6 +538,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AscPerformanceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/activity-log': {
+      id: '/activity-log'
+      path: '/activity-log'
+      fullPath: '/activity-log'
+      preLoaderRoute: typeof ActivityLogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -537,6 +557,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActivityLogRoute: ActivityLogRoute,
   AscPerformanceRoute: AscPerformanceRoute,
   CallCenterRoute: CallCenterRoute,
   CallCenterAssignmentRoute: CallCenterAssignmentRoute,
