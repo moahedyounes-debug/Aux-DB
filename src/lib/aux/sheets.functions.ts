@@ -129,6 +129,16 @@ export interface CallCenterSummary {
   byBranch: { branch: string; count: number }[];
   tickets: CallCenterTicket[];
 }
+export interface CityKpi {
+  city: string;
+  region: string;
+  total: number;
+  completed: number;
+  pending: number;
+  rate48h: number;
+  rate72h: number;
+  topProduct: string;
+}
 export interface Snapshot {
   total: number;
   pending: number;
@@ -151,6 +161,7 @@ export interface KpiData {
   branches: BranchKpi[];
   pending: PendingSummary;
   callCenter: CallCenterSummary;
+  cities: CityKpi[];
   error?: string;
 }
 
