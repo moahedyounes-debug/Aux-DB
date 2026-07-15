@@ -514,6 +514,90 @@ function aggregate(rows: string[][]): KpiData {
     if (under48) bs.c48++;
     if (under72) bs.c72++;
 
+    // ---------------- Warranty claim per repair ticket ----------------
+    {
+      const productLine = String(row[COL.productLine] ?? "").trim() || "Other";
+      const pl = productLine.toLowerCase();
+      const rate =
+        WARRANTY_RATES.find((r) => pl.includes(r.match))?.rate ?? WARRANTY_DEFAULT_RATE;
+      const gross = rate;
+      let status: WarrantyStatus;
+      let deduction = 0;
+      if (!done) {
+        status = "submitted";
+      } else if (under72) {
+        status = "paid";
+      } else {
+        status = "approved";
+        deduction = Math.round((gross * WARRANTY_SLA_DEDUCTION_PCT) / 100);
+      }
+      const net = gross - deduction;
+      warrGross += gross;
+      warrDeduction += deduction;
+      if (status === "paid") warrPaid++;
+      else if (status === "approved") warrApproved++;
+      else warrSubmitted++;
+
+      let br = warrantyByBranch.get(branch);
+      if (!br) {
+        br = { branch, claims: 0, paid: 0, approved: 0, submitted: 0, gross: 0, deduction: 0, net: 0 };
+        warrantyByBranch.set(branch, br);
+      }
+      br.claims++;
+      br.gross += gross;
+      br.deduction += deduction;
+      br.net += net;
+      if (status === "paid") br.paid++;
+      else if (status === "approved") br.approved++;
+      else br.submitted++;
+
+      const claimDate = done ? parseDate(row[COL.completionTime]) ?? created : created;
+      if (claimDate) {
+        const ym = claimDate.toISOString().slice(0, 7);
+        let mr = warrantyByMonth.get(ym);
+        if (!mr) {
+          mr = {
+            month: ym,
+            label: claimDate.toLocaleString("en-US", { month: "short" }),
+            claims: 0,
+            gross: 0,
+            deduction: 0,
+            net: 0,
+          };
+          warrantyByMonth.set(ym, mr);
+        }
+        mr.claims++;
+        mr.gross += gross;
+        mr.deduction += deduction;
+        mr.net += net;
+      }
+
+      let pr = warrantyByProduct.get(productLine);
+      if (!pr) {
+        pr = { product: productLine, rate, claims: 0, net: 0 };
+        warrantyByProduct.set(productLine, pr);
+      }
+      pr.claims++;
+      pr.net += net;
+
+      warrantyClaims.push({
+        ticket: String(row[COL.ticket] ?? "").trim(),
+        branch,
+        city: cityEarly,
+        productLine,
+        createdAt: created ? created.toISOString().slice(0, 10) : "—",
+        completedAt:
+          done && parseDate(row[COL.completionTime])
+            ? parseDate(row[COL.completionTime])!.toISOString().slice(0, 10)
+            : "—",
+        serviceHours: isNaN(hrs) ? 0 : hrs,
+        status,
+        gross,
+        deduction,
+        net,
+      });
+    }
+
     // City aggregation from Location column: "Region/City/District"
     const locRaw = String(row[COL.location] ?? "").trim();
     if (locRaw) {
