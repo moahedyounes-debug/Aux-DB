@@ -649,6 +649,7 @@ function aggregate(rows: string[][]): KpiData {
     branches,
     pending: pendingSummary,
     callCenter,
+    cities,
   };
 }
 
