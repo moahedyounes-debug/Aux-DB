@@ -30,6 +30,41 @@ async function cached<T>(key: string, fn: () => Promise<T>): Promise<T> {
 }
 
 // ============================================================
+// Shared ticket index — merges Sheet1 (live tickets) into
+// specialized tabs so every recent table can show the current
+// branch / status / worker for the same ticket number.
+// ============================================================
+export interface TicketInfo {
+  branch: string;
+  status: string;
+  worker: string;
+  createdAt: string;
+  city: string;
+}
+export async function fetchTicketIndex(): Promise<Map<string, TicketInfo>> {
+  return cached("ticketIndex", async () => {
+    try {
+      const rows = await fetchRange("Sheet1!A2:O");
+      const m = new Map<string, TicketInfo>();
+      for (const r of rows) {
+        const t = String(r[0] ?? "").trim();
+        if (!t) continue;
+        m.set(t, {
+          branch: String(r[2] ?? "").trim(),
+          city: String(r[5] ?? "").trim(),
+          worker: String(r[7] ?? "").trim(),
+          status: String(r[12] ?? "").trim(),
+          createdAt: String(r[14] ?? "").trim(),
+        });
+      }
+      return m;
+    } catch {
+      return new Map<string, TicketInfo>();
+    }
+  }) as Promise<Map<string, TicketInfo>>;
+}
+
+// ============================================================
 // Parts (spare-parts inventory / request log)
 // ============================================================
 export interface PartRow {
@@ -407,6 +442,9 @@ export interface AscRemarkRow {
   remark: string;
   updated: string;
   by: string;
+  branch?: string;
+  status?: string;
+  worker?: string;
 }
 export interface AscRemarksSummary {
   fetchedAt: string;
@@ -423,14 +461,22 @@ export const getAscRemarks = createServerFn({ method: "GET" }).handler(
     return cached("ascremarks", async () => {
       try {
         const rows = await fetchRange("ASC Remarks!A2:D");
+        const idx = await fetchTicketIndex();
         const parsed: AscRemarkRow[] = rows
           .filter((r) => r[0])
-          .map((r) => ({
-            ticket: String(r[0] ?? "").trim(),
-            remark: String(r[1] ?? "").trim(),
-            updated: String(r[2] ?? "").trim(),
-            by: String(r[3] ?? "").trim(),
-          }));
+          .map((r) => {
+            const ticket = String(r[0] ?? "").trim();
+            const info = idx.get(ticket);
+            return {
+              ticket,
+              remark: String(r[1] ?? "").trim(),
+              updated: String(r[2] ?? "").trim(),
+              by: String(r[3] ?? "").trim(),
+              branch: info?.branch,
+              status: info?.status,
+              worker: info?.worker,
+            };
+          });
 
         const byAuthorMap = new Map<string, number>();
         let withRemarks = 0;
