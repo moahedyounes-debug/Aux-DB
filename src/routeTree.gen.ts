@@ -23,9 +23,11 @@ import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
 import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as InstallationAnalysisRouteImport } from './routes/installation-analysis'
 import { Route as ExportCenterRouteImport } from './routes/export-center'
+import { Route as DistrictsMapRouteImport } from './routes/districts-map'
 import { Route as DeepInsightsRouteImport } from './routes/deep-insights'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
 import { Route as CustomDashboardRouteImport } from './routes/custom-dashboard'
+import { Route as CostsRouteImport } from './routes/costs'
 import { Route as ControlPanelRouteImport } from './routes/control-panel'
 import { Route as CommerceComplaintsRouteImport } from './routes/commerce-complaints'
 import { Route as CityRouteImport } from './routes/city'
@@ -107,6 +109,11 @@ const ExportCenterRoute = ExportCenterRouteImport.update({
   path: '/export-center',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DistrictsMapRoute = DistrictsMapRouteImport.update({
+  id: '/districts-map',
+  path: '/districts-map',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DeepInsightsRoute = DeepInsightsRouteImport.update({
   id: '/deep-insights',
   path: '/deep-insights',
@@ -120,6 +127,11 @@ const DailyOperationsRoute = DailyOperationsRouteImport.update({
 const CustomDashboardRoute = CustomDashboardRouteImport.update({
   id: '/custom-dashboard',
   path: '/custom-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CostsRoute = CostsRouteImport.update({
+  id: '/costs',
+  path: '/costs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ControlPanelRoute = ControlPanelRouteImport.update({
@@ -184,9 +196,11 @@ export interface FileRoutesByFullPath {
   '/city': typeof CityRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
   '/control-panel': typeof ControlPanelRoute
+  '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
+  '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
@@ -213,9 +227,11 @@ export interface FileRoutesByTo {
   '/city': typeof CityRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
   '/control-panel': typeof ControlPanelRoute
+  '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
+  '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
@@ -243,9 +259,11 @@ export interface FileRoutesById {
   '/city': typeof CityRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
   '/control-panel': typeof ControlPanelRoute
+  '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
+  '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
@@ -274,9 +292,11 @@ export interface FileRouteTypes {
     | '/city'
     | '/commerce-complaints'
     | '/control-panel'
+    | '/costs'
     | '/custom-dashboard'
     | '/daily-operations'
     | '/deep-insights'
+    | '/districts-map'
     | '/export-center'
     | '/installation-analysis'
     | '/kpis'
@@ -303,9 +323,11 @@ export interface FileRouteTypes {
     | '/city'
     | '/commerce-complaints'
     | '/control-panel'
+    | '/costs'
     | '/custom-dashboard'
     | '/daily-operations'
     | '/deep-insights'
+    | '/districts-map'
     | '/export-center'
     | '/installation-analysis'
     | '/kpis'
@@ -332,9 +354,11 @@ export interface FileRouteTypes {
     | '/city'
     | '/commerce-complaints'
     | '/control-panel'
+    | '/costs'
     | '/custom-dashboard'
     | '/daily-operations'
     | '/deep-insights'
+    | '/districts-map'
     | '/export-center'
     | '/installation-analysis'
     | '/kpis'
@@ -362,9 +386,11 @@ export interface RootRouteChildren {
   CityRoute: typeof CityRoute
   CommerceComplaintsRoute: typeof CommerceComplaintsRoute
   ControlPanelRoute: typeof ControlPanelRoute
+  CostsRoute: typeof CostsRoute
   CustomDashboardRoute: typeof CustomDashboardRoute
   DailyOperationsRoute: typeof DailyOperationsRoute
   DeepInsightsRoute: typeof DeepInsightsRoute
+  DistrictsMapRoute: typeof DistrictsMapRoute
   ExportCenterRoute: typeof ExportCenterRoute
   InstallationAnalysisRoute: typeof InstallationAnalysisRoute
   KpisRoute: typeof KpisRoute
@@ -481,6 +507,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExportCenterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/districts-map': {
+      id: '/districts-map'
+      path: '/districts-map'
+      fullPath: '/districts-map'
+      preLoaderRoute: typeof DistrictsMapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/deep-insights': {
       id: '/deep-insights'
       path: '/deep-insights'
@@ -500,6 +533,13 @@ declare module '@tanstack/react-router' {
       path: '/custom-dashboard'
       fullPath: '/custom-dashboard'
       preLoaderRoute: typeof CustomDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/costs': {
+      id: '/costs'
+      path: '/costs'
+      fullPath: '/costs'
+      preLoaderRoute: typeof CostsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/control-panel': {
@@ -586,9 +626,11 @@ const rootRouteChildren: RootRouteChildren = {
   CityRoute: CityRoute,
   CommerceComplaintsRoute: CommerceComplaintsRoute,
   ControlPanelRoute: ControlPanelRoute,
+  CostsRoute: CostsRoute,
   CustomDashboardRoute: CustomDashboardRoute,
   DailyOperationsRoute: DailyOperationsRoute,
   DeepInsightsRoute: DeepInsightsRoute,
+  DistrictsMapRoute: DistrictsMapRoute,
   ExportCenterRoute: ExportCenterRoute,
   InstallationAnalysisRoute: InstallationAnalysisRoute,
   KpisRoute: KpisRoute,

@@ -123,7 +123,7 @@ function DistrictsPage() {
       </section>
 
       <section className="mt-6">
-        <ChartCard title="City heatmap" subtitle="Sorted by ticket volume · color = SLA (72h)" exportRows={cities}>
+        <ChartCard title="City heatmap" subtitle="Sorted by ticket volume · color = SLA (72h)" exportRows={cities.map((c) => ({ ...c }))}>
           <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 max-h-[560px] overflow-auto pr-1">
             {[...cities].sort((a, b) => b.total - a.total).map((c) => {
               const tone = c.rate72h >= 90 ? "bg-success/15 border-success/40" : c.rate72h >= 75 ? "bg-warning/15 border-warning/40" : "bg-destructive/15 border-destructive/40";

@@ -85,7 +85,7 @@ function CostsPage() {
       </section>
 
       <section className="grid gap-6 grid-cols-1 lg:grid-cols-2 mt-6">
-        <ChartCard title="Top-cost ASCs" subtitle="Net warranty cost per branch" exportRows={topBranches}>
+        <ChartCard title="Top-cost ASCs" subtitle="Net warranty cost per branch" exportRows={topBranches.map((b) => ({ ...b }))}>
           <div className="h-96">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topBranches} layout="vertical" margin={{ top: 8, right: 12, left: 8, bottom: 0 }}>
