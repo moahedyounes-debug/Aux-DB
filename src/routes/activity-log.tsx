@@ -36,7 +36,7 @@ function ActivityPage() {
         <KpiCard label="Days Tracked" value={num.format(data.byDay.length)} icon={Clock} tone="warning" />
       </section>
 
-      <ChartCard title="Daily Activity (last 30 days)" exportRows={data.byDay}>
+      <ChartCard title="Daily Activity (last 30 days)" exportRows={data.byDay as unknown as Array<Record<string, unknown>>}>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={data.byDay}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -49,7 +49,7 @@ function ActivityPage() {
       </ChartCard>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Top Pages" exportRows={data.byPage}>
+        <ChartCard title="Top Pages" exportRows={data.byPage as unknown as Array<Record<string, unknown>>}>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={data.byPage} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -61,7 +61,7 @@ function ActivityPage() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Top Users" exportRows={data.byUser}>
+        <ChartCard title="Top Users" exportRows={data.byUser as unknown as Array<Record<string, unknown>>}>
           <div className="overflow-x-auto max-h-[320px]">
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-muted-foreground sticky top-0">
@@ -85,7 +85,7 @@ function ActivityPage() {
         </ChartCard>
       </section>
 
-      <ChartCard title="Recent Activity" exportRows={data.recent}>
+      <ChartCard title="Recent Activity" exportRows={data.recent as unknown as Array<Record<string, unknown>>}>
         <div className="overflow-x-auto max-h-[400px]">
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground sticky top-0">

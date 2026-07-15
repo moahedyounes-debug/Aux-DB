@@ -43,7 +43,7 @@ function ControlPanelPage() {
         <KpiCard label="Last Run" value={data.lastStatus} hint={`${num.format(data.lastRows)} rows`} icon={Settings2} tone="accent" />
       </section>
 
-      <ChartCard title="Pipelines" exportRows={data.byAction}>
+      <ChartCard title="Pipelines" exportRows={data.byAction as unknown as Array<Record<string, unknown>>}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground">
@@ -68,7 +68,7 @@ function ControlPanelPage() {
         </div>
       </ChartCard>
 
-      <ChartCard title="Recent Upload Runs" exportRows={data.recent}>
+      <ChartCard title="Recent Upload Runs" exportRows={data.recent as unknown as Array<Record<string, unknown>>}>
         <div className="overflow-x-auto max-h-[420px]">
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground sticky top-0">

@@ -43,7 +43,7 @@ function AccessPage() {
         <KpiCard label="Parts Access" value={num.format(data.partsAccess)} icon={Wrench} tone="warning" />
       </section>
 
-      <ChartCard title="Users by ASC" exportRows={data.byASC}>
+      <ChartCard title="Users by ASC" exportRows={data.byASC as unknown as Array<Record<string, unknown>>}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground">
@@ -64,7 +64,7 @@ function AccessPage() {
         </div>
       </ChartCard>
 
-      <ChartCard title="User Directory" exportRows={data.users}>
+      <ChartCard title="User Directory" exportRows={data.users as unknown as Array<Record<string, unknown>>}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground">

@@ -47,7 +47,7 @@ function SparePartsPage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Requests by Status" exportRows={data.byStatus}>
+        <ChartCard title="Requests by Status" exportRows={data.byStatus as unknown as Array<Record<string, unknown>>}>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={data.byStatus}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -58,7 +58,7 @@ function SparePartsPage() {
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
-        <ChartCard title="Monthly Requests" exportRows={data.byMonth}>
+        <ChartCard title="Monthly Requests" exportRows={data.byMonth as unknown as Array<Record<string, unknown>>}>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={data.byMonth}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -72,7 +72,7 @@ function SparePartsPage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="By Branch" exportRows={data.byBranch}>
+        <ChartCard title="By Branch" exportRows={data.byBranch as unknown as Array<Record<string, unknown>>}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-muted-foreground">
@@ -98,7 +98,7 @@ function SparePartsPage() {
             </table>
           </div>
         </ChartCard>
-        <ChartCard title="Top Requested Parts" exportRows={data.topParts}>
+        <ChartCard title="Top Requested Parts" exportRows={data.topParts as unknown as Array<Record<string, unknown>>}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-muted-foreground">
@@ -122,7 +122,7 @@ function SparePartsPage() {
         </ChartCard>
       </section>
 
-      <ChartCard title="Recent Requests" exportRows={data.recent}>
+      <ChartCard title="Recent Requests" exportRows={data.recent as unknown as Array<Record<string, unknown>>}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground">
