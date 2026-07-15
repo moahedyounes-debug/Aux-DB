@@ -10,11 +10,35 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
+import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
+import { Route as KpisRouteImport } from './routes/kpis'
+import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PendingAnalysisRoute = PendingAnalysisRouteImport.update({
+  id: '/pending-analysis',
+  path: '/pending-analysis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonthlyTrendsRoute = MonthlyTrendsRouteImport.update({
+  id: '/monthly-trends',
+  path: '/monthly-trends',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KpisRoute = KpisRouteImport.update({
+  id: '/kpis',
+  path: '/kpis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DailyOperationsRoute = DailyOperationsRouteImport.update({
+  id: '/daily-operations',
+  path: '/daily-operations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,27 +49,62 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/daily-operations': typeof DailyOperationsRoute
+  '/kpis': typeof KpisRoute
+  '/monthly-trends': typeof MonthlyTrendsRoute
+  '/pending-analysis': typeof PendingAnalysisRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/daily-operations': typeof DailyOperationsRoute
+  '/kpis': typeof KpisRoute
+  '/monthly-trends': typeof MonthlyTrendsRoute
+  '/pending-analysis': typeof PendingAnalysisRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/daily-operations': typeof DailyOperationsRoute
+  '/kpis': typeof KpisRoute
+  '/monthly-trends': typeof MonthlyTrendsRoute
+  '/pending-analysis': typeof PendingAnalysisRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sitemap.xml'
+  fullPaths:
+    | '/'
+    | '/daily-operations'
+    | '/kpis'
+    | '/monthly-trends'
+    | '/pending-analysis'
+    | '/sitemap.xml'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sitemap.xml'
-  id: '__root__' | '/' | '/sitemap.xml'
+  to:
+    | '/'
+    | '/daily-operations'
+    | '/kpis'
+    | '/monthly-trends'
+    | '/pending-analysis'
+    | '/sitemap.xml'
+  id:
+    | '__root__'
+    | '/'
+    | '/daily-operations'
+    | '/kpis'
+    | '/monthly-trends'
+    | '/pending-analysis'
+    | '/sitemap.xml'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DailyOperationsRoute: typeof DailyOperationsRoute
+  KpisRoute: typeof KpisRoute
+  MonthlyTrendsRoute: typeof MonthlyTrendsRoute
+  PendingAnalysisRoute: typeof PendingAnalysisRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
 
@@ -56,6 +115,34 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pending-analysis': {
+      id: '/pending-analysis'
+      path: '/pending-analysis'
+      fullPath: '/pending-analysis'
+      preLoaderRoute: typeof PendingAnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monthly-trends': {
+      id: '/monthly-trends'
+      path: '/monthly-trends'
+      fullPath: '/monthly-trends'
+      preLoaderRoute: typeof MonthlyTrendsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kpis': {
+      id: '/kpis'
+      path: '/kpis'
+      fullPath: '/kpis'
+      preLoaderRoute: typeof KpisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daily-operations': {
+      id: '/daily-operations'
+      path: '/daily-operations'
+      fullPath: '/daily-operations'
+      preLoaderRoute: typeof DailyOperationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,6 +157,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DailyOperationsRoute: DailyOperationsRoute,
+  KpisRoute: KpisRoute,
+  MonthlyTrendsRoute: MonthlyTrendsRoute,
+  PendingAnalysisRoute: PendingAnalysisRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
 export const routeTree = rootRouteImport
