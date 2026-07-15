@@ -14,6 +14,7 @@ import { Route as TicketRepairHistoryRouteImport } from './routes/ticket-repair-
 import { Route as SparePartsRouteImport } from './routes/spare-parts'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ShipmentsRouteImport } from './routes/shipments'
+import { Route as RejectedReturnedRouteImport } from './routes/rejected-returned'
 import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
 import { Route as ObmAnalysisRouteImport } from './routes/obm-analysis'
 import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
@@ -58,6 +59,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const ShipmentsRoute = ShipmentsRouteImport.update({
   id: '/shipments',
   path: '/shipments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RejectedReturnedRoute = RejectedReturnedRouteImport.update({
+  id: '/rejected-returned',
+  path: '/rejected-returned',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PendingAnalysisRoute = PendingAnalysisRouteImport.update({
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
+  '/rejected-returned': typeof RejectedReturnedRoute
   '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
@@ -209,6 +216,7 @@ export interface FileRoutesByTo {
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
+  '/rejected-returned': typeof RejectedReturnedRoute
   '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
@@ -237,6 +245,7 @@ export interface FileRoutesById {
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
+  '/rejected-returned': typeof RejectedReturnedRoute
   '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
     | '/monthly-trends'
     | '/obm-analysis'
     | '/pending-analysis'
+    | '/rejected-returned'
     | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
@@ -293,6 +303,7 @@ export interface FileRouteTypes {
     | '/monthly-trends'
     | '/obm-analysis'
     | '/pending-analysis'
+    | '/rejected-returned'
     | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
@@ -320,6 +331,7 @@ export interface FileRouteTypes {
     | '/monthly-trends'
     | '/obm-analysis'
     | '/pending-analysis'
+    | '/rejected-returned'
     | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
@@ -348,6 +360,7 @@ export interface RootRouteChildren {
   MonthlyTrendsRoute: typeof MonthlyTrendsRoute
   ObmAnalysisRoute: typeof ObmAnalysisRoute
   PendingAnalysisRoute: typeof PendingAnalysisRoute
+  RejectedReturnedRoute: typeof RejectedReturnedRoute
   ShipmentsRoute: typeof ShipmentsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SparePartsRoute: typeof SparePartsRoute
@@ -390,6 +403,13 @@ declare module '@tanstack/react-router' {
       path: '/shipments'
       fullPath: '/shipments'
       preLoaderRoute: typeof ShipmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rejected-returned': {
+      id: '/rejected-returned'
+      path: '/rejected-returned'
+      fullPath: '/rejected-returned'
+      preLoaderRoute: typeof RejectedReturnedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pending-analysis': {
@@ -556,6 +576,7 @@ const rootRouteChildren: RootRouteChildren = {
   MonthlyTrendsRoute: MonthlyTrendsRoute,
   ObmAnalysisRoute: ObmAnalysisRoute,
   PendingAnalysisRoute: PendingAnalysisRoute,
+  RejectedReturnedRoute: RejectedReturnedRoute,
   ShipmentsRoute: ShipmentsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SparePartsRoute: SparePartsRoute,
