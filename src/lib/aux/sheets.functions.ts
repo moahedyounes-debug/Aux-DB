@@ -1167,6 +1167,9 @@ export interface AssignmentRow {
   center: string;
   score: number;
   reason: string;
+  branch?: string;
+  status?: string;
+  worker?: string;
 }
 export interface AssignmentAgentRow {
   agent: string;
@@ -1216,17 +1219,25 @@ export const getAssignmentLog = createServerFn({ method: "GET" }).handler(
   async (): Promise<AssignmentSummary> => {
     try {
       const rows = await fetchRange(ASSIGNMENT_RANGE);
+      const idx = await fetchTicketIndex();
       const parsed: AssignmentRow[] = rows
         .filter((r) => r[0] && r[4])
-        .map((r) => ({
-          timestamp: String(r[0] ?? "").trim(),
-          agent: String(r[1] ?? "").trim(),
-          ticket: String(r[2] ?? "").trim(),
-          customer: String(r[3] ?? "").trim(),
-          center: String(r[4] ?? "").trim(),
-          score: Number(String(r[5] ?? "0").replace(/[^0-9.\-]/g, "")) || 0,
-          reason: String(r[7] ?? "").trim(),
-        }));
+        .map((r) => {
+          const ticket = String(r[2] ?? "").trim();
+          const info = idx.get(ticket);
+          return {
+            timestamp: String(r[0] ?? "").trim(),
+            agent: String(r[1] ?? "").trim(),
+            ticket,
+            customer: String(r[3] ?? "").trim(),
+            center: String(r[4] ?? "").trim(),
+            score: Number(String(r[5] ?? "0").replace(/[^0-9.\-]/g, "")) || 0,
+            reason: String(r[7] ?? "").trim(),
+            branch: info?.branch,
+            status: info?.status,
+            worker: info?.worker,
+          };
+        });
 
       const byAgentMap = new Map<string, { count: number; scoreSum: number; centers: Set<string> }>();
       const byCenterMap = new Map<string, { count: number; scoreSum: number }>();
