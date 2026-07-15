@@ -696,6 +696,7 @@ export const getSheetsKpi = createServerFn({ method: "GET" }).handler(async (): 
         branchAlerts: [],
       },
       callCenter: { total: 0, pending: 0, completed: 0, byType: [], byBranch: [], tickets: [] },
+      cities: [],
       error: msg,
     };
   }
