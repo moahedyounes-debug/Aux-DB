@@ -17,8 +17,7 @@ import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
 import {
-  WARRANTY_RATES,
-  WARRANTY_DEFAULT_RATE,
+  WARRANTY_TIERS,
   WARRANTY_SLA_DEDUCTION_PCT,
 } from "@/lib/aux/sheets.functions";
 import { cn } from "@/lib/utils";
@@ -133,18 +132,24 @@ function WarrantyPaymentsPage() {
         </ChartCard>
 
         <ChartCard
-          title="Payout by Product Line"
-          subtitle="Net claim value per product"
-          exportRows={w.byProduct.map((p) => ({
-            Product: p.product,
-            Rate: p.rate,
-            Claims: p.claims,
-            Net: p.net,
+          title="Payout by Job Tier"
+          subtitle="Net claim value per warranty tariff tier"
+          exportRows={w.byTier.map((t) => ({
+            Tier: t.tier,
+            Label: t.label,
+            Rate: t.rate,
+            Claims: t.claims,
+            Paid: t.paid,
+            Approved: t.approved,
+            Submitted: t.submitted,
+            Gross: t.gross,
+            Deduction: t.deduction,
+            Net: t.net,
           }))}
         >
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
-              data={w.byProduct.slice(0, 10)}
+              data={w.byTier}
               layout="vertical"
               margin={{ top: 10, right: 24, bottom: 0, left: 24 }}
             >
@@ -157,10 +162,10 @@ function WarrantyPaymentsPage() {
               />
               <YAxis
                 type="category"
-                dataKey="product"
+                dataKey="label"
                 stroke="var(--color-muted-foreground)"
                 fontSize={11}
-                width={150}
+                width={170}
               />
               <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => sar.format(v)} />
               <Bar dataKey="net" fill="var(--color-primary)" radius={[0, 6, 6, 0]} />
@@ -229,31 +234,42 @@ function WarrantyPaymentsPage() {
 
       <div className="mt-6 grid gap-5 grid-cols-1 xl:grid-cols-3">
         <ChartCard
-          title="Rate Card"
-          subtitle={`Editable in code · default ${sar.format(WARRANTY_DEFAULT_RATE)}`}
+          title="Warranty Rate Card"
+          subtitle="Official tariff per repair job tier"
           className="xl:col-span-1"
         >
           <ul className="space-y-2">
-            {WARRANTY_RATES.map((r) => (
-              <li
-                key={r.match}
-                className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm"
-              >
-                <span className="font-medium capitalize">{r.match}</span>
-                <span className="tabular-nums text-primary">{sar.format(r.rate)}</span>
-              </li>
-            ))}
-            <li className="flex items-center justify-between rounded-lg border border-dashed border-border/60 px-3 py-2 text-sm">
-              <span className="font-medium text-muted-foreground">Default (no match)</span>
-              <span className="tabular-nums text-muted-foreground">
-                {sar.format(WARRANTY_DEFAULT_RATE)}
-              </span>
-            </li>
+            {WARRANTY_TIERS.map((t) => {
+              const row = w.byTier.find((x) => x.tier === t.tier);
+              return (
+                <li
+                  key={t.tier}
+                  className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-semibold">{t.label}</span>
+                    <span className="tabular-nums text-primary font-semibold">
+                      {sar.format(t.rate)}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground leading-snug" dir="rtl">
+                    {t.description}
+                  </p>
+                  {row && (
+                    <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>{num.format(row.claims)} claims</span>
+                      <span className="tabular-nums">Net {sar.format(row.net)}</span>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
           <p className="mt-3 text-xs text-muted-foreground">
-            Rate matches the first keyword found in the ticket's Product Line, case-insensitive.
-            Update <code className="rounded bg-muted px-1">WARRANTY_RATES</code> in{" "}
-            <code className="rounded bg-muted px-1">sheets.functions.ts</code> to change tariffs.
+            Tier is auto-detected from <em>Maintenance Instructions</em>, <em>Reasons Supplemented</em>,{" "}
+            and <em>Completion Result</em> using Arabic + English keywords. Tickets with no match fall
+            back to the base 220 SAR service tier. A {WARRANTY_SLA_DEDUCTION_PCT}% deduction applies
+            when completion exceeds 72h.
           </p>
         </ChartCard>
 
@@ -266,6 +282,7 @@ function WarrantyPaymentsPage() {
             Branch: c.branch,
             City: c.city,
             Product: c.productLine,
+            Tier: c.tierLabel,
             Status: c.status,
             Created: c.createdAt,
             Completed: c.completedAt,
@@ -286,7 +303,7 @@ function WarrantyPaymentsPage() {
                   <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
                     <th className="py-2 pr-4 text-start">Ticket</th>
                     <th className="py-2 pr-4 text-start">Branch</th>
-                    <th className="py-2 pr-4 text-start">Product</th>
+                    <th className="py-2 pr-4 text-start">Tier</th>
                     <th className="py-2 pr-4 text-center">Status</th>
                     <th className="py-2 pr-4 text-end">Net</th>
                   </tr>
@@ -298,7 +315,7 @@ function WarrantyPaymentsPage() {
                         {c.ticket}
                       </td>
                       <td className="py-2 pr-4 text-xs">{c.branch}</td>
-                      <td className="py-2 pr-4 text-xs text-muted-foreground">{c.productLine}</td>
+                      <td className="py-2 pr-4 text-xs text-muted-foreground">{c.tierLabel}</td>
                       <td className="py-2 pr-4 text-center">
                         <span
                           className={cn(
