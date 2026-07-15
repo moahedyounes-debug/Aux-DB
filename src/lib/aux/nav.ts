@@ -46,7 +46,7 @@ export const NAV_PAGES: NavPage[] = [
   { path: "/deep-insights", label: "Deep Insights", icon: Microscope },
   { path: "/obm-analysis", label: "OBM Analysis", icon: Boxes },
   { path: "/spare-parts", label: "Spare Parts", icon: Package },
-  { path: "/call-center", label: "Call Center", icon: Headphones },
+  { path: "/call-center", label: "Call Center", icon: Headphones, active: true },
   { path: "/call-center-assignment", label: "Call Assignment", icon: PhoneForwarded },
   { path: "/call-events", label: "Call Events", icon: PhoneCall },
   { path: "/ticket-repair-history", label: "Repair History", icon: Wrench },
