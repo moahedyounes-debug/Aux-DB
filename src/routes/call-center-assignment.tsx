@@ -110,6 +110,7 @@ function AssignmentPage() {
           exportRows={data.recent.map((r) => ({
             Timestamp: r.timestamp, Agent: r.agent, Ticket: r.ticket,
             Customer: r.customer, Center: r.center, Score: r.score, Reason: r.reason,
+            Branch: r.branch ?? "", Status: r.status ?? "", Worker: r.worker ?? "",
           }))}
         >
           <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
@@ -121,6 +122,8 @@ function AssignmentPage() {
                   <th className="py-2 pr-4 text-start">Ticket</th>
                   <th className="py-2 pr-4 text-start">Customer</th>
                   <th className="py-2 pr-4 text-start">Center</th>
+                  <th className="py-2 pr-4 text-start">Status</th>
+                  <th className="py-2 pr-4 text-start">Worker</th>
                   <th className="py-2 pr-4 text-end">Score</th>
                 </tr>
               </thead>
@@ -132,6 +135,8 @@ function AssignmentPage() {
                     <td className="py-2 pr-4 font-mono text-xs">{r.ticket}</td>
                     <td className="py-2 pr-4">{r.customer}</td>
                     <td className="py-2 pr-4 font-medium">{r.center}</td>
+                    <td className="py-2 pr-4 text-xs">{r.status || "—"}</td>
+                    <td className="py-2 pr-4 text-xs">{r.worker || "—"}</td>
                     <td className="py-2 pr-4 text-end tabular-nums">{r.score.toFixed(1)}</td>
                   </tr>
                 ))}
