@@ -15,6 +15,7 @@ import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
 import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
 import { Route as CallCenterRouteImport } from './routes/call-center'
+import { Route as AscPerformanceRouteImport } from './routes/asc-performance'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -47,6 +48,11 @@ const CallCenterRoute = CallCenterRouteImport.update({
   path: '/call-center',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AscPerformanceRoute = AscPerformanceRouteImport.update({
+  id: '/asc-performance',
+  path: '/asc-performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,6 +61,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/kpis': typeof KpisRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/kpis': typeof KpisRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/kpis': typeof KpisRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/asc-performance'
     | '/call-center'
     | '/daily-operations'
     | '/kpis'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/asc-performance'
     | '/call-center'
     | '/daily-operations'
     | '/kpis'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/asc-performance'
     | '/call-center'
     | '/daily-operations'
     | '/kpis'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AscPerformanceRoute: typeof AscPerformanceRoute
   CallCenterRoute: typeof CallCenterRoute
   DailyOperationsRoute: typeof DailyOperationsRoute
   KpisRoute: typeof KpisRoute
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CallCenterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/asc-performance': {
+      id: '/asc-performance'
+      path: '/asc-performance'
+      fullPath: '/asc-performance'
+      preLoaderRoute: typeof AscPerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -177,6 +197,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AscPerformanceRoute: AscPerformanceRoute,
   CallCenterRoute: CallCenterRoute,
   DailyOperationsRoute: DailyOperationsRoute,
   KpisRoute: KpisRoute,

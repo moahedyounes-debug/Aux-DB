@@ -51,7 +51,7 @@ export const NAV_PAGES: NavPage[] = [
   { path: "/call-events", label: "Call Events", icon: PhoneCall },
   { path: "/ticket-repair-history", label: "Repair History", icon: Wrench },
   { path: "/installation-analysis", label: "Installation Analysis", icon: Hammer },
-  { path: "/asc-performance", label: "ASC Performance", icon: Building2 },
+  { path: "/asc-performance", label: "ASC Performance", icon: Building2, active: true },
   { path: "/rejected-returned", label: "Rejected / Returned", icon: Undo2 },
   { path: "/city", label: "City Breakdown", icon: MapPin },
   { path: "/districts-map", label: "Districts Map", icon: MapPin },
