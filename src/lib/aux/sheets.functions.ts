@@ -1317,6 +1317,9 @@ export interface SurveyRow {
   language: string;
   agent: string;
   savedAt: string;
+  branch?: string;
+  status?: string;
+  worker?: string;
 }
 export interface SurveyAgentRow {
   agent: string;
@@ -1357,6 +1360,7 @@ export const getSatisfactionSurveys = createServerFn({ method: "GET" }).handler(
   async (): Promise<SatisfactionSummary> => {
     try {
       const rows = await fetchRange(SATISFACTION_RANGE);
+      const idx = await fetchTicketIndex();
       const parsed: SurveyRow[] = rows
         .filter((r) => r[0])
         .map((r) => {
@@ -1367,8 +1371,10 @@ export const getSatisfactionSurveys = createServerFn({ method: "GET" }).handler(
           const q5 = Number(r[7]) || 0;
           const scores = [q1, q2, q3, q4, q5].filter((v) => v > 0);
           const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+          const ticket = String(r[0] ?? "").trim();
+          const info = idx.get(ticket);
           return {
-            ticket: String(r[0] ?? "").trim(),
+            ticket,
             customer: String(r[1] ?? "").trim(),
             phone: String(r[2] ?? "").trim(),
             q1, q2, q3, q4, q5,
@@ -1377,6 +1383,9 @@ export const getSatisfactionSurveys = createServerFn({ method: "GET" }).handler(
             language: String(r[9] ?? "").trim(),
             agent: String(r[10] ?? "").trim(),
             savedAt: String(r[11] ?? "").trim(),
+            branch: info?.branch,
+            status: info?.status,
+            worker: info?.worker,
           };
         });
 
