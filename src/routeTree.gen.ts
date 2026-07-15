@@ -19,6 +19,7 @@ import { Route as InstallationAnalysisRouteImport } from './routes/installation-
 import { Route as DeepInsightsRouteImport } from './routes/deep-insights'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
 import { Route as CityRouteImport } from './routes/city'
+import { Route as CallCenterAssignmentRouteImport } from './routes/call-center-assignment'
 import { Route as CallCenterRouteImport } from './routes/call-center'
 import { Route as AscPerformanceRouteImport } from './routes/asc-performance'
 import { Route as IndexRouteImport } from './routes/index'
@@ -73,6 +74,11 @@ const CityRoute = CityRouteImport.update({
   path: '/city',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CallCenterAssignmentRoute = CallCenterAssignmentRouteImport.update({
+  id: '/call-center-assignment',
+  path: '/call-center-assignment',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CallCenterRoute = CallCenterRouteImport.update({
   id: '/call-center',
   path: '/call-center',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
+  '/call-center-assignment': typeof CallCenterAssignmentRoute
   '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
+  '/call-center-assignment': typeof CallCenterAssignmentRoute
   '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
+  '/call-center-assignment': typeof CallCenterAssignmentRoute
   '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/'
     | '/asc-performance'
     | '/call-center'
+    | '/call-center-assignment'
     | '/city'
     | '/daily-operations'
     | '/deep-insights'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/'
     | '/asc-performance'
     | '/call-center'
+    | '/call-center-assignment'
     | '/city'
     | '/daily-operations'
     | '/deep-insights'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/'
     | '/asc-performance'
     | '/call-center'
+    | '/call-center-assignment'
     | '/city'
     | '/daily-operations'
     | '/deep-insights'
@@ -187,6 +199,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AscPerformanceRoute: typeof AscPerformanceRoute
   CallCenterRoute: typeof CallCenterRoute
+  CallCenterAssignmentRoute: typeof CallCenterAssignmentRoute
   CityRoute: typeof CityRoute
   DailyOperationsRoute: typeof DailyOperationsRoute
   DeepInsightsRoute: typeof DeepInsightsRoute
@@ -271,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/call-center-assignment': {
+      id: '/call-center-assignment'
+      path: '/call-center-assignment'
+      fullPath: '/call-center-assignment'
+      preLoaderRoute: typeof CallCenterAssignmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/call-center': {
       id: '/call-center'
       path: '/call-center'
@@ -299,6 +319,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AscPerformanceRoute: AscPerformanceRoute,
   CallCenterRoute: CallCenterRoute,
+  CallCenterAssignmentRoute: CallCenterAssignmentRoute,
   CityRoute: CityRoute,
   DailyOperationsRoute: DailyOperationsRoute,
   DeepInsightsRoute: DeepInsightsRoute,
