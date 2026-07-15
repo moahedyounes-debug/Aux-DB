@@ -1146,6 +1146,7 @@ export const getSheetsKpi = createServerFn({ method: "GET" }).handler(async (): 
         byBranch: [],
         byMonth: [],
         byProduct: [],
+        byTier: [],
         recentClaims: [],
       },
       error: msg,
