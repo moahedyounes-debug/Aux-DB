@@ -15,7 +15,9 @@ const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
 // AB Reasons Supplemented · AC Maintenance Instructions · AD Mileage · AE Consultation Type
 const COL = {
   ticket: 0,
+  productLine: 1,
   serviceProvider: 2,
+  location: 5,
   workerName: 7,
   serviceType: 8,
   ticketStatus: 12,
