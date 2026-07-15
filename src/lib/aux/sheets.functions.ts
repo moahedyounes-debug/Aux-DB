@@ -806,6 +806,17 @@ export const getSheetsKpi = createServerFn({ method: "GET" }).handler(async (): 
       },
       callCenter: { total: 0, pending: 0, completed: 0, byType: [], byBranch: [], tickets: [] },
       cities: [],
+      installation: {
+        total: 0,
+        pending: 0,
+        completed: 0,
+        scheduledToday: 0,
+        avgLeadDays: 0,
+        byProduct: [],
+        byCity: [],
+        byBranch: [],
+        tickets: [],
+      },
       error: msg,
     };
   }
