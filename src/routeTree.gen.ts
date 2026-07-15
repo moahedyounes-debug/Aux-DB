@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
 import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
 import { Route as KpisRouteImport } from './routes/kpis'
+import { Route as InstallationAnalysisRouteImport } from './routes/installation-analysis'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
 import { Route as CityRouteImport } from './routes/city'
 import { Route as CallCenterRouteImport } from './routes/call-center'
@@ -37,6 +38,11 @@ const MonthlyTrendsRoute = MonthlyTrendsRouteImport.update({
 const KpisRoute = KpisRouteImport.update({
   id: '/kpis',
   path: '/kpis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstallationAnalysisRoute = InstallationAnalysisRouteImport.update({
+  id: '/installation-analysis',
+  path: '/installation-analysis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DailyOperationsRoute = DailyOperationsRouteImport.update({
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/call-center': typeof CallCenterRoute
   '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
+  '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/pending-analysis': typeof PendingAnalysisRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/call-center': typeof CallCenterRoute
   '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
+  '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/pending-analysis': typeof PendingAnalysisRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/call-center': typeof CallCenterRoute
   '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
+  '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/pending-analysis': typeof PendingAnalysisRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/call-center'
     | '/city'
     | '/daily-operations'
+    | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
     | '/pending-analysis'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/call-center'
     | '/city'
     | '/daily-operations'
+    | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
     | '/pending-analysis'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/call-center'
     | '/city'
     | '/daily-operations'
+    | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
     | '/pending-analysis'
@@ -141,6 +153,7 @@ export interface RootRouteChildren {
   CallCenterRoute: typeof CallCenterRoute
   CityRoute: typeof CityRoute
   DailyOperationsRoute: typeof DailyOperationsRoute
+  InstallationAnalysisRoute: typeof InstallationAnalysisRoute
   KpisRoute: typeof KpisRoute
   MonthlyTrendsRoute: typeof MonthlyTrendsRoute
   PendingAnalysisRoute: typeof PendingAnalysisRoute
@@ -175,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/kpis'
       fullPath: '/kpis'
       preLoaderRoute: typeof KpisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/installation-analysis': {
+      id: '/installation-analysis'
+      path: '/installation-analysis'
+      fullPath: '/installation-analysis'
+      preLoaderRoute: typeof InstallationAnalysisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/daily-operations': {
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   CallCenterRoute: CallCenterRoute,
   CityRoute: CityRoute,
   DailyOperationsRoute: DailyOperationsRoute,
+  InstallationAnalysisRoute: InstallationAnalysisRoute,
   KpisRoute: KpisRoute,
   MonthlyTrendsRoute: MonthlyTrendsRoute,
   PendingAnalysisRoute: PendingAnalysisRoute,
