@@ -139,6 +139,30 @@ export interface CityKpi {
   rate72h: number;
   topProduct: string;
 }
+export interface InstallationTicket {
+  ticket: string;
+  branch: string;
+  city: string;
+  productLine: string;
+  productType: string;
+  status: string;
+  worker: string;
+  createdAt: string;
+  installationDate: string;
+  completed: boolean;
+  ageDays: number;
+}
+export interface InstallationSummary {
+  total: number;
+  pending: number;
+  completed: number;
+  scheduledToday: number;
+  avgLeadDays: number;
+  byProduct: { product: string; count: number }[];
+  byCity: { city: string; count: number; pending: number }[];
+  byBranch: { branch: string; count: number; pending: number }[];
+  tickets: InstallationTicket[];
+}
 export interface Snapshot {
   total: number;
   pending: number;
@@ -162,6 +186,7 @@ export interface KpiData {
   pending: PendingSummary;
   callCenter: CallCenterSummary;
   cities: CityKpi[];
+  installation: InstallationSummary;
   error?: string;
 }
 
