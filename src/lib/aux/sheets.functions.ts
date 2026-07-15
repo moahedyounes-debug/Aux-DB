@@ -1155,3 +1155,294 @@ export const getSheetsKpi = createServerFn({ method: "GET" }).handler(async (): 
     };
   }
 });
+// ============================================================
+// Assignment Log (tab "Assignment Log") — auto-assignment / "send worker"
+// ============================================================
+export interface AssignmentRow {
+  timestamp: string;
+  agent: string;
+  ticket: string;
+  customer: string;
+  center: string;
+  score: number;
+  reason: string;
+}
+export interface AssignmentAgentRow {
+  agent: string;
+  assignments: number;
+  avgScore: number;
+  centers: number;
+}
+export interface AssignmentCenterRow {
+  center: string;
+  assignments: number;
+  avgScore: number;
+}
+export interface AssignmentDayRow {
+  date: string;
+  assignments: number;
+}
+export interface AssignmentSummary {
+  fetchedAt: string;
+  totalAssignments: number;
+  activeAgents: number;
+  activeCenters: number;
+  avgScore: number;
+  byAgent: AssignmentAgentRow[];
+  byCenter: AssignmentCenterRow[];
+  byDay: AssignmentDayRow[];
+  recent: AssignmentRow[];
+  error?: string;
+}
+
+async function fetchRange(range: string): Promise<string[][]> {
+  const key = process.env.GOOGLE_SHEETS_API_KEY;
+  const lov = process.env.LOVABLE_API_KEY;
+  if (!key || !lov) throw new Error("Google Sheets connector not configured");
+  const url = `${GATEWAY}/spreadsheets/${SHEET_ID}/values/${range}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${lov}`, "X-Connection-Api-Key": key },
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Sheets fetch failed [${res.status}]: ${body.slice(0, 200)}`);
+  }
+  const json = (await res.json()) as { values?: string[][] };
+  return json.values ?? [];
+}
+
+export const getAssignmentLog = createServerFn({ method: "GET" }).handler(
+  async (): Promise<AssignmentSummary> => {
+    try {
+      const rows = await fetchRange(ASSIGNMENT_RANGE);
+      const parsed: AssignmentRow[] = rows
+        .filter((r) => r[0] && r[4])
+        .map((r) => ({
+          timestamp: String(r[0] ?? "").trim(),
+          agent: String(r[1] ?? "").trim(),
+          ticket: String(r[2] ?? "").trim(),
+          customer: String(r[3] ?? "").trim(),
+          center: String(r[4] ?? "").trim(),
+          score: Number(String(r[5] ?? "0").replace(/[^0-9.\-]/g, "")) || 0,
+          reason: String(r[7] ?? "").trim(),
+        }));
+
+      const byAgentMap = new Map<string, { count: number; scoreSum: number; centers: Set<string> }>();
+      const byCenterMap = new Map<string, { count: number; scoreSum: number }>();
+      const byDayMap = new Map<string, number>();
+      let scoreSum = 0;
+      let scoreCount = 0;
+
+      for (const r of parsed) {
+        const a = byAgentMap.get(r.agent) ?? { count: 0, scoreSum: 0, centers: new Set<string>() };
+        a.count++; a.scoreSum += r.score; a.centers.add(r.center);
+        byAgentMap.set(r.agent, a);
+
+        const c = byCenterMap.get(r.center) ?? { count: 0, scoreSum: 0 };
+        c.count++; c.scoreSum += r.score;
+        byCenterMap.set(r.center, c);
+
+        const d = r.timestamp.slice(0, 10);
+        if (d) byDayMap.set(d, (byDayMap.get(d) ?? 0) + 1);
+
+        if (r.score > 0) { scoreSum += r.score; scoreCount++; }
+      }
+
+      const byAgent: AssignmentAgentRow[] = Array.from(byAgentMap.entries())
+        .map(([agent, v]) => ({
+          agent,
+          assignments: v.count,
+          avgScore: v.count ? Math.round((v.scoreSum / v.count) * 10) / 10 : 0,
+          centers: v.centers.size,
+        }))
+        .sort((a, b) => b.assignments - a.assignments);
+
+      const byCenter: AssignmentCenterRow[] = Array.from(byCenterMap.entries())
+        .map(([center, v]) => ({
+          center,
+          assignments: v.count,
+          avgScore: v.count ? Math.round((v.scoreSum / v.count) * 10) / 10 : 0,
+        }))
+        .sort((a, b) => b.assignments - a.assignments);
+
+      const byDay: AssignmentDayRow[] = Array.from(byDayMap.entries())
+        .map(([date, assignments]) => ({ date, assignments }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      const recent = [...parsed]
+        .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+        .slice(0, 100);
+
+      return {
+        fetchedAt: new Date().toISOString(),
+        totalAssignments: parsed.length,
+        activeAgents: byAgent.length,
+        activeCenters: byCenter.length,
+        avgScore: scoreCount ? Math.round((scoreSum / scoreCount) * 10) / 10 : 0,
+        byAgent, byCenter, byDay, recent,
+      };
+    } catch (e) {
+      return {
+        fetchedAt: new Date().toISOString(),
+        totalAssignments: 0, activeAgents: 0, activeCenters: 0, avgScore: 0,
+        byAgent: [], byCenter: [], byDay: [], recent: [],
+        error: e instanceof Error ? e.message : String(e),
+      };
+    }
+  },
+);
+
+// ============================================================
+// Satisfaction Surveys (tab "Satisfaction Surveys")
+// ============================================================
+export interface SurveyRow {
+  ticket: string;
+  customer: string;
+  phone: string;
+  q1: number; q2: number; q3: number; q4: number; q5: number;
+  avg: number;
+  comment: string;
+  language: string;
+  agent: string;
+  savedAt: string;
+}
+export interface SurveyAgentRow {
+  agent: string;
+  surveys: number;
+  avgScore: number;
+  promoters: number; // avg >= 9
+  detractors: number; // avg <= 6
+}
+export interface SurveyMonthRow {
+  month: string;
+  surveys: number;
+  avgScore: number;
+}
+export interface SatisfactionSummary {
+  fetchedAt: string;
+  totalSurveys: number;
+  avgScore: number;
+  promoters: number;
+  passives: number;
+  detractors: number;
+  nps: number;
+  perQuestion: { key: string; label: string; avg: number }[];
+  byAgent: SurveyAgentRow[];
+  byMonth: SurveyMonthRow[];
+  recent: SurveyRow[];
+  error?: string;
+}
+
+const Q_LABELS: [string, string][] = [
+  ["q1", "Response Time"],
+  ["q2", "Repair Time"],
+  ["q3", "Overall Quality"],
+  ["q4", "Technicians"],
+  ["q5", "Recommend"],
+];
+
+export const getSatisfactionSurveys = createServerFn({ method: "GET" }).handler(
+  async (): Promise<SatisfactionSummary> => {
+    try {
+      const rows = await fetchRange(SATISFACTION_RANGE);
+      const parsed: SurveyRow[] = rows
+        .filter((r) => r[0])
+        .map((r) => {
+          const q1 = Number(r[3]) || 0;
+          const q2 = Number(r[4]) || 0;
+          const q3 = Number(r[5]) || 0;
+          const q4 = Number(r[6]) || 0;
+          const q5 = Number(r[7]) || 0;
+          const scores = [q1, q2, q3, q4, q5].filter((v) => v > 0);
+          const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+          return {
+            ticket: String(r[0] ?? "").trim(),
+            customer: String(r[1] ?? "").trim(),
+            phone: String(r[2] ?? "").trim(),
+            q1, q2, q3, q4, q5,
+            avg: Math.round(avg * 10) / 10,
+            comment: String(r[8] ?? "").trim(),
+            language: String(r[9] ?? "").trim(),
+            agent: String(r[10] ?? "").trim(),
+            savedAt: String(r[11] ?? "").trim(),
+          };
+        });
+
+      // Overall
+      let sum = 0, count = 0, promoters = 0, passives = 0, detractors = 0;
+      const perQAcc = { q1: [0, 0], q2: [0, 0], q3: [0, 0], q4: [0, 0], q5: [0, 0] } as Record<string, [number, number]>;
+      const byAgentMap = new Map<string, { count: number; sum: number; p: number; d: number }>();
+      const byMonthMap = new Map<string, { count: number; sum: number }>();
+
+      for (const r of parsed) {
+        if (r.avg > 0) { sum += r.avg; count++; }
+        if (r.avg >= 9) promoters++;
+        else if (r.avg >= 7) passives++;
+        else if (r.avg > 0) detractors++;
+
+        for (const [k] of Q_LABELS) {
+          const v = r[k as "q1"];
+          if (v > 0) { perQAcc[k][0] += v; perQAcc[k][1] += 1; }
+        }
+
+        const a = byAgentMap.get(r.agent) ?? { count: 0, sum: 0, p: 0, d: 0 };
+        a.count++; a.sum += r.avg;
+        if (r.avg >= 9) a.p++; else if (r.avg > 0 && r.avg <= 6) a.d++;
+        byAgentMap.set(r.agent, a);
+
+        // parse savedAt like "6/30/2026"
+        const m = r.savedAt.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+        if (m) {
+          const key = `${m[3]}-${m[1].padStart(2, "0")}`;
+          const mm = byMonthMap.get(key) ?? { count: 0, sum: 0 };
+          mm.count++; mm.sum += r.avg;
+          byMonthMap.set(key, mm);
+        }
+      }
+
+      const avgScore = count ? Math.round((sum / count) * 10) / 10 : 0;
+      const totalRated = promoters + passives + detractors;
+      const nps = totalRated
+        ? Math.round(((promoters - detractors) / totalRated) * 100)
+        : 0;
+
+      const perQuestion = Q_LABELS.map(([key, label]) => ({
+        key, label,
+        avg: perQAcc[key][1] ? Math.round((perQAcc[key][0] / perQAcc[key][1]) * 10) / 10 : 0,
+      }));
+
+      const byAgent: SurveyAgentRow[] = Array.from(byAgentMap.entries())
+        .map(([agent, v]) => ({
+          agent: agent || "—",
+          surveys: v.count,
+          avgScore: v.count ? Math.round((v.sum / v.count) * 10) / 10 : 0,
+          promoters: v.p,
+          detractors: v.d,
+        }))
+        .sort((a, b) => b.surveys - a.surveys);
+
+      const byMonth: SurveyMonthRow[] = Array.from(byMonthMap.entries())
+        .map(([month, v]) => ({
+          month, surveys: v.count,
+          avgScore: v.count ? Math.round((v.sum / v.count) * 10) / 10 : 0,
+        }))
+        .sort((a, b) => a.month.localeCompare(b.month));
+
+      const recent = [...parsed].reverse().slice(0, 100);
+
+      return {
+        fetchedAt: new Date().toISOString(),
+        totalSurveys: parsed.length,
+        avgScore, promoters, passives, detractors, nps,
+        perQuestion, byAgent, byMonth, recent,
+      };
+    } catch (e) {
+      return {
+        fetchedAt: new Date().toISOString(),
+        totalSurveys: 0, avgScore: 0, promoters: 0, passives: 0, detractors: 0, nps: 0,
+        perQuestion: [], byAgent: [], byMonth: [], recent: [],
+        error: e instanceof Error ? e.message : String(e),
+      };
+    }
+  },
+);
