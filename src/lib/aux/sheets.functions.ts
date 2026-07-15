@@ -19,6 +19,8 @@ const COL = {
   appointedDate: 24,
   rescheduling: 25,
   rescheduleReason: 26,
+  remark: 27,
+  parts: 28,
 } as const;
 
 export interface MonthKpi {
@@ -54,6 +56,49 @@ export interface BranchKpi {
   rate72h: number;
   csat: number;
 }
+export interface PendingTicket {
+  ticket: string;
+  branch: string;
+  worker: string;
+  status: string;
+  ageBucket: string;
+  ageHours: number;
+  reason: string;
+  appointedDate: string;
+  remark: string;
+  parts: string;
+  rescheduled: boolean;
+  dispatched: boolean;
+  unassigned: boolean;
+}
+export interface PendingBranchPivot {
+  branch: string;
+  b12: number;
+  b24: number;
+  b48: number;
+  b72: number;
+  over72: number;
+  total: number;
+}
+export interface BranchAlert {
+  branch: string;
+  pending: number;
+  noReason: number;
+  visitToday: boolean;
+}
+export interface PendingSummary {
+  todayVisits: number;
+  totalPending: number;
+  activeWorkers: number;
+  dispatched: number;
+  unassigned: number;
+  aging: { bucket: string; count: number }[];
+  reasons: { reason: string; count: number }[];
+  tickets: PendingTicket[];
+  todayTickets: PendingTicket[];
+  branchPivot: PendingBranchPivot[];
+  branchAlerts: BranchAlert[];
+}
 export interface Snapshot {
   total: number;
   pending: number;
@@ -74,6 +119,7 @@ export interface KpiData {
   pendingByBranch: { branch: string; count: number }[];
   pendingAging: { bucket: string; count: number }[];
   branches: BranchKpi[];
+  pending: PendingSummary;
   error?: string;
 }
 
@@ -85,6 +131,13 @@ function parseDate(v: string | undefined): Date | null {
   const s = String(v).trim().replace(" ", "T");
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
+}
+
+function localISODate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function normalizeBranch(raw: string): string {
@@ -132,6 +185,7 @@ async function fetchSheetRows(): Promise<string[][]> {
 
 function aggregate(rows: string[][]): KpiData {
   const now = new Date();
+  const todayISO = localISODate(now);
   const monthMap = new Map<string, MonthKpi>();
   const dayMap = new Map<string, DailyRow>();
   const reasonMap = new Map<string, number>();
@@ -141,6 +195,16 @@ function aggregate(rows: string[][]): KpiData {
     { total: number; completed: number; pending: number; c48: number; c72: number }
   >();
   const aging = { "0–24h": 0, "24–48h": 0, "48–72h": 0, "3–7d": 0, "7–14d": 0, "14d+": 0 };
+
+  // Pending-focused accumulators
+  const pendingAging5 = { "≤ 12 Hours": 0, "≤ 24 Hours": 0, "≤ 48 Hours": 0, "≤ 72 Hours": 0, "> 72 Hours": 0 };
+  const pendingReasonMap = new Map<string, number>();
+  const pendingTickets: PendingTicket[] = [];
+  const branchPivotMap = new Map<string, PendingBranchPivot>();
+  const branchAlertMap = new Map<string, BranchAlert>();
+  const activeWorkerSet = new Set<string>();
+  let dispatchedCount = 0;
+  let todayVisitsCount = 0;
 
   let total = 0;
   let pending = 0;
@@ -196,14 +260,18 @@ function aggregate(rows: string[][]): KpiData {
     if (done) completed++;
     else {
       pending++;
-      if (status.toLowerCase().includes("not assigned")) unassigned++;
+      const statusLower = status.toLowerCase();
+      const isUnassigned = statusLower.includes("not assigned");
+      const isDispatched = statusLower.includes("dispatch");
+      if (isUnassigned) unassigned++;
+      if (isDispatched) dispatchedCount++;
       const reason = String(row[COL.rescheduleReason] ?? "").trim();
       if (!reason) pendingNoReason++;
       else reasonMap.set(reason, (reasonMap.get(reason) ?? 0) + 1);
       branchPending.set(branch, (branchPending.get(branch) ?? 0) + 1);
 
+      const ageH = created ? (now.getTime() - created.getTime()) / 36e5 : 0;
       if (created) {
-        const ageH = (now.getTime() - created.getTime()) / 36e5;
         if (ageH < 24) aging["0–24h"]++;
         else if (ageH < 48) aging["24–48h"]++;
         else if (ageH < 72) aging["48–72h"]++;
@@ -211,6 +279,74 @@ function aggregate(rows: string[][]): KpiData {
         else if (ageH < 24 * 14) aging["7–14d"]++;
         else aging["14d+"]++;
       }
+
+      // 5-bucket pending aging
+      let bucket5: keyof typeof pendingAging5;
+      if (ageH <= 12) bucket5 = "≤ 12 Hours";
+      else if (ageH <= 24) bucket5 = "≤ 24 Hours";
+      else if (ageH <= 48) bucket5 = "≤ 48 Hours";
+      else if (ageH <= 72) bucket5 = "≤ 72 Hours";
+      else bucket5 = "> 72 Hours";
+      pendingAging5[bucket5]++;
+
+      const reasonLabel = reason || "(No reason)";
+      pendingReasonMap.set(reasonLabel, (pendingReasonMap.get(reasonLabel) ?? 0) + 1);
+
+      const worker = String(row[COL.builder] ?? "").trim() || "";
+      const appointed = String(row[COL.appointedDate] ?? "").trim();
+      // extract yyyy-mm-dd (or dd/mm/yyyy) prefix
+      let appointedISO = "";
+      const isoMatch = appointed.match(/(\d{4})-(\d{2})-(\d{2})/);
+      if (isoMatch) appointedISO = `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+      else {
+        const d2 = parseDate(appointed);
+        if (d2) appointedISO = localISODate(d2);
+      }
+      const isToday = appointedISO === todayISO;
+      if (isToday) {
+        todayVisitsCount++;
+        if (worker && !isUnassigned) activeWorkerSet.add(`${branch}::${worker}`);
+      }
+
+      const ticket: PendingTicket = {
+        ticket: String(row[COL.ticket] ?? "").trim(),
+        branch,
+        worker: isUnassigned ? "Not Assigned" : worker || "—",
+        status: status || "Not assigned",
+        ageBucket: bucket5,
+        ageHours: Math.max(0, Math.round(ageH * 10) / 10),
+        reason: reason || "—",
+        appointedDate: appointedISO || appointed || "—",
+        remark: String(row[COL.remark] ?? "").trim() || "—",
+        parts: String(row[COL.parts] ?? "").trim() || "—",
+        rescheduled: resched,
+        dispatched: isDispatched,
+        unassigned: isUnassigned,
+      };
+      pendingTickets.push(ticket);
+
+      // pivot
+      let piv = branchPivotMap.get(branch);
+      if (!piv) {
+        piv = { branch, b12: 0, b24: 0, b48: 0, b72: 0, over72: 0, total: 0 };
+        branchPivotMap.set(branch, piv);
+      }
+      if (bucket5 === "≤ 12 Hours") piv.b12++;
+      else if (bucket5 === "≤ 24 Hours") piv.b24++;
+      else if (bucket5 === "≤ 48 Hours") piv.b48++;
+      else if (bucket5 === "≤ 72 Hours") piv.b72++;
+      else piv.over72++;
+      piv.total++;
+
+      // alerts
+      let al = branchAlertMap.get(branch);
+      if (!al) {
+        al = { branch, pending: 0, noReason: 0, visitToday: false };
+        branchAlertMap.set(branch, al);
+      }
+      al.pending++;
+      if (!reason) al.noReason++;
+      if (isToday) al.visitToday = true;
     }
 
     // Monthly
@@ -295,6 +431,36 @@ function aggregate(rows: string[][]): KpiData {
     count: aging[bucket],
   }));
 
+  // Sort pending tickets: rescheduled-today first, then by age desc
+  pendingTickets.sort((a, b) => {
+    const at = a.appointedDate === todayISO ? 1 : 0;
+    const bt = b.appointedDate === todayISO ? 1 : 0;
+    if (at !== bt) return bt - at;
+    return b.ageHours - a.ageHours;
+  });
+  const todayTickets = pendingTickets.filter(
+    (t) => t.appointedDate === todayISO && t.rescheduled,
+  );
+  const pendingSummary: PendingSummary = {
+    todayVisits: todayVisitsCount,
+    totalPending: pending,
+    activeWorkers: activeWorkerSet.size,
+    dispatched: dispatchedCount,
+    unassigned,
+    aging: (Object.keys(pendingAging5) as (keyof typeof pendingAging5)[]).map((k) => ({
+      bucket: k,
+      count: pendingAging5[k],
+    })),
+    reasons: Array.from(pendingReasonMap.entries())
+      .map(([reason, count]) => ({ reason, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10),
+    tickets: pendingTickets,
+    todayTickets,
+    branchPivot: Array.from(branchPivotMap.values()).sort((a, b) => b.total - a.total),
+    branchAlerts: Array.from(branchAlertMap.values()).sort((a, b) => b.pending - a.pending),
+  };
+
   const branches: BranchKpi[] = Array.from(branchStats.entries())
     .map(([branch, s]) => ({
       branch,
@@ -317,6 +483,7 @@ function aggregate(rows: string[][]): KpiData {
     pendingByBranch,
     pendingAging,
     branches,
+    pending: pendingSummary,
   };
 }
 
@@ -349,6 +516,19 @@ export const getSheetsKpi = createServerFn({ method: "GET" }).handler(async (): 
       pendingByBranch: [],
       pendingAging: [],
       branches: [],
+      pending: {
+        todayVisits: 0,
+        totalPending: 0,
+        activeWorkers: 0,
+        dispatched: 0,
+        unassigned: 0,
+        aging: [],
+        reasons: [],
+        tickets: [],
+        todayTickets: [],
+        branchPivot: [],
+        branchAlerts: [],
+      },
       error: msg,
     };
   }
