@@ -1,13 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
 
 const SHEET_ID = "1x796CMZf8b3RUNkqsanO56F_Wmo75L2uLzIlgE65doY";
-const RANGE = "Sheet1!A2:AE"; // skip header row; columns A..AE covers all needed fields
+const RANGE = "Sheet1!A2:AE"; // skip header row (columns A..AE)
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
 
-// Column indices (0-based, relative to A)
+// Column indices (0-based, relative to A) — matched to sheet headers:
+// A Ticket Number · B Product Line · C Service Provider Name · D User Name
+// E Tel · F Location · G Address · H Worker Name · I Service Type
+// J Product Type · K Service Information · L Processing Phase · M Ticket Status
+// N Affiliated Service Center · O Order Creation Time · P Installation Date
+// Q Ticket Source · R Dispatch Point Time · S Rejection Of Documents
+// T Completion Result · U Completion Time · V Service Hours(H) · W Service Timeliness
+// X Builder · Y Appointed Date · Z Rescheduling · AA Reason For Rescheduling
+// AB Reasons Supplemented · AC Maintenance Instructions · AD Mileage · AE Consultation Type
 const COL = {
   ticket: 0,
   serviceProvider: 2,
+  workerName: 7,
   ticketStatus: 12,
   orderCreation: 14,
   ticketSource: 16,
@@ -19,8 +28,8 @@ const COL = {
   appointedDate: 24,
   rescheduling: 25,
   rescheduleReason: 26,
-  remark: 27,
-  parts: 28,
+  remark: 27,        // "Reasons Supplemented"
+  maintenance: 28,   // "Maintenance Instructions"
 } as const;
 
 export interface MonthKpi {
@@ -265,7 +274,8 @@ function aggregate(rows: string[][]): KpiData {
     else {
       pending++;
       const statusLower = status.toLowerCase();
-      const isUnassigned = statusLower.includes("not assigned");
+      const workerBlank = !String(row[COL.workerName] ?? "").trim();
+      const isUnassigned = workerBlank;
       const isDispatched = statusLower.includes("dispatch");
       if (isUnassigned) unassigned++;
       if (isDispatched) dispatchedCount++;
@@ -297,6 +307,9 @@ function aggregate(rows: string[][]): KpiData {
       pendingReasonMap.set(reasonLabel, (pendingReasonMap.get(reasonLabel) ?? 0) + 1);
 
       const worker = String(row[COL.builder] ?? "").trim() || "";
+      const workerName = String(row[COL.workerName] ?? "").trim();
+      const effectiveWorker = workerName || worker;
+      const isUnassignedByName = !workerName;
       const appointed = String(row[COL.appointedDate] ?? "").trim();
       // extract yyyy-mm-dd (or dd/mm/yyyy) prefix
       let appointedISO = "";
@@ -315,17 +328,17 @@ function aggregate(rows: string[][]): KpiData {
       const ticket: PendingTicket = {
         ticket: String(row[COL.ticket] ?? "").trim(),
         branch,
-        worker: isUnassigned ? "Not Assigned" : worker || "—",
+        worker: isUnassignedByName ? "Not Assigned" : effectiveWorker,
         status: status || "Not assigned",
         ageBucket: bucket5,
         ageHours: Math.max(0, Math.round(ageH * 10) / 10),
         reason: reason || "—",
         appointedDate: appointedISO || appointed || "—",
         remark: String(row[COL.remark] ?? "").trim() || "—",
-        parts: String(row[COL.parts] ?? "").trim() || "—",
+        parts: String(row[COL.maintenance] ?? "").trim() || "—",
         rescheduled: resched,
         dispatched: isDispatched,
-        unassigned: isUnassigned,
+        unassigned: isUnassignedByName,
       };
       pendingTickets.push(ticket);
 
