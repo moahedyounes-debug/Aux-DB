@@ -20,8 +20,10 @@ const COL = {
   location: 5,
   workerName: 7,
   serviceType: 8,
+  productType: 9,
   ticketStatus: 12,
   orderCreation: 14,
+  installationDate: 15,
   ticketSource: 16,
   completionResult: 19,
   completionTime: 20,
@@ -139,6 +141,30 @@ export interface CityKpi {
   rate72h: number;
   topProduct: string;
 }
+export interface InstallationTicket {
+  ticket: string;
+  branch: string;
+  city: string;
+  productLine: string;
+  productType: string;
+  status: string;
+  worker: string;
+  createdAt: string;
+  installationDate: string;
+  completed: boolean;
+  ageDays: number;
+}
+export interface InstallationSummary {
+  total: number;
+  pending: number;
+  completed: number;
+  scheduledToday: number;
+  avgLeadDays: number;
+  byProduct: { product: string; count: number }[];
+  byCity: { city: string; count: number; pending: number }[];
+  byBranch: { branch: string; count: number; pending: number }[];
+  tickets: InstallationTicket[];
+}
 export interface Snapshot {
   total: number;
   pending: number;
@@ -162,6 +188,7 @@ export interface KpiData {
   pending: PendingSummary;
   callCenter: CallCenterSummary;
   cities: CityKpi[];
+  installation: InstallationSummary;
   error?: string;
 }
 
@@ -265,6 +292,16 @@ function aggregate(rows: string[][]): KpiData {
   const ccBranchMap = new Map<string, number>();
   let ccCompleted = 0;
 
+  // Installation bucket
+  const installationTickets: InstallationTicket[] = [];
+  const instProductMap = new Map<string, number>();
+  const instCityMap = new Map<string, { count: number; pending: number }>();
+  const instBranchMap = new Map<string, { count: number; pending: number }>();
+  let instCompleted = 0;
+  let instScheduledToday = 0;
+  let instLeadDaysSum = 0;
+  let instLeadDaysCount = 0;
+
   // City breakdown
   const cityMap = new Map<
     string,
@@ -309,7 +346,54 @@ function aggregate(rows: string[][]): KpiData {
     const status = String(row[COL.ticketStatus] ?? "").trim();
     const branch = normalizeBranch(String(row[COL.serviceProvider] ?? ""));
 
-    // Non-repair (Consultation / Easy repair / etc.) — handled by call center, not ASC.
+    const locRawEarly = String(row[COL.location] ?? "").trim();
+    const cityEarly = locRawEarly
+      ? (locRawEarly.split(/[\/,>·|]/).map((p) => p.trim()).filter(Boolean)[1] ?? "Unknown")
+      : "Unknown";
+
+    // Installation bucket — separate from repair and call-center
+    const isInstallation = serviceTypeLower.includes("install");
+    if (isInstallation) {
+      const productLine = String(row[COL.productLine] ?? "").trim() || "—";
+      const productType = String(row[COL.productType] ?? "").trim() || "—";
+      instProductMap.set(productLine, (instProductMap.get(productLine) ?? 0) + 1);
+      const ci = instCityMap.get(cityEarly) ?? { count: 0, pending: 0 };
+      ci.count++;
+      if (!done) ci.pending++;
+      instCityMap.set(cityEarly, ci);
+      const bi = instBranchMap.get(branch) ?? { count: 0, pending: 0 };
+      bi.count++;
+      if (!done) bi.pending++;
+      instBranchMap.set(branch, bi);
+      if (done) instCompleted++;
+      const instDate = parseDate(row[COL.installationDate]);
+      const instISO = instDate ? localISODate(instDate) : "";
+      if (instISO === todayISO) instScheduledToday++;
+      if (created && instDate) {
+        const lead = (instDate.getTime() - created.getTime()) / 86_400_000;
+        if (lead >= 0 && lead < 365) {
+          instLeadDaysSum += lead;
+          instLeadDaysCount++;
+        }
+      }
+      const ageDays = created ? (now.getTime() - created.getTime()) / 86_400_000 : 0;
+      installationTickets.push({
+        ticket: String(row[COL.ticket] ?? "").trim(),
+        branch,
+        city: cityEarly,
+        productLine,
+        productType,
+        status: status || "—",
+        worker: String(row[COL.workerName] ?? "").trim() || "Not Assigned",
+        createdAt: created ? created.toISOString().slice(0, 10) : "—",
+        installationDate: instISO || "—",
+        completed: done,
+        ageDays: Math.max(0, Math.round(ageDays * 10) / 10),
+      });
+      continue;
+    }
+
+    // Non-repair, non-installation (Consultation / Easy repair / etc.) — call center.
     if (!isRepair) {
       const label = rawServiceType || "Unknown";
       ccTypeMap.set(label, (ccTypeMap.get(label) ?? 0) + 1);
@@ -625,6 +709,30 @@ function aggregate(rows: string[][]): KpiData {
     })
     .sort((a, b) => b.total - a.total);
 
+  installationTickets.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const installation: InstallationSummary = {
+    total: installationTickets.length,
+    pending: installationTickets.filter((t) => !t.completed).length,
+    completed: instCompleted,
+    scheduledToday: instScheduledToday,
+    avgLeadDays:
+      instLeadDaysCount > 0
+        ? Math.round((instLeadDaysSum / instLeadDaysCount) * 10) / 10
+        : 0,
+    byProduct: Array.from(instProductMap.entries())
+      .map(([product, count]) => ({ product, count }))
+      .sort((a, b) => b.count - a.count),
+    byCity: Array.from(instCityMap.entries())
+      .map(([city, s]) => ({ city, ...s }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15),
+    byBranch: Array.from(instBranchMap.entries())
+      .map(([branch, s]) => ({ branch, ...s }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15),
+    tickets: installationTickets,
+  };
+
   const branches: BranchKpi[] = Array.from(branchStats.entries())
     .map(([branch, s]) => ({
       branch,
@@ -650,6 +758,7 @@ function aggregate(rows: string[][]): KpiData {
     pending: pendingSummary,
     callCenter,
     cities,
+    installation,
   };
 }
 
@@ -697,6 +806,17 @@ export const getSheetsKpi = createServerFn({ method: "GET" }).handler(async (): 
       },
       callCenter: { total: 0, pending: 0, completed: 0, byType: [], byBranch: [], tickets: [] },
       cities: [],
+      installation: {
+        total: 0,
+        pending: 0,
+        completed: 0,
+        scheduledToday: 0,
+        avgLeadDays: 0,
+        byProduct: [],
+        byCity: [],
+        byBranch: [],
+        tickets: [],
+      },
       error: msg,
     };
   }
