@@ -348,6 +348,36 @@ function aggregate(rows: string[][]): KpiData {
     if (under48) bs.c48++;
     if (under72) bs.c72++;
 
+    // City aggregation from Location column: "Region/City/District"
+    const locRaw = String(row[COL.location] ?? "").trim();
+    if (locRaw) {
+      const locParts = locRaw.split(/[\/,>·|]/).map((p) => p.trim()).filter(Boolean);
+      const region = locParts[0] ?? "—";
+      const city = locParts[1] ?? locParts[0] ?? "Unknown";
+      const cityKey = `${region}||${city}`;
+      let cs = cityMap.get(cityKey);
+      if (!cs) {
+        cs = {
+          city,
+          region,
+          total: 0,
+          completed: 0,
+          pending: 0,
+          c48: 0,
+          c72: 0,
+          products: new Map(),
+        };
+        cityMap.set(cityKey, cs);
+      }
+      cs.total++;
+      if (done) cs.completed++;
+      else cs.pending++;
+      if (under48) cs.c48++;
+      if (under72) cs.c72++;
+      const prod = String(row[COL.productLine] ?? "").trim();
+      if (prod) cs.products.set(prod, (cs.products.get(prod) ?? 0) + 1);
+    }
+
     if (done) completed++;
     else {
       pending++;
