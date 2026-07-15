@@ -223,7 +223,14 @@ function DeepInsightsPage() {
         <ChartCard
           title="Monthly Trend — Volume & SLA"
           subtitle="Total tickets and 48h compliance"
-          exportRows={monthly}
+          exportRows={monthly.map((m) => ({
+            Month: m.label,
+            Total: m.total,
+            Completed: m.completed,
+            Pending: m.pending,
+            "48h %": m.rate48h,
+            "72h %": m.rate72h,
+          }))}
         >
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={monthly} margin={{ top: 10, right: 16, bottom: 0, left: -8 }}>
