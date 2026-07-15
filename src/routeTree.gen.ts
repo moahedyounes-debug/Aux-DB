@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
 import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonthlyTrendsRoute = MonthlyTrendsRouteImport.update({
+  id: '/monthly-trends',
+  path: '/monthly-trends',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KpisRoute = KpisRouteImport.update({
@@ -32,30 +38,34 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/kpis': typeof KpisRoute
+  '/monthly-trends': typeof MonthlyTrendsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/kpis': typeof KpisRoute
+  '/monthly-trends': typeof MonthlyTrendsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/kpis': typeof KpisRoute
+  '/monthly-trends': typeof MonthlyTrendsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/kpis' | '/sitemap.xml'
+  fullPaths: '/' | '/kpis' | '/monthly-trends' | '/sitemap.xml'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/kpis' | '/sitemap.xml'
-  id: '__root__' | '/' | '/kpis' | '/sitemap.xml'
+  to: '/' | '/kpis' | '/monthly-trends' | '/sitemap.xml'
+  id: '__root__' | '/' | '/kpis' | '/monthly-trends' | '/sitemap.xml'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   KpisRoute: typeof KpisRoute
+  MonthlyTrendsRoute: typeof MonthlyTrendsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
 
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monthly-trends': {
+      id: '/monthly-trends'
+      path: '/monthly-trends'
+      fullPath: '/monthly-trends'
+      preLoaderRoute: typeof MonthlyTrendsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kpis': {
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   KpisRoute: KpisRoute,
+  MonthlyTrendsRoute: MonthlyTrendsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
 export const routeTree = rootRouteImport
