@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
-import { BRANCHES, TARGETS } from "@/lib/aux/mock-data";
+import { TARGETS } from "@/lib/aux/mock-data";
+import { kpiQueryOptions } from "@/lib/aux/queries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/kpis")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
   head: () => ({
     meta: [
       { title: "KPI Scorecard — AUX ASC Dashboard" },
@@ -39,7 +42,8 @@ function Badge({ ok, children }: { ok: boolean; children: React.ReactNode }) {
 }
 
 function KpisPage() {
-  const sorted = [...BRANCHES].sort((a, b) => b.rate48h - a.rate48h);
+  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const sorted = [...data.branches].sort((a, b) => b.rate48h - a.rate48h);
   return (
     <DashboardLayout
       title="KPI Scorecard"
@@ -54,22 +58,19 @@ function KpisPage() {
             <thead>
               <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
                 <th className="py-2 pr-4 text-start">Branch</th>
-                <th className="py-2 pr-4 text-start">City</th>
                 <th className="py-2 pr-4 text-end">Total</th>
                 <th className="py-2 pr-4 text-end">Completed</th>
                 <th className="py-2 pr-4 text-end">Pending</th>
                 <th className="py-2 pr-4 text-end">48h</th>
                 <th className="py-2 pr-4 text-end">72h</th>
-                <th className="py-2 pr-4 text-end">CSAT</th>
               </tr>
             </thead>
             <tbody>
               {sorted.map((b) => {
-                const pRate = (b.pending / b.total) * 100;
+                const pRate = b.total > 0 ? (b.pending / b.total) * 100 : 0;
                 return (
                   <tr key={b.branch} className="border-b border-border/60 last:border-0">
                     <td className="py-2.5 pr-4 font-medium text-foreground">{b.branch}</td>
-                    <td className="py-2.5 pr-4 text-muted-foreground">{b.city}</td>
                     <td className="py-2.5 pr-4 text-end tabular-nums">{fmt.format(b.total)}</td>
                     <td className="py-2.5 pr-4 text-end tabular-nums text-success">
                       {fmt.format(b.completed)}
@@ -84,9 +85,6 @@ function KpisPage() {
                     </td>
                     <td className="py-2.5 pr-4 text-end">
                       <Badge ok={b.rate72h >= TARGETS.rate72h}>{b.rate72h}%</Badge>
-                    </td>
-                    <td className="py-2.5 pr-4 text-end">
-                      <Badge ok={b.csat >= 85}>{b.csat}</Badge>
                     </td>
                   </tr>
                 );
