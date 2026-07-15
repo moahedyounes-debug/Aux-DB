@@ -1,0 +1,311 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import {
+  Activity,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  Timer,
+  Users,
+  BarChart3,
+  Building2,
+} from "lucide-react";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { ChartCard } from "@/components/dashboard/ChartCard";
+import { KpiCard } from "@/components/dashboard/KpiCard";
+import { useAccess, applyAccessFilter } from "@/hooks/use-access";
+import { readTable } from "@/lib/sheets-client";
+import { cn } from "@/lib/utils";
+
+export const Route = createFileRoute("/kpis")({
+  head: () => ({
+    meta: [
+      { title: "KPIs — AUX ASC Dashboard" },
+      {
+        name: "description",
+        content:
+          "Live KPI scorecard for AUX service centres — tickets, pending, 48h/72h SLA and branch performance.",
+      },
+      { property: "og:title", content: "KPIs — AUX ASC Dashboard" },
+      {
+        property: "og:description",
+        content: "Real-time KPI performance filtered by your service centre access.",
+      },
+    ],
+  }),
+  component: KpisPage,
+});
+
+// SLA targets (hours) & thresholds
+const SLA_48 = 48;
+const SLA_72 = 72;
+const TARGETS = { rate48h: 90, rate72h: 95, pendingRate: 10 };
+
+// Column names in Sheet1 of the maintenance sheet
+const COL = {
+  ticket: "Ticket Number",
+  asc: "Service Provider Name",
+  branch: "Affiliated Service Center",
+  status: "Ticket Status",
+  phase: "Processing Phase",
+  hours: "Service hours(H)",
+  timeliness: "Service Timeliness",
+  serviceType: "Service Type",
+  createdAt: "Order Creation Time",
+  completedAt: "Completion time",
+  completionResult: "Completion Result",
+} as const;
+
+const fmt = new Intl.NumberFormat("en-US");
+const pct = (n: number, d: number) => (d > 0 ? (n / d) * 100 : 0);
+
+type Row = Record<string, string>;
+
+function isCompleted(r: Row): boolean {
+  const s = (r[COL.status] || "").toLowerCase();
+  const p = (r[COL.phase] || "").toLowerCase();
+  return (
+    s.includes("completed") ||
+    s.includes("finished") ||
+    s.includes("closed") ||
+    p.includes("completed") ||
+    !!r[COL.completedAt]?.trim()
+  );
+}
+function isPending(r: Row): boolean {
+  if (isCompleted(r)) return false;
+  const s = (r[COL.status] || "").toLowerCase();
+  return (
+    s.includes("pending") ||
+    s.includes("not assigned") ||
+    s.includes("assigned") ||
+    s.includes("in progress") ||
+    s.includes("processing") ||
+    s.trim().length > 0
+  );
+}
+function hours(r: Row): number {
+  const v = parseFloat(r[COL.hours] || "");
+  return Number.isFinite(v) ? v : NaN;
+}
+
+function Badge({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium tabular-nums",
+        ok ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function KpisPage() {
+  const { access, ready } = useAccess();
+
+  const query = useQuery({
+    queryKey: ["maintenance", "Sheet1"],
+    queryFn: () => readTable("maintenance", "Sheet1!A1:AE"),
+    staleTime: 60_000,
+    enabled: ready,
+  });
+
+  const rows = useMemo(() => {
+    if (!query.data) return [] as Row[];
+    return applyAccessFilter(query.data.rows, access, {
+      asc: COL.asc,
+      branch: COL.branch,
+    });
+  }, [query.data, access]);
+
+  const stats = useMemo(() => {
+    const total = rows.length;
+    const completed = rows.filter(isCompleted).length;
+    const pending = rows.filter(isPending).length;
+    const completedRows = rows.filter(isCompleted);
+    const withHrs = completedRows.filter((r) => Number.isFinite(hours(r)));
+    const under48 = withHrs.filter((r) => hours(r) <= SLA_48).length;
+    const under72 = withHrs.filter((r) => hours(r) <= SLA_72).length;
+    const rate48 = pct(under48, withHrs.length);
+    const rate72 = pct(under72, withHrs.length);
+    const avgHours =
+      withHrs.length > 0
+        ? withHrs.reduce((s, r) => s + hours(r), 0) / withHrs.length
+        : 0;
+    const branches = new Set(rows.map((r) => r[COL.branch]).filter(Boolean)).size;
+    return {
+      total, completed, pending, rate48, rate72, avgHours, branches,
+      pendingRate: pct(pending, total),
+      completionRate: pct(completed, total),
+    };
+  }, [rows]);
+
+  const branchTable = useMemo(() => {
+    const map = new Map<string, { total: number; completed: number; pending: number; u48: number; u72: number; withHrs: number }>();
+    for (const r of rows) {
+      const key = r[COL.branch] || "—";
+      const entry = map.get(key) ?? { total: 0, completed: 0, pending: 0, u48: 0, u72: 0, withHrs: 0 };
+      entry.total++;
+      if (isCompleted(r)) entry.completed++;
+      if (isPending(r)) entry.pending++;
+      const h = hours(r);
+      if (isCompleted(r) && Number.isFinite(h)) {
+        entry.withHrs++;
+        if (h <= SLA_48) entry.u48++;
+        if (h <= SLA_72) entry.u72++;
+      }
+      map.set(key, entry);
+    }
+    return Array.from(map.entries())
+      .map(([branch, s]) => ({
+        branch,
+        ...s,
+        rate48: pct(s.u48, s.withHrs),
+        rate72: pct(s.u72, s.withHrs),
+        pendingRate: pct(s.pending, s.total),
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [rows]);
+
+  const scope = access
+    ? access.isAllAccess
+      ? "All service centres"
+      : `${access.asc}${access.branch ? " · " + access.branch : ""}`
+    : "—";
+
+  return (
+    <DashboardLayout
+      title="KPIs"
+      subtitle={`Live from maintenance sheet · Scope: ${scope}`}
+    >
+      {query.isError && (
+        <div className="surface-card p-4 border border-destructive/40 text-destructive text-sm">
+          Failed to load maintenance data: {(query.error as Error)?.message}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiCard
+          label="Total Tickets"
+          value={query.isLoading ? "…" : fmt.format(stats.total)}
+          hint={query.isLoading ? "Loading…" : `${stats.branches} branch(es)`}
+          icon={Activity}
+          tone="primary"
+        />
+        <KpiCard
+          label="Completed"
+          value={query.isLoading ? "…" : fmt.format(stats.completed)}
+          hint={`${stats.completionRate.toFixed(1)}% completion`}
+          icon={CheckCircle2}
+          tone="success"
+        />
+        <KpiCard
+          label="Pending"
+          value={query.isLoading ? "…" : fmt.format(stats.pending)}
+          hint={`${stats.pendingRate.toFixed(1)}% of total · target ≤ ${TARGETS.pendingRate}%`}
+          icon={AlertTriangle}
+          tone={stats.pendingRate > TARGETS.pendingRate ? "destructive" : "warning"}
+        />
+        <KpiCard
+          label="Avg Repair Time"
+          value={query.isLoading ? "…" : `${stats.avgHours.toFixed(1)}h`}
+          hint="Across completed tickets"
+          icon={Timer}
+          tone="accent"
+        />
+        <KpiCard
+          label="48h Rate"
+          value={query.isLoading ? "…" : `${stats.rate48.toFixed(1)}%`}
+          hint={`Target ≥ ${TARGETS.rate48h}%`}
+          icon={Clock}
+          tone={stats.rate48 >= TARGETS.rate48h ? "success" : "warning"}
+        />
+        <KpiCard
+          label="72h Rate"
+          value={query.isLoading ? "…" : `${stats.rate72.toFixed(1)}%`}
+          hint={`Target ≥ ${TARGETS.rate72h}%`}
+          icon={Clock}
+          tone={stats.rate72 >= TARGETS.rate72h ? "success" : "warning"}
+        />
+        <KpiCard
+          label="Branches"
+          value={query.isLoading ? "…" : fmt.format(stats.branches)}
+          hint="Distinct service centres in scope"
+          icon={Building2}
+          tone="primary"
+        />
+        <KpiCard
+          label="Access Role"
+          value={access?.isAdmin ? "Admin" : access?.isAllAccess ? "All Access" : "Branch"}
+          hint={access?.email ?? "—"}
+          icon={Users}
+          tone="accent"
+        />
+      </div>
+
+      <ChartCard
+        title="Branch Scorecard"
+        subtitle={`Targets — 48h ≥ ${TARGETS.rate48h}% · 72h ≥ ${TARGETS.rate72h}% · Pending ≤ ${TARGETS.pendingRate}%`}
+      >
+        {query.isLoading ? (
+          <div className="py-12 text-center text-sm text-muted-foreground">
+            Loading live maintenance data…
+          </div>
+        ) : branchTable.length === 0 ? (
+          <div className="py-12 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
+            <BarChart3 className="h-8 w-8 opacity-40" />
+            No tickets in your access scope yet.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                  <th className="py-2 pr-4 text-start">Branch</th>
+                  <th className="py-2 pr-4 text-end">Total</th>
+                  <th className="py-2 pr-4 text-end">Completed</th>
+                  <th className="py-2 pr-4 text-end">Pending</th>
+                  <th className="py-2 pr-4 text-end">48h</th>
+                  <th className="py-2 pr-4 text-end">72h</th>
+                </tr>
+              </thead>
+              <tbody>
+                {branchTable.map((b) => (
+                  <tr key={b.branch} className="border-b border-border/60 last:border-0">
+                    <td className="py-2.5 pr-4 font-medium text-foreground">{b.branch}</td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums">{fmt.format(b.total)}</td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums text-success">
+                      {fmt.format(b.completed)}
+                    </td>
+                    <td className="py-2.5 pr-4 text-end">
+                      <Badge ok={b.pendingRate <= TARGETS.pendingRate}>
+                        {fmt.format(b.pending)} · {b.pendingRate.toFixed(1)}%
+                      </Badge>
+                    </td>
+                    <td className="py-2.5 pr-4 text-end">
+                      {b.withHrs > 0 ? (
+                        <Badge ok={b.rate48 >= TARGETS.rate48h}>{b.rate48.toFixed(1)}%</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-4 text-end">
+                      {b.withHrs > 0 ? (
+                        <Badge ok={b.rate72 >= TARGETS.rate72h}>{b.rate72.toFixed(1)}%</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </ChartCard>
+    </DashboardLayout>
+  );
+}
