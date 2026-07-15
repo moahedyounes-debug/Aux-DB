@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TicketRepairHistoryRouteImport } from './routes/ticket-repair-history'
 import { Route as SparePartsRouteImport } from './routes/spare-parts'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
@@ -25,6 +26,11 @@ import { Route as CallCenterRouteImport } from './routes/call-center'
 import { Route as AscPerformanceRouteImport } from './routes/asc-performance'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TicketRepairHistoryRoute = TicketRepairHistoryRouteImport.update({
+  id: '/ticket-repair-history',
+  path: '/ticket-repair-history',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SparePartsRoute = SparePartsRouteImport.update({
   id: '/spare-parts',
   path: '/spare-parts',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/pending-analysis': typeof PendingAnalysisRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
+  '/ticket-repair-history': typeof TicketRepairHistoryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/pending-analysis': typeof PendingAnalysisRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
+  '/ticket-repair-history': typeof TicketRepairHistoryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/pending-analysis': typeof PendingAnalysisRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
+  '/ticket-repair-history': typeof TicketRepairHistoryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/pending-analysis'
     | '/sitemap.xml'
     | '/spare-parts'
+    | '/ticket-repair-history'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/pending-analysis'
     | '/sitemap.xml'
     | '/spare-parts'
+    | '/ticket-repair-history'
   id:
     | '__root__'
     | '/'
@@ -205,6 +216,7 @@ export interface FileRouteTypes {
     | '/pending-analysis'
     | '/sitemap.xml'
     | '/spare-parts'
+    | '/ticket-repair-history'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -223,10 +235,18 @@ export interface RootRouteChildren {
   PendingAnalysisRoute: typeof PendingAnalysisRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SparePartsRoute: typeof SparePartsRoute
+  TicketRepairHistoryRoute: typeof TicketRepairHistoryRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/ticket-repair-history': {
+      id: '/ticket-repair-history'
+      path: '/ticket-repair-history'
+      fullPath: '/ticket-repair-history'
+      preLoaderRoute: typeof TicketRepairHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/spare-parts': {
       id: '/spare-parts'
       path: '/spare-parts'
@@ -351,6 +371,7 @@ const rootRouteChildren: RootRouteChildren = {
   PendingAnalysisRoute: PendingAnalysisRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SparePartsRoute: SparePartsRoute,
+  TicketRepairHistoryRoute: TicketRepairHistoryRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
