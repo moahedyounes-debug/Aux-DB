@@ -142,10 +142,14 @@ function localISODate(d: Date): string {
 
 function normalizeBranch(raw: string): string {
   if (!raw) return "Unknown";
-  return raw
-    .replace(/^\s*(HMA|ABL|CTV|EYT|MZ|SJK)\s*[-–]\s*/i, "")
-    .replace(/\s+Branch\s*$/i, "")
-    .trim() || raw;
+  // Format: "<Company ...> - <City>"  →  "<City> - <CompanyFirstWord>"
+  const parts = raw.split(/\s*[-–]\s*/);
+  if (parts.length >= 2) {
+    const company = parts[0].trim().split(/\s+/)[0] || parts[0].trim();
+    const city = parts.slice(1).join(" - ").trim();
+    return `${city} - ${company}`;
+  }
+  return raw.trim();
 }
 
 function isTruthy(v: string | undefined): boolean {
