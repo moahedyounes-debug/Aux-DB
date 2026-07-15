@@ -3,6 +3,8 @@ import { createServerFn } from "@tanstack/react-start";
 const SHEET_ID = "1x796CMZf8b3RUNkqsanO56F_Wmo75L2uLzIlgE65doY";
 const RANGE = "Sheet1!A2:AE"; // skip header row (columns A..AE)
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
+const ASSIGNMENT_RANGE = "Assignment Log!A2:H";
+const SATISFACTION_RANGE = "Satisfaction Surveys!A2:L";
 
 // Column indices (0-based, relative to A) — matched to sheet headers:
 // A Ticket Number · B Product Line · C Service Provider Name · D User Name
