@@ -15,6 +15,7 @@ import { Route as TicketRepairHistoryRouteImport } from './routes/ticket-repair-
 import { Route as SparePartsRouteImport } from './routes/spare-parts'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ShipmentsRouteImport } from './routes/shipments'
+import { Route as SatisfactionRouteImport } from './routes/satisfaction'
 import { Route as RejectedReturnedRouteImport } from './routes/rejected-returned'
 import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
 import { Route as ObmAnalysisRouteImport } from './routes/obm-analysis'
@@ -67,6 +68,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const ShipmentsRoute = ShipmentsRouteImport.update({
   id: '/shipments',
   path: '/shipments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SatisfactionRoute = SatisfactionRouteImport.update({
+  id: '/satisfaction',
+  path: '/satisfaction',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RejectedReturnedRoute = RejectedReturnedRouteImport.update({
@@ -209,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
   '/rejected-returned': typeof RejectedReturnedRoute
+  '/satisfaction': typeof SatisfactionRoute
   '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByTo {
   '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
   '/rejected-returned': typeof RejectedReturnedRoute
+  '/satisfaction': typeof SatisfactionRoute
   '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
@@ -272,6 +280,7 @@ export interface FileRoutesById {
   '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
   '/rejected-returned': typeof RejectedReturnedRoute
+  '/satisfaction': typeof SatisfactionRoute
   '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
@@ -305,6 +314,7 @@ export interface FileRouteTypes {
     | '/obm-analysis'
     | '/pending-analysis'
     | '/rejected-returned'
+    | '/satisfaction'
     | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
@@ -336,6 +346,7 @@ export interface FileRouteTypes {
     | '/obm-analysis'
     | '/pending-analysis'
     | '/rejected-returned'
+    | '/satisfaction'
     | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/obm-analysis'
     | '/pending-analysis'
     | '/rejected-returned'
+    | '/satisfaction'
     | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
@@ -399,6 +411,7 @@ export interface RootRouteChildren {
   ObmAnalysisRoute: typeof ObmAnalysisRoute
   PendingAnalysisRoute: typeof PendingAnalysisRoute
   RejectedReturnedRoute: typeof RejectedReturnedRoute
+  SatisfactionRoute: typeof SatisfactionRoute
   ShipmentsRoute: typeof ShipmentsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SparePartsRoute: typeof SparePartsRoute
@@ -449,6 +462,13 @@ declare module '@tanstack/react-router' {
       path: '/shipments'
       fullPath: '/shipments'
       preLoaderRoute: typeof ShipmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/satisfaction': {
+      id: '/satisfaction'
+      path: '/satisfaction'
+      fullPath: '/satisfaction'
+      preLoaderRoute: typeof SatisfactionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rejected-returned': {
@@ -639,6 +659,7 @@ const rootRouteChildren: RootRouteChildren = {
   ObmAnalysisRoute: ObmAnalysisRoute,
   PendingAnalysisRoute: PendingAnalysisRoute,
   RejectedReturnedRoute: RejectedReturnedRoute,
+  SatisfactionRoute: SatisfactionRoute,
   ShipmentsRoute: ShipmentsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SparePartsRoute: SparePartsRoute,
