@@ -293,6 +293,19 @@ export interface WarrantyProductRow {
   claims: number;
   net: number;
 }
+export interface WarrantyTierRow {
+  tier: WarrantyTier;
+  label: string;
+  description: string;
+  rate: number;
+  claims: number;
+  paid: number;
+  approved: number;
+  submitted: number;
+  gross: number;
+  deduction: number;
+  net: number;
+}
 export interface WarrantySummary {
   totalClaims: number;
   paid: number;
@@ -306,6 +319,7 @@ export interface WarrantySummary {
   byBranch: WarrantyBranchRow[];
   byMonth: WarrantyMonthRow[];
   byProduct: WarrantyProductRow[];
+  byTier: WarrantyTierRow[];
   recentClaims: WarrantyClaim[];
 }
 export interface Snapshot {
