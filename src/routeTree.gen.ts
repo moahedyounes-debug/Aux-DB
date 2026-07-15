@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TicketRepairHistoryRouteImport } from './routes/ticket-repair-history'
 import { Route as SparePartsRouteImport } from './routes/spare-parts'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as RejectedReturnedRouteImport } from './routes/rejected-returned'
 import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
 import { Route as ObmAnalysisRouteImport } from './routes/obm-analysis'
 import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
@@ -39,6 +40,11 @@ const SparePartsRoute = SparePartsRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RejectedReturnedRoute = RejectedReturnedRouteImport.update({
+  id: '/rejected-returned',
+  path: '/rejected-returned',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PendingAnalysisRoute = PendingAnalysisRouteImport.update({
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
+  '/rejected-returned': typeof RejectedReturnedRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
+  '/rejected-returned': typeof RejectedReturnedRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
+  '/rejected-returned': typeof RejectedReturnedRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/monthly-trends'
     | '/obm-analysis'
     | '/pending-analysis'
+    | '/rejected-returned'
     | '/sitemap.xml'
     | '/spare-parts'
     | '/ticket-repair-history'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/monthly-trends'
     | '/obm-analysis'
     | '/pending-analysis'
+    | '/rejected-returned'
     | '/sitemap.xml'
     | '/spare-parts'
     | '/ticket-repair-history'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/monthly-trends'
     | '/obm-analysis'
     | '/pending-analysis'
+    | '/rejected-returned'
     | '/sitemap.xml'
     | '/spare-parts'
     | '/ticket-repair-history'
@@ -233,6 +245,7 @@ export interface RootRouteChildren {
   MonthlyTrendsRoute: typeof MonthlyTrendsRoute
   ObmAnalysisRoute: typeof ObmAnalysisRoute
   PendingAnalysisRoute: typeof PendingAnalysisRoute
+  RejectedReturnedRoute: typeof RejectedReturnedRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SparePartsRoute: typeof SparePartsRoute
   TicketRepairHistoryRoute: typeof TicketRepairHistoryRoute
@@ -259,6 +272,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rejected-returned': {
+      id: '/rejected-returned'
+      path: '/rejected-returned'
+      fullPath: '/rejected-returned'
+      preLoaderRoute: typeof RejectedReturnedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pending-analysis': {
@@ -369,6 +389,7 @@ const rootRouteChildren: RootRouteChildren = {
   MonthlyTrendsRoute: MonthlyTrendsRoute,
   ObmAnalysisRoute: ObmAnalysisRoute,
   PendingAnalysisRoute: PendingAnalysisRoute,
+  RejectedReturnedRoute: RejectedReturnedRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SparePartsRoute: SparePartsRoute,
   TicketRepairHistoryRoute: TicketRepairHistoryRoute,
