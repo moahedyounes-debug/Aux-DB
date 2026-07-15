@@ -480,6 +480,22 @@ function aggregate(rows: string[][]): KpiData {
   const warrantyByBranch = new Map<string, WarrantyBranchRow>();
   const warrantyByMonth = new Map<string, WarrantyMonthRow>();
   const warrantyByProduct = new Map<string, WarrantyProductRow>();
+  const warrantyByTier = new Map<WarrantyTier, WarrantyTierRow>();
+  for (const def of WARRANTY_TIERS) {
+    warrantyByTier.set(def.tier, {
+      tier: def.tier,
+      label: def.label,
+      description: def.description,
+      rate: def.rate,
+      claims: 0,
+      paid: 0,
+      approved: 0,
+      submitted: 0,
+      gross: 0,
+      deduction: 0,
+      net: 0,
+    });
+  }
   let warrGross = 0;
   let warrDeduction = 0;
   let warrPaid = 0;
