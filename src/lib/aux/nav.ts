@@ -43,7 +43,7 @@ export const NAV_PAGES: NavPage[] = [
   { path: "/monthly-trends", label: "Monthly Trends", icon: TrendingUp, active: true },
   { path: "/daily-operations", label: "Daily Operations", icon: CalendarClock, active: true },
   { path: "/pending-analysis", label: "Pending Analysis", icon: AlarmClock, active: true },
-  { path: "/deep-insights", label: "Deep Insights", icon: Microscope },
+  { path: "/deep-insights", label: "Deep Insights", icon: Microscope, active: true },
   { path: "/obm-analysis", label: "OBM Analysis", icon: Boxes },
   { path: "/spare-parts", label: "Spare Parts", icon: Package },
   { path: "/call-center", label: "Call Center", icon: Headphones, active: true },
