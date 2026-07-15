@@ -14,6 +14,7 @@ import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
 import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
 import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as InstallationAnalysisRouteImport } from './routes/installation-analysis'
+import { Route as DeepInsightsRouteImport } from './routes/deep-insights'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
 import { Route as CityRouteImport } from './routes/city'
 import { Route as CallCenterRouteImport } from './routes/call-center'
@@ -43,6 +44,11 @@ const KpisRoute = KpisRouteImport.update({
 const InstallationAnalysisRoute = InstallationAnalysisRouteImport.update({
   id: '/installation-analysis',
   path: '/installation-analysis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeepInsightsRoute = DeepInsightsRouteImport.update({
+  id: '/deep-insights',
+  path: '/deep-insights',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DailyOperationsRoute = DailyOperationsRouteImport.update({
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/call-center': typeof CallCenterRoute
   '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
+  '/deep-insights': typeof DeepInsightsRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/call-center': typeof CallCenterRoute
   '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
+  '/deep-insights': typeof DeepInsightsRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/call-center': typeof CallCenterRoute
   '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
+  '/deep-insights': typeof DeepInsightsRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/call-center'
     | '/city'
     | '/daily-operations'
+    | '/deep-insights'
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/call-center'
     | '/city'
     | '/daily-operations'
+    | '/deep-insights'
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/call-center'
     | '/city'
     | '/daily-operations'
+    | '/deep-insights'
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
@@ -153,6 +165,7 @@ export interface RootRouteChildren {
   CallCenterRoute: typeof CallCenterRoute
   CityRoute: typeof CityRoute
   DailyOperationsRoute: typeof DailyOperationsRoute
+  DeepInsightsRoute: typeof DeepInsightsRoute
   InstallationAnalysisRoute: typeof InstallationAnalysisRoute
   KpisRoute: typeof KpisRoute
   MonthlyTrendsRoute: typeof MonthlyTrendsRoute
@@ -195,6 +208,13 @@ declare module '@tanstack/react-router' {
       path: '/installation-analysis'
       fullPath: '/installation-analysis'
       preLoaderRoute: typeof InstallationAnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deep-insights': {
+      id: '/deep-insights'
+      path: '/deep-insights'
+      fullPath: '/deep-insights'
+      preLoaderRoute: typeof DeepInsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/daily-operations': {
@@ -241,6 +261,7 @@ const rootRouteChildren: RootRouteChildren = {
   CallCenterRoute: CallCenterRoute,
   CityRoute: CityRoute,
   DailyOperationsRoute: DailyOperationsRoute,
+  DeepInsightsRoute: DeepInsightsRoute,
   InstallationAnalysisRoute: InstallationAnalysisRoute,
   KpisRoute: KpisRoute,
   MonthlyTrendsRoute: MonthlyTrendsRoute,
