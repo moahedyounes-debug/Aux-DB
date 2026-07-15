@@ -1,0 +1,327 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ComposedChart,
+  Line,
+} from "recharts";
+import { Wallet, CheckCircle2, Clock3, TrendingDown } from "lucide-react";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { ChartCard } from "@/components/dashboard/ChartCard";
+import { KpiCard } from "@/components/dashboard/KpiCard";
+import { kpiQueryOptions } from "@/lib/aux/queries";
+import {
+  WARRANTY_RATES,
+  WARRANTY_DEFAULT_RATE,
+  WARRANTY_SLA_DEDUCTION_PCT,
+} from "@/lib/aux/sheets.functions";
+import { cn } from "@/lib/utils";
+
+export const Route = createFileRoute("/warranty-payments")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  head: () => ({
+    meta: [
+      { title: "Warranty Payments — AUX ASC Dashboard" },
+      {
+        name: "description",
+        content:
+          "Warranty payouts derived from completed repair tickets: paid, approved with SLA deduction, and pending submission.",
+      },
+      { property: "og:title", content: "Warranty Payments — AUX ASC Dashboard" },
+      {
+        property: "og:description",
+        content: "Estimated warranty payouts per ASC, product line and month.",
+      },
+    ],
+  }),
+  component: WarrantyPaymentsPage,
+});
+
+const sar = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "SAR",
+  maximumFractionDigits: 0,
+});
+const num = new Intl.NumberFormat("en-US");
+
+function WarrantyPaymentsPage() {
+  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const w = data.warranty;
+
+  const tooltipStyle = {
+    background: "var(--color-popover)",
+    border: "1px solid var(--color-border)",
+    borderRadius: 8,
+    color: "var(--color-popover-foreground)",
+    fontSize: 12,
+  } as const;
+
+  return (
+    <DashboardLayout
+      title="Warranty Payments"
+      subtitle={`Derived from ${num.format(w.totalClaims)} repair claims · ${WARRANTY_SLA_DEDUCTION_PCT}% deduction on SLA misses`}
+    >
+      <section aria-label="Warranty KPIs" className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          label="Net Payout"
+          value={sar.format(w.net)}
+          hint={`Gross ${sar.format(w.gross)}`}
+          icon={Wallet}
+          tone="primary"
+        />
+        <KpiCard
+          label="Paid Claims"
+          value={num.format(w.paid)}
+          hint={`${w.paidRate}% of total`}
+          icon={CheckCircle2}
+          tone="success"
+        />
+        <KpiCard
+          label="Pending Submission"
+          value={num.format(w.submitted)}
+          hint="Ticket not yet completed"
+          icon={Clock3}
+          tone="warning"
+        />
+        <KpiCard
+          label="SLA Deductions"
+          value={sar.format(w.deduction)}
+          hint={`${num.format(w.approved)} claims out of 72h`}
+          icon={TrendingDown}
+          tone="destructive"
+        />
+      </section>
+
+      <div className="mt-6 grid gap-5 grid-cols-1 xl:grid-cols-2">
+        <ChartCard
+          title="Monthly Payout Trend"
+          subtitle="Gross vs net after SLA deduction"
+          exportRows={w.byMonth.map((m) => ({
+            Month: m.month,
+            Claims: m.claims,
+            Gross: m.gross,
+            Deduction: m.deduction,
+            Net: m.net,
+          }))}
+        >
+          <ResponsiveContainer width="100%" height={300}>
+            <ComposedChart data={w.byMonth} margin={{ top: 10, right: 16, bottom: 0, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis dataKey="label" stroke="var(--color-muted-foreground)" fontSize={12} />
+              <YAxis
+                stroke="var(--color-muted-foreground)"
+                fontSize={12}
+                tickFormatter={(v) => `${Math.round(v / 1000)}k`}
+              />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => sar.format(v)} />
+              <Bar dataKey="gross" name="Gross" fill="var(--color-chart-2)" radius={[6, 6, 0, 0]} />
+              <Line
+                dataKey="net"
+                name="Net"
+                stroke="var(--color-primary)"
+                strokeWidth={2.5}
+                dot={{ r: 3 }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard
+          title="Payout by Product Line"
+          subtitle="Net claim value per product"
+          exportRows={w.byProduct.map((p) => ({
+            Product: p.product,
+            Rate: p.rate,
+            Claims: p.claims,
+            Net: p.net,
+          }))}
+        >
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              data={w.byProduct.slice(0, 10)}
+              layout="vertical"
+              margin={{ top: 10, right: 24, bottom: 0, left: 24 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
+              <XAxis
+                type="number"
+                stroke="var(--color-muted-foreground)"
+                fontSize={12}
+                tickFormatter={(v) => `${Math.round(v / 1000)}k`}
+              />
+              <YAxis
+                type="category"
+                dataKey="product"
+                stroke="var(--color-muted-foreground)"
+                fontSize={11}
+                width={150}
+              />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => sar.format(v)} />
+              <Bar dataKey="net" fill="var(--color-primary)" radius={[0, 6, 6, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+
+      <section className="mt-6">
+        <ChartCard
+          title="Payout by ASC"
+          subtitle="Net warranty payout per service center — top 20"
+          exportRows={w.byBranch.map((b) => ({
+            Branch: b.branch,
+            Claims: b.claims,
+            Paid: b.paid,
+            Approved: b.approved,
+            Submitted: b.submitted,
+            Gross: b.gross,
+            Deduction: b.deduction,
+            Net: b.net,
+          }))}
+        >
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                  <th className="py-2 pr-4 text-start">Branch</th>
+                  <th className="py-2 pr-4 text-end">Claims</th>
+                  <th className="py-2 pr-4 text-end">Paid</th>
+                  <th className="py-2 pr-4 text-end">Approved</th>
+                  <th className="py-2 pr-4 text-end">Pending</th>
+                  <th className="py-2 pr-4 text-end">Gross</th>
+                  <th className="py-2 pr-4 text-end">Deduction</th>
+                  <th className="py-2 pr-4 text-end">Net</th>
+                </tr>
+              </thead>
+              <tbody>
+                {w.byBranch.map((b) => (
+                  <tr key={b.branch} className="border-b border-border/60 last:border-0">
+                    <td className="py-2.5 pr-4 font-medium">{b.branch}</td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums">{num.format(b.claims)}</td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums text-success">
+                      {num.format(b.paid)}
+                    </td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums text-warning">
+                      {num.format(b.approved)}
+                    </td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums text-muted-foreground">
+                      {num.format(b.submitted)}
+                    </td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums">{sar.format(b.gross)}</td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums text-destructive">
+                      {b.deduction > 0 ? `−${sar.format(b.deduction)}` : sar.format(0)}
+                    </td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums font-semibold">
+                      {sar.format(b.net)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </ChartCard>
+      </section>
+
+      <div className="mt-6 grid gap-5 grid-cols-1 xl:grid-cols-3">
+        <ChartCard
+          title="Rate Card"
+          subtitle={`Editable in code · default ${sar.format(WARRANTY_DEFAULT_RATE)}`}
+          className="xl:col-span-1"
+        >
+          <ul className="space-y-2">
+            {WARRANTY_RATES.map((r) => (
+              <li
+                key={r.match}
+                className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm"
+              >
+                <span className="font-medium capitalize">{r.match}</span>
+                <span className="tabular-nums text-primary">{sar.format(r.rate)}</span>
+              </li>
+            ))}
+            <li className="flex items-center justify-between rounded-lg border border-dashed border-border/60 px-3 py-2 text-sm">
+              <span className="font-medium text-muted-foreground">Default (no match)</span>
+              <span className="tabular-nums text-muted-foreground">
+                {sar.format(WARRANTY_DEFAULT_RATE)}
+              </span>
+            </li>
+          </ul>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Rate matches the first keyword found in the ticket's Product Line, case-insensitive.
+            Update <code className="rounded bg-muted px-1">WARRANTY_RATES</code> in{" "}
+            <code className="rounded bg-muted px-1">sheets.functions.ts</code> to change tariffs.
+          </p>
+        </ChartCard>
+
+        <ChartCard
+          title="Recent Claims"
+          subtitle={`Latest ${w.recentClaims.length} — export CSV for the full list`}
+          className="xl:col-span-2"
+          exportRows={w.recentClaims.map((c) => ({
+            Ticket: c.ticket,
+            Branch: c.branch,
+            City: c.city,
+            Product: c.productLine,
+            Status: c.status,
+            Created: c.createdAt,
+            Completed: c.completedAt,
+            Hours: c.serviceHours,
+            Gross: c.gross,
+            Deduction: c.deduction,
+            Net: c.net,
+          }))}
+        >
+          {w.recentClaims.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              No warranty claims yet.
+            </p>
+          ) : (
+            <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
+              <table className="min-w-full text-sm">
+                <thead className="sticky top-0 bg-background">
+                  <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                    <th className="py-2 pr-4 text-start">Ticket</th>
+                    <th className="py-2 pr-4 text-start">Branch</th>
+                    <th className="py-2 pr-4 text-start">Product</th>
+                    <th className="py-2 pr-4 text-center">Status</th>
+                    <th className="py-2 pr-4 text-end">Net</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {w.recentClaims.slice(0, 60).map((c) => (
+                    <tr key={c.ticket} className="border-b border-border/60 last:border-0">
+                      <td className="py-2 pr-4 font-mono text-[11px] text-muted-foreground">
+                        {c.ticket}
+                      </td>
+                      <td className="py-2 pr-4 text-xs">{c.branch}</td>
+                      <td className="py-2 pr-4 text-xs text-muted-foreground">{c.productLine}</td>
+                      <td className="py-2 pr-4 text-center">
+                        <span
+                          className={cn(
+                            "inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium capitalize",
+                            c.status === "paid" && "bg-success/15 text-success",
+                            c.status === "approved" && "bg-warning/15 text-warning",
+                            c.status === "submitted" && "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          {c.status}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-4 text-end tabular-nums font-medium">
+                        {sar.format(c.net)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </ChartCard>
+      </div>
+    </DashboardLayout>
+  );
+}

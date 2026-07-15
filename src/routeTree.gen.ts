@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
-import { Route as WarrantyPaymentsRouteImport } from './routes/warranty-payments'
 import { Route as TicketRepairHistoryRouteImport } from './routes/ticket-repair-history'
 import { Route as SparePartsRouteImport } from './routes/spare-parts'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -42,11 +41,6 @@ import { Route as IndexRouteImport } from './routes/index'
 const WhatsappRoute = WhatsappRouteImport.update({
   id: '/whatsapp',
   path: '/whatsapp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const WarrantyPaymentsRoute = WarrantyPaymentsRouteImport.update({
-  id: '/warranty-payments',
-  path: '/warranty-payments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TicketRepairHistoryRoute = TicketRepairHistoryRouteImport.update({
@@ -213,7 +207,6 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
-  '/warranty-payments': typeof WarrantyPaymentsRoute
   '/whatsapp': typeof WhatsappRoute
 }
 export interface FileRoutesByTo {
@@ -244,7 +237,6 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
-  '/warranty-payments': typeof WarrantyPaymentsRoute
   '/whatsapp': typeof WhatsappRoute
 }
 export interface FileRoutesById {
@@ -276,7 +268,6 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
-  '/warranty-payments': typeof WarrantyPaymentsRoute
   '/whatsapp': typeof WhatsappRoute
 }
 export interface FileRouteTypes {
@@ -309,7 +300,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/spare-parts'
     | '/ticket-repair-history'
-    | '/warranty-payments'
     | '/whatsapp'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -340,7 +330,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/spare-parts'
     | '/ticket-repair-history'
-    | '/warranty-payments'
     | '/whatsapp'
   id:
     | '__root__'
@@ -371,7 +360,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/spare-parts'
     | '/ticket-repair-history'
-    | '/warranty-payments'
     | '/whatsapp'
   fileRoutesById: FileRoutesById
 }
@@ -403,7 +391,6 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SparePartsRoute: typeof SparePartsRoute
   TicketRepairHistoryRoute: typeof TicketRepairHistoryRoute
-  WarrantyPaymentsRoute: typeof WarrantyPaymentsRoute
   WhatsappRoute: typeof WhatsappRoute
 }
 
@@ -414,13 +401,6 @@ declare module '@tanstack/react-router' {
       path: '/whatsapp'
       fullPath: '/whatsapp'
       preLoaderRoute: typeof WhatsappRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/warranty-payments': {
-      id: '/warranty-payments'
-      path: '/warranty-payments'
-      fullPath: '/warranty-payments'
-      preLoaderRoute: typeof WarrantyPaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ticket-repair-history': {
@@ -643,7 +623,6 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SparePartsRoute: SparePartsRoute,
   TicketRepairHistoryRoute: TicketRepairHistoryRoute,
-  WarrantyPaymentsRoute: WarrantyPaymentsRoute,
   WhatsappRoute: WhatsappRoute,
 }
 export const routeTree = rootRouteImport
