@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
 import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
 import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
@@ -18,6 +19,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PendingAnalysisRoute = PendingAnalysisRouteImport.update({
+  id: '/pending-analysis',
+  path: '/pending-analysis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MonthlyTrendsRoute = MonthlyTrendsRouteImport.update({
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/daily-operations': typeof DailyOperationsRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
+  '/pending-analysis': typeof PendingAnalysisRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/daily-operations': typeof DailyOperationsRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
+  '/pending-analysis': typeof PendingAnalysisRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
 }
 export interface FileRoutesById {
@@ -61,6 +69,7 @@ export interface FileRoutesById {
   '/daily-operations': typeof DailyOperationsRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
+  '/pending-analysis': typeof PendingAnalysisRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
 }
 export interface FileRouteTypes {
@@ -70,15 +79,23 @@ export interface FileRouteTypes {
     | '/daily-operations'
     | '/kpis'
     | '/monthly-trends'
+    | '/pending-analysis'
     | '/sitemap.xml'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/daily-operations' | '/kpis' | '/monthly-trends' | '/sitemap.xml'
+  to:
+    | '/'
+    | '/daily-operations'
+    | '/kpis'
+    | '/monthly-trends'
+    | '/pending-analysis'
+    | '/sitemap.xml'
   id:
     | '__root__'
     | '/'
     | '/daily-operations'
     | '/kpis'
     | '/monthly-trends'
+    | '/pending-analysis'
     | '/sitemap.xml'
   fileRoutesById: FileRoutesById
 }
@@ -87,6 +104,7 @@ export interface RootRouteChildren {
   DailyOperationsRoute: typeof DailyOperationsRoute
   KpisRoute: typeof KpisRoute
   MonthlyTrendsRoute: typeof MonthlyTrendsRoute
+  PendingAnalysisRoute: typeof PendingAnalysisRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
 
@@ -97,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pending-analysis': {
+      id: '/pending-analysis'
+      path: '/pending-analysis'
+      fullPath: '/pending-analysis'
+      preLoaderRoute: typeof PendingAnalysisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/monthly-trends': {
@@ -135,6 +160,7 @@ const rootRouteChildren: RootRouteChildren = {
   DailyOperationsRoute: DailyOperationsRoute,
   KpisRoute: KpisRoute,
   MonthlyTrendsRoute: MonthlyTrendsRoute,
+  PendingAnalysisRoute: PendingAnalysisRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
 export const routeTree = rootRouteImport
