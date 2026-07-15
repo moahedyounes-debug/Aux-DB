@@ -1044,6 +1044,7 @@ function aggregate(rows: string[][]): KpiData {
       .sort((a, b) => (a.month < b.month ? -1 : 1))
       .slice(-12),
     byProduct: Array.from(warrantyByProduct.values()).sort((a, b) => b.net - a.net),
+    byTier: Array.from(warrantyByTier.values()).sort((a, b) => a.rate - b.rate),
     recentClaims: warrantyClaims.slice(0, 200),
   };
 
