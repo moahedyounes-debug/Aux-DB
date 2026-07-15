@@ -14,6 +14,7 @@ import { Route as WarrantyPaymentsRouteImport } from './routes/warranty-payments
 import { Route as TicketRepairHistoryRouteImport } from './routes/ticket-repair-history'
 import { Route as SparePartsRouteImport } from './routes/spare-parts'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ShipmentsRouteImport } from './routes/shipments'
 import { Route as SatisfactionRouteImport } from './routes/satisfaction'
 import { Route as RejectedReturnedRouteImport } from './routes/rejected-returned'
 import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
@@ -56,6 +57,11 @@ const SparePartsRoute = SparePartsRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShipmentsRoute = ShipmentsRouteImport.update({
+  id: '/shipments',
+  path: '/shipments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SatisfactionRoute = SatisfactionRouteImport.update({
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/pending-analysis': typeof PendingAnalysisRoute
   '/rejected-returned': typeof RejectedReturnedRoute
   '/satisfaction': typeof SatisfactionRoute
+  '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/pending-analysis': typeof PendingAnalysisRoute
   '/rejected-returned': typeof RejectedReturnedRoute
   '/satisfaction': typeof SatisfactionRoute
+  '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/pending-analysis': typeof PendingAnalysisRoute
   '/rejected-returned': typeof RejectedReturnedRoute
   '/satisfaction': typeof SatisfactionRoute
+  '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
@@ -246,6 +255,7 @@ export interface FileRouteTypes {
     | '/pending-analysis'
     | '/rejected-returned'
     | '/satisfaction'
+    | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
     | '/ticket-repair-history'
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/pending-analysis'
     | '/rejected-returned'
     | '/satisfaction'
+    | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
     | '/ticket-repair-history'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/pending-analysis'
     | '/rejected-returned'
     | '/satisfaction'
+    | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
     | '/ticket-repair-history'
@@ -322,6 +334,7 @@ export interface RootRouteChildren {
   PendingAnalysisRoute: typeof PendingAnalysisRoute
   RejectedReturnedRoute: typeof RejectedReturnedRoute
   SatisfactionRoute: typeof SatisfactionRoute
+  ShipmentsRoute: typeof ShipmentsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SparePartsRoute: typeof SparePartsRoute
   TicketRepairHistoryRoute: typeof TicketRepairHistoryRoute
@@ -364,6 +377,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shipments': {
+      id: '/shipments'
+      path: '/shipments'
+      fullPath: '/shipments'
+      preLoaderRoute: typeof ShipmentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/satisfaction': {
@@ -514,6 +534,7 @@ const rootRouteChildren: RootRouteChildren = {
   PendingAnalysisRoute: PendingAnalysisRoute,
   RejectedReturnedRoute: RejectedReturnedRoute,
   SatisfactionRoute: SatisfactionRoute,
+  ShipmentsRoute: ShipmentsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SparePartsRoute: SparePartsRoute,
   TicketRepairHistoryRoute: TicketRepairHistoryRoute,
