@@ -388,6 +388,17 @@ function aggregate(rows: string[][]): KpiData {
     }
   >();
 
+  // Warranty accumulators (repair tickets only, populated inside the loop)
+  const warrantyClaims: WarrantyClaim[] = [];
+  const warrantyByBranch = new Map<string, WarrantyBranchRow>();
+  const warrantyByMonth = new Map<string, WarrantyMonthRow>();
+  const warrantyByProduct = new Map<string, WarrantyProductRow>();
+  let warrGross = 0;
+  let warrDeduction = 0;
+  let warrPaid = 0;
+  let warrApproved = 0;
+  let warrSubmitted = 0;
+
   // Prep last 30 days buckets
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
