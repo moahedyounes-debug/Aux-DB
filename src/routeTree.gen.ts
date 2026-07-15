@@ -9,16 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WhatsappRouteImport } from './routes/whatsapp'
 import { Route as WarrantyPaymentsRouteImport } from './routes/warranty-payments'
-import { Route as TicketRepairHistoryRouteImport } from './routes/ticket-repair-history'
 import { Route as SparePartsRouteImport } from './routes/spare-parts'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ShipmentsRouteImport } from './routes/shipments'
-import { Route as SatisfactionRouteImport } from './routes/satisfaction'
-import { Route as RejectedReturnedRouteImport } from './routes/rejected-returned'
 import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
-import { Route as ObmAnalysisRouteImport } from './routes/obm-analysis'
 import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
 import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as InstallationAnalysisRouteImport } from './routes/installation-analysis'
@@ -31,27 +26,15 @@ import { Route as CostsRouteImport } from './routes/costs'
 import { Route as ControlPanelRouteImport } from './routes/control-panel'
 import { Route as CommerceComplaintsRouteImport } from './routes/commerce-complaints'
 import { Route as CityRouteImport } from './routes/city'
-import { Route as CallEventsRouteImport } from './routes/call-events'
-import { Route as CallCenterAssignmentRouteImport } from './routes/call-center-assignment'
 import { Route as CallCenterRouteImport } from './routes/call-center'
 import { Route as AscPerformanceRouteImport } from './routes/asc-performance'
 import { Route as ActivityLogRouteImport } from './routes/activity-log'
 import { Route as AccessRouteImport } from './routes/access'
 import { Route as IndexRouteImport } from './routes/index'
 
-const WhatsappRoute = WhatsappRouteImport.update({
-  id: '/whatsapp',
-  path: '/whatsapp',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const WarrantyPaymentsRoute = WarrantyPaymentsRouteImport.update({
   id: '/warranty-payments',
   path: '/warranty-payments',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TicketRepairHistoryRoute = TicketRepairHistoryRouteImport.update({
-  id: '/ticket-repair-history',
-  path: '/ticket-repair-history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SparePartsRoute = SparePartsRouteImport.update({
@@ -69,24 +52,9 @@ const ShipmentsRoute = ShipmentsRouteImport.update({
   path: '/shipments',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SatisfactionRoute = SatisfactionRouteImport.update({
-  id: '/satisfaction',
-  path: '/satisfaction',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RejectedReturnedRoute = RejectedReturnedRouteImport.update({
-  id: '/rejected-returned',
-  path: '/rejected-returned',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PendingAnalysisRoute = PendingAnalysisRouteImport.update({
   id: '/pending-analysis',
   path: '/pending-analysis',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ObmAnalysisRoute = ObmAnalysisRouteImport.update({
-  id: '/obm-analysis',
-  path: '/obm-analysis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MonthlyTrendsRoute = MonthlyTrendsRouteImport.update({
@@ -149,16 +117,6 @@ const CityRoute = CityRouteImport.update({
   path: '/city',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CallEventsRoute = CallEventsRouteImport.update({
-  id: '/call-events',
-  path: '/call-events',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CallCenterAssignmentRoute = CallCenterAssignmentRouteImport.update({
-  id: '/call-center-assignment',
-  path: '/call-center-assignment',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CallCenterRoute = CallCenterRouteImport.update({
   id: '/call-center',
   path: '/call-center',
@@ -191,8 +149,6 @@ export interface FileRoutesByFullPath {
   '/activity-log': typeof ActivityLogRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
-  '/call-center-assignment': typeof CallCenterAssignmentRoute
-  '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
   '/control-panel': typeof ControlPanelRoute
@@ -205,16 +161,11 @@ export interface FileRoutesByFullPath {
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
-  '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
-  '/rejected-returned': typeof RejectedReturnedRoute
-  '/satisfaction': typeof SatisfactionRoute
   '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
-  '/ticket-repair-history': typeof TicketRepairHistoryRoute
   '/warranty-payments': typeof WarrantyPaymentsRoute
-  '/whatsapp': typeof WhatsappRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -222,8 +173,6 @@ export interface FileRoutesByTo {
   '/activity-log': typeof ActivityLogRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
-  '/call-center-assignment': typeof CallCenterAssignmentRoute
-  '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
   '/control-panel': typeof ControlPanelRoute
@@ -236,16 +185,11 @@ export interface FileRoutesByTo {
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
-  '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
-  '/rejected-returned': typeof RejectedReturnedRoute
-  '/satisfaction': typeof SatisfactionRoute
   '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
-  '/ticket-repair-history': typeof TicketRepairHistoryRoute
   '/warranty-payments': typeof WarrantyPaymentsRoute
-  '/whatsapp': typeof WhatsappRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -254,8 +198,6 @@ export interface FileRoutesById {
   '/activity-log': typeof ActivityLogRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
-  '/call-center-assignment': typeof CallCenterAssignmentRoute
-  '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
   '/control-panel': typeof ControlPanelRoute
@@ -268,16 +210,11 @@ export interface FileRoutesById {
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
-  '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
-  '/rejected-returned': typeof RejectedReturnedRoute
-  '/satisfaction': typeof SatisfactionRoute
   '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
-  '/ticket-repair-history': typeof TicketRepairHistoryRoute
   '/warranty-payments': typeof WarrantyPaymentsRoute
-  '/whatsapp': typeof WhatsappRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -287,8 +224,6 @@ export interface FileRouteTypes {
     | '/activity-log'
     | '/asc-performance'
     | '/call-center'
-    | '/call-center-assignment'
-    | '/call-events'
     | '/city'
     | '/commerce-complaints'
     | '/control-panel'
@@ -301,16 +236,11 @@ export interface FileRouteTypes {
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
-    | '/obm-analysis'
     | '/pending-analysis'
-    | '/rejected-returned'
-    | '/satisfaction'
     | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
-    | '/ticket-repair-history'
     | '/warranty-payments'
-    | '/whatsapp'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -318,8 +248,6 @@ export interface FileRouteTypes {
     | '/activity-log'
     | '/asc-performance'
     | '/call-center'
-    | '/call-center-assignment'
-    | '/call-events'
     | '/city'
     | '/commerce-complaints'
     | '/control-panel'
@@ -332,16 +260,11 @@ export interface FileRouteTypes {
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
-    | '/obm-analysis'
     | '/pending-analysis'
-    | '/rejected-returned'
-    | '/satisfaction'
     | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
-    | '/ticket-repair-history'
     | '/warranty-payments'
-    | '/whatsapp'
   id:
     | '__root__'
     | '/'
@@ -349,8 +272,6 @@ export interface FileRouteTypes {
     | '/activity-log'
     | '/asc-performance'
     | '/call-center'
-    | '/call-center-assignment'
-    | '/call-events'
     | '/city'
     | '/commerce-complaints'
     | '/control-panel'
@@ -363,16 +284,11 @@ export interface FileRouteTypes {
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
-    | '/obm-analysis'
     | '/pending-analysis'
-    | '/rejected-returned'
-    | '/satisfaction'
     | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
-    | '/ticket-repair-history'
     | '/warranty-payments'
-    | '/whatsapp'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -381,8 +297,6 @@ export interface RootRouteChildren {
   ActivityLogRoute: typeof ActivityLogRoute
   AscPerformanceRoute: typeof AscPerformanceRoute
   CallCenterRoute: typeof CallCenterRoute
-  CallCenterAssignmentRoute: typeof CallCenterAssignmentRoute
-  CallEventsRoute: typeof CallEventsRoute
   CityRoute: typeof CityRoute
   CommerceComplaintsRoute: typeof CommerceComplaintsRoute
   ControlPanelRoute: typeof ControlPanelRoute
@@ -395,39 +309,20 @@ export interface RootRouteChildren {
   InstallationAnalysisRoute: typeof InstallationAnalysisRoute
   KpisRoute: typeof KpisRoute
   MonthlyTrendsRoute: typeof MonthlyTrendsRoute
-  ObmAnalysisRoute: typeof ObmAnalysisRoute
   PendingAnalysisRoute: typeof PendingAnalysisRoute
-  RejectedReturnedRoute: typeof RejectedReturnedRoute
-  SatisfactionRoute: typeof SatisfactionRoute
   ShipmentsRoute: typeof ShipmentsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SparePartsRoute: typeof SparePartsRoute
-  TicketRepairHistoryRoute: typeof TicketRepairHistoryRoute
   WarrantyPaymentsRoute: typeof WarrantyPaymentsRoute
-  WhatsappRoute: typeof WhatsappRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/whatsapp': {
-      id: '/whatsapp'
-      path: '/whatsapp'
-      fullPath: '/whatsapp'
-      preLoaderRoute: typeof WhatsappRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/warranty-payments': {
       id: '/warranty-payments'
       path: '/warranty-payments'
       fullPath: '/warranty-payments'
       preLoaderRoute: typeof WarrantyPaymentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ticket-repair-history': {
-      id: '/ticket-repair-history'
-      path: '/ticket-repair-history'
-      fullPath: '/ticket-repair-history'
-      preLoaderRoute: typeof TicketRepairHistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/spare-parts': {
@@ -451,32 +346,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShipmentsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/satisfaction': {
-      id: '/satisfaction'
-      path: '/satisfaction'
-      fullPath: '/satisfaction'
-      preLoaderRoute: typeof SatisfactionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/rejected-returned': {
-      id: '/rejected-returned'
-      path: '/rejected-returned'
-      fullPath: '/rejected-returned'
-      preLoaderRoute: typeof RejectedReturnedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/pending-analysis': {
       id: '/pending-analysis'
       path: '/pending-analysis'
       fullPath: '/pending-analysis'
       preLoaderRoute: typeof PendingAnalysisRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/obm-analysis': {
-      id: '/obm-analysis'
-      path: '/obm-analysis'
-      fullPath: '/obm-analysis'
-      preLoaderRoute: typeof ObmAnalysisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/monthly-trends': {
@@ -563,20 +437,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CityRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/call-events': {
-      id: '/call-events'
-      path: '/call-events'
-      fullPath: '/call-events'
-      preLoaderRoute: typeof CallEventsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/call-center-assignment': {
-      id: '/call-center-assignment'
-      path: '/call-center-assignment'
-      fullPath: '/call-center-assignment'
-      preLoaderRoute: typeof CallCenterAssignmentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/call-center': {
       id: '/call-center'
       path: '/call-center'
@@ -621,8 +481,6 @@ const rootRouteChildren: RootRouteChildren = {
   ActivityLogRoute: ActivityLogRoute,
   AscPerformanceRoute: AscPerformanceRoute,
   CallCenterRoute: CallCenterRoute,
-  CallCenterAssignmentRoute: CallCenterAssignmentRoute,
-  CallEventsRoute: CallEventsRoute,
   CityRoute: CityRoute,
   CommerceComplaintsRoute: CommerceComplaintsRoute,
   ControlPanelRoute: ControlPanelRoute,
@@ -635,16 +493,11 @@ const rootRouteChildren: RootRouteChildren = {
   InstallationAnalysisRoute: InstallationAnalysisRoute,
   KpisRoute: KpisRoute,
   MonthlyTrendsRoute: MonthlyTrendsRoute,
-  ObmAnalysisRoute: ObmAnalysisRoute,
   PendingAnalysisRoute: PendingAnalysisRoute,
-  RejectedReturnedRoute: RejectedReturnedRoute,
-  SatisfactionRoute: SatisfactionRoute,
   ShipmentsRoute: ShipmentsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SparePartsRoute: SparePartsRoute,
-  TicketRepairHistoryRoute: TicketRepairHistoryRoute,
   WarrantyPaymentsRoute: WarrantyPaymentsRoute,
-  WhatsappRoute: WhatsappRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
