@@ -162,6 +162,13 @@ function Index() {
           <ChartCard
             title="Monthly 48h vs 72h Completion"
             subtitle="Rolling monthly performance versus SLA targets"
+            exportRows={MONTHLY.map((m) => ({
+              Month: m.label,
+              "48h %": m.rate48h,
+              "72h %": m.rate72h,
+              "48h count": m.count48h,
+              "72h count": m.count72h,
+            }))}
             action={
               <div
                 className="inline-flex rounded-md border border-border bg-card p-0.5 text-xs font-medium"
@@ -235,6 +242,7 @@ function Index() {
           <ChartCard
             title="Rescheduled Tickets by Month"
             subtitle="Volume of tickets moved to a later date"
+            exportRows={MONTHLY.map((m) => ({ Month: m.label, Rescheduled: m.rescheduled }))}
             footer="Lower is better."
           >
             <ResponsiveContainer width="100%" height={280}>
@@ -267,6 +275,7 @@ function Index() {
             title="Pending by Reason"
             subtitle="Why open tickets are still open"
             className="xl:col-span-2"
+            exportRows={PENDING_BY_REASON.map((r) => ({ Reason: r.reason, Count: r.count }))}
             footer={`Top reason accounts for ~${Math.round(
               (PENDING_BY_REASON[0].count /
                 PENDING_BY_REASON.reduce((s, r) => s + r.count, 0)) *
@@ -313,6 +322,15 @@ function Index() {
         <ChartCard
           title="Monthly Comparison"
           subtitle="Month-over-month totals, completion and rescheduled volume"
+          exportRows={MONTHLY.map((m) => ({
+            Month: m.label,
+            Total: m.total,
+            Completed: m.completed,
+            Pending: m.pending,
+            "48h %": m.rate48h,
+            "72h %": m.rate72h,
+            Rescheduled: m.rescheduled,
+          }))}
         >
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
