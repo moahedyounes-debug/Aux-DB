@@ -14,6 +14,7 @@ import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
 import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
 import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
+import { Route as CityRouteImport } from './routes/city'
 import { Route as CallCenterRouteImport } from './routes/call-center'
 import { Route as AscPerformanceRouteImport } from './routes/asc-performance'
 import { Route as IndexRouteImport } from './routes/index'
@@ -43,6 +44,11 @@ const DailyOperationsRoute = DailyOperationsRouteImport.update({
   path: '/daily-operations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CityRoute = CityRouteImport.update({
+  id: '/city',
+  path: '/city',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CallCenterRoute = CallCenterRouteImport.update({
   id: '/call-center',
   path: '/call-center',
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
+  '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
+  '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
+  '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/asc-performance'
     | '/call-center'
+    | '/city'
     | '/daily-operations'
     | '/kpis'
     | '/monthly-trends'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/asc-performance'
     | '/call-center'
+    | '/city'
     | '/daily-operations'
     | '/kpis'
     | '/monthly-trends'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/asc-performance'
     | '/call-center'
+    | '/city'
     | '/daily-operations'
     | '/kpis'
     | '/monthly-trends'
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AscPerformanceRoute: typeof AscPerformanceRoute
   CallCenterRoute: typeof CallCenterRoute
+  CityRoute: typeof CityRoute
   DailyOperationsRoute: typeof DailyOperationsRoute
   KpisRoute: typeof KpisRoute
   MonthlyTrendsRoute: typeof MonthlyTrendsRoute
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DailyOperationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/city': {
+      id: '/city'
+      path: '/city'
+      fullPath: '/city'
+      preLoaderRoute: typeof CityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/call-center': {
       id: '/call-center'
       path: '/call-center'
@@ -199,6 +219,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AscPerformanceRoute: AscPerformanceRoute,
   CallCenterRoute: CallCenterRoute,
+  CityRoute: CityRoute,
   DailyOperationsRoute: DailyOperationsRoute,
   KpisRoute: KpisRoute,
   MonthlyTrendsRoute: MonthlyTrendsRoute,
