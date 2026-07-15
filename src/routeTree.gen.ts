@@ -28,6 +28,7 @@ import { Route as DeepInsightsRouteImport } from './routes/deep-insights'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
 import { Route as CustomDashboardRouteImport } from './routes/custom-dashboard'
 import { Route as CostsRouteImport } from './routes/costs'
+import { Route as ControlPanelRouteImport } from './routes/control-panel'
 import { Route as CommerceComplaintsRouteImport } from './routes/commerce-complaints'
 import { Route as CityRouteImport } from './routes/city'
 import { Route as CallEventsRouteImport } from './routes/call-events'
@@ -132,6 +133,11 @@ const CostsRoute = CostsRouteImport.update({
   path: '/costs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ControlPanelRoute = ControlPanelRouteImport.update({
+  id: '/control-panel',
+  path: '/control-panel',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CommerceComplaintsRoute = CommerceComplaintsRouteImport.update({
   id: '/commerce-complaints',
   path: '/commerce-complaints',
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
+  '/control-panel': typeof ControlPanelRoute
   '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
   '/daily-operations': typeof DailyOperationsRoute
@@ -211,6 +218,7 @@ export interface FileRoutesByTo {
   '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
+  '/control-panel': typeof ControlPanelRoute
   '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
   '/daily-operations': typeof DailyOperationsRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
   '/commerce-complaints': typeof CommerceComplaintsRoute
+  '/control-panel': typeof ControlPanelRoute
   '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
   '/daily-operations': typeof DailyOperationsRoute
@@ -272,6 +281,7 @@ export interface FileRouteTypes {
     | '/call-events'
     | '/city'
     | '/commerce-complaints'
+    | '/control-panel'
     | '/costs'
     | '/custom-dashboard'
     | '/daily-operations'
@@ -301,6 +311,7 @@ export interface FileRouteTypes {
     | '/call-events'
     | '/city'
     | '/commerce-complaints'
+    | '/control-panel'
     | '/costs'
     | '/custom-dashboard'
     | '/daily-operations'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/call-events'
     | '/city'
     | '/commerce-complaints'
+    | '/control-panel'
     | '/costs'
     | '/custom-dashboard'
     | '/daily-operations'
@@ -360,6 +372,7 @@ export interface RootRouteChildren {
   CallEventsRoute: typeof CallEventsRoute
   CityRoute: typeof CityRoute
   CommerceComplaintsRoute: typeof CommerceComplaintsRoute
+  ControlPanelRoute: typeof ControlPanelRoute
   CostsRoute: typeof CostsRoute
   CustomDashboardRoute: typeof CustomDashboardRoute
   DailyOperationsRoute: typeof DailyOperationsRoute
@@ -516,6 +529,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CostsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/control-panel': {
+      id: '/control-panel'
+      path: '/control-panel'
+      fullPath: '/control-panel'
+      preLoaderRoute: typeof ControlPanelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/commerce-complaints': {
       id: '/commerce-complaints'
       path: '/commerce-complaints'
@@ -584,6 +604,7 @@ const rootRouteChildren: RootRouteChildren = {
   CallEventsRoute: CallEventsRoute,
   CityRoute: CityRoute,
   CommerceComplaintsRoute: CommerceComplaintsRoute,
+  ControlPanelRoute: ControlPanelRoute,
   CostsRoute: CostsRoute,
   CustomDashboardRoute: CustomDashboardRoute,
   DailyOperationsRoute: DailyOperationsRoute,
