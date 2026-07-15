@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
+import { Route as ObmAnalysisRouteImport } from './routes/obm-analysis'
 import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
 import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as InstallationAnalysisRouteImport } from './routes/installation-analysis'
@@ -29,6 +30,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const PendingAnalysisRoute = PendingAnalysisRouteImport.update({
   id: '/pending-analysis',
   path: '/pending-analysis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ObmAnalysisRoute = ObmAnalysisRouteImport.update({
+  id: '/obm-analysis',
+  path: '/obm-analysis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MonthlyTrendsRoute = MonthlyTrendsRouteImport.update({
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
+  '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
 }
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
+  '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
 }
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
+  '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
 }
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
+    | '/obm-analysis'
     | '/pending-analysis'
     | '/sitemap.xml'
   fileRoutesByTo: FileRoutesByTo
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
+    | '/obm-analysis'
     | '/pending-analysis'
     | '/sitemap.xml'
   id:
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
+    | '/obm-analysis'
     | '/pending-analysis'
     | '/sitemap.xml'
   fileRoutesById: FileRoutesById
@@ -169,6 +181,7 @@ export interface RootRouteChildren {
   InstallationAnalysisRoute: typeof InstallationAnalysisRoute
   KpisRoute: typeof KpisRoute
   MonthlyTrendsRoute: typeof MonthlyTrendsRoute
+  ObmAnalysisRoute: typeof ObmAnalysisRoute
   PendingAnalysisRoute: typeof PendingAnalysisRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
@@ -187,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/pending-analysis'
       fullPath: '/pending-analysis'
       preLoaderRoute: typeof PendingAnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/obm-analysis': {
+      id: '/obm-analysis'
+      path: '/obm-analysis'
+      fullPath: '/obm-analysis'
+      preLoaderRoute: typeof ObmAnalysisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/monthly-trends': {
@@ -265,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   InstallationAnalysisRoute: InstallationAnalysisRoute,
   KpisRoute: KpisRoute,
   MonthlyTrendsRoute: MonthlyTrendsRoute,
+  ObmAnalysisRoute: ObmAnalysisRoute,
   PendingAnalysisRoute: PendingAnalysisRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
