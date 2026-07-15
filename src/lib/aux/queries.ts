@@ -1,7 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getSheetsKpi } from "./sheets.functions";
-import { getCallsSnapshot } from "./calls.functions";
-import { getCICSnapshot } from "./cic.functions";
+import { getSheetsKpi, getAssignmentLog, getSatisfactionSurveys } from "./sheets.functions";
 
 export const kpiQueryOptions = queryOptions({
   queryKey: ["aux", "kpi", "sheets"],
@@ -9,14 +7,14 @@ export const kpiQueryOptions = queryOptions({
   staleTime: 5 * 60_000,
 });
 
-export const callsQueryOptions = queryOptions({
-  queryKey: ["aux", "calls"],
-  queryFn: () => getCallsSnapshot(),
+export const assignmentQueryOptions = queryOptions({
+  queryKey: ["aux", "assignment"],
+  queryFn: () => getAssignmentLog(),
   staleTime: 10 * 60_000,
 });
 
-export const cicQueryOptions = queryOptions({
-  queryKey: ["aux", "cic"],
-  queryFn: () => getCICSnapshot(),
+export const satisfactionQueryOptions = queryOptions({
+  queryKey: ["aux", "satisfaction"],
+  queryFn: () => getSatisfactionSurveys(),
   staleTime: 10 * 60_000,
 });
