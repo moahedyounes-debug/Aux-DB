@@ -45,6 +45,15 @@ export interface CountRow {
   key: string;
   count: number;
 }
+export interface BranchKpi {
+  branch: string;
+  total: number;
+  completed: number;
+  pending: number;
+  rate48h: number;
+  rate72h: number;
+  csat: number;
+}
 export interface Snapshot {
   total: number;
   pending: number;
@@ -64,6 +73,7 @@ export interface KpiData {
   pendingByReason: { reason: string; count: number }[];
   pendingByBranch: { branch: string; count: number }[];
   pendingAging: { bucket: string; count: number }[];
+  branches: BranchKpi[];
   error?: string;
 }
 
@@ -126,6 +136,10 @@ function aggregate(rows: string[][]): KpiData {
   const dayMap = new Map<string, DailyRow>();
   const reasonMap = new Map<string, number>();
   const branchPending = new Map<string, number>();
+  const branchStats = new Map<
+    string,
+    { total: number; completed: number; pending: number; c48: number; c72: number }
+  >();
   const aging = { "0–24h": 0, "24–48h": 0, "48–72h": 0, "3–7d": 0, "7–14d": 0, "14d+": 0 };
 
   let total = 0;
@@ -167,6 +181,17 @@ function aggregate(rows: string[][]): KpiData {
     const hrs = Number(String(row[COL.serviceHours] ?? "").trim());
     const under48 = done && !isNaN(hrs) && hrs <= 48;
     const under72 = done && !isNaN(hrs) && hrs <= 72;
+
+    let bs = branchStats.get(branch);
+    if (!bs) {
+      bs = { total: 0, completed: 0, pending: 0, c48: 0, c72: 0 };
+      branchStats.set(branch, bs);
+    }
+    bs.total++;
+    if (done) bs.completed++;
+    else bs.pending++;
+    if (under48) bs.c48++;
+    if (under72) bs.c72++;
 
     if (done) completed++;
     else {
@@ -270,6 +295,18 @@ function aggregate(rows: string[][]): KpiData {
     count: aging[bucket],
   }));
 
+  const branches: BranchKpi[] = Array.from(branchStats.entries())
+    .map(([branch, s]) => ({
+      branch,
+      total: s.total,
+      completed: s.completed,
+      pending: s.pending,
+      rate48h: s.completed > 0 ? Math.round((s.c48 / s.completed) * 1000) / 10 : 0,
+      rate72h: s.completed > 0 ? Math.round((s.c72 / s.completed) * 1000) / 10 : 0,
+      csat: 0,
+    }))
+    .sort((a, b) => b.total - a.total);
+
   return {
     fetchedAt: new Date().toISOString(),
     rowCount: rows.length,
@@ -279,6 +316,7 @@ function aggregate(rows: string[][]): KpiData {
     pendingByReason,
     pendingByBranch,
     pendingAging,
+    branches,
   };
 }
 
@@ -310,6 +348,7 @@ export const getSheetsKpi = createServerFn({ method: "GET" }).handler(async (): 
       pendingByReason: [],
       pendingByBranch: [],
       pendingAging: [],
+      branches: [],
       error: msg,
     };
   }
