@@ -18,6 +18,7 @@ import { Route as ObmAnalysisRouteImport } from './routes/obm-analysis'
 import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
 import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as InstallationAnalysisRouteImport } from './routes/installation-analysis'
+import { Route as DistrictsMapRouteImport } from './routes/districts-map'
 import { Route as DeepInsightsRouteImport } from './routes/deep-insights'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
 import { Route as CityRouteImport } from './routes/city'
@@ -72,6 +73,11 @@ const InstallationAnalysisRoute = InstallationAnalysisRouteImport.update({
   path: '/installation-analysis',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DistrictsMapRoute = DistrictsMapRouteImport.update({
+  id: '/districts-map',
+  path: '/districts-map',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DeepInsightsRoute = DeepInsightsRouteImport.update({
   id: '/deep-insights',
   path: '/deep-insights',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
+  '/districts-map': typeof DistrictsMapRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
+  '/districts-map': typeof DistrictsMapRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/city': typeof CityRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
+  '/districts-map': typeof DistrictsMapRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
@@ -182,6 +191,7 @@ export interface FileRouteTypes {
     | '/city'
     | '/daily-operations'
     | '/deep-insights'
+    | '/districts-map'
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/city'
     | '/daily-operations'
     | '/deep-insights'
+    | '/districts-map'
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/city'
     | '/daily-operations'
     | '/deep-insights'
+    | '/districts-map'
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
@@ -240,6 +252,7 @@ export interface RootRouteChildren {
   CityRoute: typeof CityRoute
   DailyOperationsRoute: typeof DailyOperationsRoute
   DeepInsightsRoute: typeof DeepInsightsRoute
+  DistrictsMapRoute: typeof DistrictsMapRoute
   InstallationAnalysisRoute: typeof InstallationAnalysisRoute
   KpisRoute: typeof KpisRoute
   MonthlyTrendsRoute: typeof MonthlyTrendsRoute
@@ -316,6 +329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstallationAnalysisRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/districts-map': {
+      id: '/districts-map'
+      path: '/districts-map'
+      fullPath: '/districts-map'
+      preLoaderRoute: typeof DistrictsMapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/deep-insights': {
       id: '/deep-insights'
       path: '/deep-insights'
@@ -384,6 +404,7 @@ const rootRouteChildren: RootRouteChildren = {
   CityRoute: CityRoute,
   DailyOperationsRoute: DailyOperationsRoute,
   DeepInsightsRoute: DeepInsightsRoute,
+  DistrictsMapRoute: DistrictsMapRoute,
   InstallationAnalysisRoute: InstallationAnalysisRoute,
   KpisRoute: KpisRoute,
   MonthlyTrendsRoute: MonthlyTrendsRoute,
