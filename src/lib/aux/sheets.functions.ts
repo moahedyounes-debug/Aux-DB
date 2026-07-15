@@ -949,6 +949,7 @@ function aggregate(rows: string[][]): KpiData {
     callCenter,
     cities,
     installation,
+    warranty,
   };
 }
 
