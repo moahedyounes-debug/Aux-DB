@@ -10,17 +10,14 @@ import {
   Cell,
 } from "recharts";
 import { AlarmClock, TimerReset, Building2, ClipboardX } from "lucide-react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
-import {
-  PENDING_AGING,
-  PENDING_BY_BRANCH,
-  PENDING_BY_REASON,
-  currentSnapshot,
-} from "@/lib/aux/mock-data";
+import { kpiQueryOptions } from "@/lib/aux/queries";
 
 export const Route = createFileRoute("/pending-analysis")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
   head: () => ({
     meta: [
       { title: "Pending Analysis — AUX ASC Dashboard" },
@@ -50,10 +47,14 @@ const AGING_COLORS = [
 ];
 
 function PendingAnalysisPage() {
-  const snap = currentSnapshot();
+  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const snap = data.snapshot;
+  const PENDING_AGING = data.pendingAging;
+  const PENDING_BY_BRANCH = data.pendingByBranch;
+  const PENDING_BY_REASON = data.pendingByReason;
   const oldest = PENDING_AGING.slice(-2).reduce((s, b) => s + b.count, 0);
-  const worstBranch = PENDING_BY_BRANCH[0];
-  const topReason = PENDING_BY_REASON[0];
+  const worstBranch = PENDING_BY_BRANCH[0] ?? { branch: "—", count: 0 };
+  const topReason = PENDING_BY_REASON[0] ?? { reason: "—", count: 0 };
 
   const tooltipStyle = {
     background: "var(--color-popover)",
