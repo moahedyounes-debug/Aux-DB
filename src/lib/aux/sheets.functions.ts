@@ -274,7 +274,8 @@ function aggregate(rows: string[][]): KpiData {
     else {
       pending++;
       const statusLower = status.toLowerCase();
-      const isUnassigned = statusLower.includes("not assigned");
+      const workerBlank = !String(row[COL.workerName] ?? "").trim();
+      const isUnassigned = workerBlank;
       const isDispatched = statusLower.includes("dispatch");
       if (isUnassigned) unassigned++;
       if (isDispatched) dispatchedCount++;
