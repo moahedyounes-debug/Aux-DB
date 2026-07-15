@@ -165,6 +165,76 @@ export interface InstallationSummary {
   byBranch: { branch: string; count: number; pending: number }[];
   tickets: InstallationTicket[];
 }
+// ---------------- Warranty Payments ----------------
+// Warranty payout is derived from completed repair tickets.
+// Rate per product line (SAR) — adjust these to match the real warranty tariff.
+export const WARRANTY_RATES: { match: string; rate: number }[] = [
+  { match: "split", rate: 180 },
+  { match: "cassette", rate: 260 },
+  { match: "duct", rate: 320 },
+  { match: "floor", rate: 220 },
+  { match: "window", rate: 140 },
+  { match: "vrf", rate: 420 },
+  { match: "chiller", rate: 520 },
+  { match: "portable", rate: 120 },
+];
+export const WARRANTY_DEFAULT_RATE = 180;
+// SLA-miss deduction (percent) applied to claims completed above the 72h target.
+export const WARRANTY_SLA_DEDUCTION_PCT = 15;
+
+export type WarrantyStatus = "paid" | "approved" | "submitted";
+export interface WarrantyClaim {
+  ticket: string;
+  branch: string;
+  city: string;
+  productLine: string;
+  createdAt: string;
+  completedAt: string;
+  serviceHours: number;
+  status: WarrantyStatus;
+  gross: number;
+  deduction: number;
+  net: number;
+}
+export interface WarrantyBranchRow {
+  branch: string;
+  claims: number;
+  paid: number;
+  approved: number;
+  submitted: number;
+  gross: number;
+  deduction: number;
+  net: number;
+}
+export interface WarrantyMonthRow {
+  month: string;
+  label: string;
+  claims: number;
+  gross: number;
+  deduction: number;
+  net: number;
+}
+export interface WarrantyProductRow {
+  product: string;
+  rate: number;
+  claims: number;
+  net: number;
+}
+export interface WarrantySummary {
+  totalClaims: number;
+  paid: number;
+  approved: number;
+  submitted: number;
+  gross: number;
+  deduction: number;
+  net: number;
+  paidRate: number;
+  avgClaim: number;
+  byBranch: WarrantyBranchRow[];
+  byMonth: WarrantyMonthRow[];
+  byProduct: WarrantyProductRow[];
+  recentClaims: WarrantyClaim[];
+}
 export interface Snapshot {
   total: number;
   pending: number;
@@ -189,6 +259,7 @@ export interface KpiData {
   callCenter: CallCenterSummary;
   cities: CityKpi[];
   installation: InstallationSummary;
+  warranty: WarrantySummary;
   error?: string;
 }
 
