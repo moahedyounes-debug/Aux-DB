@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WarrantyPaymentsRouteImport } from './routes/warranty-payments'
+import { Route as TicketRepairHistoryRouteImport } from './routes/ticket-repair-history'
 import { Route as SparePartsRouteImport } from './routes/spare-parts'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ShipmentsRouteImport } from './routes/shipments'
@@ -37,6 +38,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const WarrantyPaymentsRoute = WarrantyPaymentsRouteImport.update({
   id: '/warranty-payments',
   path: '/warranty-payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TicketRepairHistoryRoute = TicketRepairHistoryRouteImport.update({
+  id: '/ticket-repair-history',
+  path: '/ticket-repair-history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SparePartsRoute = SparePartsRouteImport.update({
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
+  '/ticket-repair-history': typeof TicketRepairHistoryRoute
   '/warranty-payments': typeof WarrantyPaymentsRoute
 }
 export interface FileRoutesByTo {
@@ -205,6 +212,7 @@ export interface FileRoutesByTo {
   '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
+  '/ticket-repair-history': typeof TicketRepairHistoryRoute
   '/warranty-payments': typeof WarrantyPaymentsRoute
 }
 export interface FileRoutesById {
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/shipments': typeof ShipmentsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/spare-parts': typeof SparePartsRoute
+  '/ticket-repair-history': typeof TicketRepairHistoryRoute
   '/warranty-payments': typeof WarrantyPaymentsRoute
 }
 export interface FileRouteTypes {
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
     | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
+    | '/ticket-repair-history'
     | '/warranty-payments'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -286,6 +296,7 @@ export interface FileRouteTypes {
     | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
+    | '/ticket-repair-history'
     | '/warranty-payments'
   id:
     | '__root__'
@@ -312,6 +323,7 @@ export interface FileRouteTypes {
     | '/shipments'
     | '/sitemap.xml'
     | '/spare-parts'
+    | '/ticket-repair-history'
     | '/warranty-payments'
   fileRoutesById: FileRoutesById
 }
@@ -339,6 +351,7 @@ export interface RootRouteChildren {
   ShipmentsRoute: typeof ShipmentsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SparePartsRoute: typeof SparePartsRoute
+  TicketRepairHistoryRoute: typeof TicketRepairHistoryRoute
   WarrantyPaymentsRoute: typeof WarrantyPaymentsRoute
 }
 
@@ -349,6 +362,13 @@ declare module '@tanstack/react-router' {
       path: '/warranty-payments'
       fullPath: '/warranty-payments'
       preLoaderRoute: typeof WarrantyPaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ticket-repair-history': {
+      id: '/ticket-repair-history'
+      path: '/ticket-repair-history'
+      fullPath: '/ticket-repair-history'
+      preLoaderRoute: typeof TicketRepairHistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/spare-parts': {
@@ -539,6 +559,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShipmentsRoute: ShipmentsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SparePartsRoute: SparePartsRoute,
+  TicketRepairHistoryRoute: TicketRepairHistoryRoute,
   WarrantyPaymentsRoute: WarrantyPaymentsRoute,
 }
 export const routeTree = rootRouteImport
