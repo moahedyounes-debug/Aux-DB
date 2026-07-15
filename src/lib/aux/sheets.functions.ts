@@ -899,6 +899,30 @@ function aggregate(rows: string[][]): KpiData {
     tickets: installationTickets,
   };
 
+  // Warranty summary
+  const warrNet = warrGross - warrDeduction;
+  const warrTotal = warrPaid + warrApproved + warrSubmitted;
+  warrantyClaims.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const warranty: WarrantySummary = {
+    totalClaims: warrTotal,
+    paid: warrPaid,
+    approved: warrApproved,
+    submitted: warrSubmitted,
+    gross: warrGross,
+    deduction: warrDeduction,
+    net: warrNet,
+    paidRate: warrTotal > 0 ? Math.round((warrPaid / warrTotal) * 1000) / 10 : 0,
+    avgClaim: warrTotal > 0 ? Math.round(warrNet / warrTotal) : 0,
+    byBranch: Array.from(warrantyByBranch.values())
+      .sort((a, b) => b.net - a.net)
+      .slice(0, 20),
+    byMonth: Array.from(warrantyByMonth.values())
+      .sort((a, b) => (a.month < b.month ? -1 : 1))
+      .slice(-12),
+    byProduct: Array.from(warrantyByProduct.values()).sort((a, b) => b.net - a.net),
+    recentClaims: warrantyClaims.slice(0, 200),
+  };
+
   const branches: BranchKpi[] = Array.from(branchStats.entries())
     .map(([branch, s]) => ({
       branch,
