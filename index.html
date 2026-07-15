@@ -215,33 +215,21 @@
 
       <section class="card" aria-labelledby="login-title">
         <h1 id="login-title">تسجيل الدخول</h1>
-        <p class="lead">ادخل بياناتك للوصول إلى لوحة التحكم.</p>
+        <p class="lead">أدخل بريدك الإلكتروني للوصول إلى لوحة التحكم.</p>
 
         <form id="login-form" autocomplete="on" novalidate>
           <div class="field">
-            <label for="username">اسم المستخدم</label>
+            <label for="email">البريد الإلكتروني</label>
             <div class="input-wrap">
               <input
-                id="username"
-                name="username"
-                type="text"
-                placeholder="admin"
+                id="email"
+                name="email"
+                type="email"
+                placeholder="name@company.com"
+                dir="ltr"
+                style="text-align: left"
                 required
-                autocomplete="username"
-              />
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="password">كلمة المرور</label>
-            <div class="input-wrap">
-              <input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                required
-                autocomplete="current-password"
+                autocomplete="email"
               />
             </div>
           </div>
@@ -252,7 +240,7 @@
           </div>
 
           <button type="submit" class="btn" id="submit-btn">دخول لوحة التحكم</button>
-          <div id="error" class="error">اسم المستخدم أو كلمة المرور غير صحيحة.</div>
+          <div id="error" class="error">البريد الإلكتروني غير مصرح له بالدخول.</div>
         </form>
       </section>
 
@@ -261,16 +249,12 @@
 
     <script>
       // ============================================================
-      // إعدادات الدخول — عدّل هذه القيم كما تريد
+      // إعدادات الدخول — التحقق يتم من قائمة Access في Google Sheet
       // ============================================================
-      const CREDENTIALS = [
-        { user: "admin", pass: "aux2026" },
-        // أضف مستخدمين إضافيين هنا إذا أردت
-      ];
-
-      // رابط لوحة التحكم بعد تسجيل الدخول (Lovable)
       const DASHBOARD_URL =
         "https://id-preview--b8a4a2f1-0ed8-44dd-9c92-ab14b39de405.lovable.app/";
+      const ACCESS_CHECK_URL =
+        "https://project--b8a4a2f1-0ed8-44dd-9c92-ab14b39de405.lovable.app/api/public/access-check";
       // ============================================================
 
       const form = document.getElementById("login-form");
@@ -280,36 +264,68 @@
       // إذا كان مسجّل مسبقاً — حوّله للداشبورد مباشرة
       try {
         const stored =
-          localStorage.getItem("aux_auth") || sessionStorage.getItem("aux_auth");
-        if (stored === "1") {
+          localStorage.getItem("aux_access") || sessionStorage.getItem("aux_access");
+        if (stored) {
           window.location.replace(DASHBOARD_URL);
         }
       } catch (_) {}
 
-      form.addEventListener("submit", (e) => {
+      function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.classList.add("show");
+      }
+
+      form.addEventListener("submit", async (e) => {
         e.preventDefault();
         errorBox.classList.remove("show");
-        const u = document.getElementById("username").value.trim().toLowerCase();
-        const p = document.getElementById("password").value;
+
+        const email = document.getElementById("email").value.trim().toLowerCase();
         const remember = document.getElementById("remember").checked;
 
-        const ok = CREDENTIALS.some(
-          (c) => c.user.toLowerCase() === u && c.pass === p,
-        );
-
-        if (!ok) {
-          errorBox.classList.add("show");
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          showError("يرجى إدخال بريد إلكتروني صحيح.");
           return;
         }
 
-        try {
-          if (remember) localStorage.setItem("aux_auth", "1");
-          else sessionStorage.setItem("aux_auth", "1");
-        } catch (_) {}
-
         btn.disabled = true;
-        btn.textContent = "جارٍ الدخول...";
-        window.location.href = DASHBOARD_URL;
+        btn.textContent = "جارٍ التحقق...";
+
+        try {
+          const res = await fetch(
+            ACCESS_CHECK_URL + "?email=" + encodeURIComponent(email),
+            { method: "GET" },
+          );
+          const data = await res.json();
+
+          if (!res.ok || !data.ok) {
+            const map = {
+              invalid_email: "يرجى إدخال بريد إلكتروني صحيح.",
+              not_authorized: "البريد الإلكتروني غير مصرح له بالدخول.",
+              internal_error: "تعذر التحقق حالياً، حاول مرة أخرى.",
+            };
+            showError(map[data.error] || "تعذر التحقق حالياً.");
+            btn.disabled = false;
+            btn.textContent = "دخول لوحة التحكم";
+            return;
+          }
+
+          const payload = JSON.stringify({
+            ...data.access,
+            savedAt: Date.now(),
+          });
+          try {
+            if (remember) localStorage.setItem("aux_access", payload);
+            else sessionStorage.setItem("aux_access", payload);
+          } catch (_) {}
+
+          btn.textContent = "جارٍ الدخول...";
+          window.location.href = DASHBOARD_URL;
+        } catch (err) {
+          console.error(err);
+          showError("تعذر الاتصال بالخادم.");
+          btn.disabled = false;
+          btn.textContent = "دخول لوحة التحكم";
+        }
       });
     </script>
   </body>

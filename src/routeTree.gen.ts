@@ -38,6 +38,7 @@ import { Route as AscPerformanceRouteImport } from './routes/asc-performance'
 import { Route as ActivityLogRouteImport } from './routes/activity-log'
 import { Route as AccessRouteImport } from './routes/access'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicAccessCheckRouteImport } from './routes/api/public/access-check'
 
 const WhatsappRoute = WhatsappRouteImport.update({
   id: '/whatsapp',
@@ -184,6 +185,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAccessCheckRoute = ApiPublicAccessCheckRouteImport.update({
+  id: '/api/public/access-check',
+  path: '/api/public/access-check',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
   '/warranty-payments': typeof WarrantyPaymentsRoute
   '/whatsapp': typeof WhatsappRoute
+  '/api/public/access-check': typeof ApiPublicAccessCheckRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -246,6 +253,7 @@ export interface FileRoutesByTo {
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
   '/warranty-payments': typeof WarrantyPaymentsRoute
   '/whatsapp': typeof WhatsappRoute
+  '/api/public/access-check': typeof ApiPublicAccessCheckRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/ticket-repair-history': typeof TicketRepairHistoryRoute
   '/warranty-payments': typeof WarrantyPaymentsRoute
   '/whatsapp': typeof WhatsappRoute
+  '/api/public/access-check': typeof ApiPublicAccessCheckRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
     | '/ticket-repair-history'
     | '/warranty-payments'
     | '/whatsapp'
+    | '/api/public/access-check'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -342,6 +352,7 @@ export interface FileRouteTypes {
     | '/ticket-repair-history'
     | '/warranty-payments'
     | '/whatsapp'
+    | '/api/public/access-check'
   id:
     | '__root__'
     | '/'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/ticket-repair-history'
     | '/warranty-payments'
     | '/whatsapp'
+    | '/api/public/access-check'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -405,6 +417,7 @@ export interface RootRouteChildren {
   TicketRepairHistoryRoute: typeof TicketRepairHistoryRoute
   WarrantyPaymentsRoute: typeof WarrantyPaymentsRoute
   WhatsappRoute: typeof WhatsappRoute
+  ApiPublicAccessCheckRoute: typeof ApiPublicAccessCheckRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -612,6 +625,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/access-check': {
+      id: '/api/public/access-check'
+      path: '/api/public/access-check'
+      fullPath: '/api/public/access-check'
+      preLoaderRoute: typeof ApiPublicAccessCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -645,6 +665,7 @@ const rootRouteChildren: RootRouteChildren = {
   TicketRepairHistoryRoute: TicketRepairHistoryRoute,
   WarrantyPaymentsRoute: WarrantyPaymentsRoute,
   WhatsappRoute: WhatsappRoute,
+  ApiPublicAccessCheckRoute: ApiPublicAccessCheckRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
