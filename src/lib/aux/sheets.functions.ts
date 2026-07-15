@@ -306,6 +306,9 @@ function aggregate(rows: string[][]): KpiData {
       pendingReasonMap.set(reasonLabel, (pendingReasonMap.get(reasonLabel) ?? 0) + 1);
 
       const worker = String(row[COL.builder] ?? "").trim() || "";
+      const workerName = String(row[COL.workerName] ?? "").trim();
+      const effectiveWorker = workerName || worker;
+      const isUnassignedByName = !workerName;
       const appointed = String(row[COL.appointedDate] ?? "").trim();
       // extract yyyy-mm-dd (or dd/mm/yyyy) prefix
       let appointedISO = "";
@@ -324,17 +327,17 @@ function aggregate(rows: string[][]): KpiData {
       const ticket: PendingTicket = {
         ticket: String(row[COL.ticket] ?? "").trim(),
         branch,
-        worker: isUnassigned ? "Not Assigned" : worker || "—",
+        worker: isUnassignedByName ? "Not Assigned" : effectiveWorker,
         status: status || "Not assigned",
         ageBucket: bucket5,
         ageHours: Math.max(0, Math.round(ageH * 10) / 10),
         reason: reason || "—",
         appointedDate: appointedISO || appointed || "—",
         remark: String(row[COL.remark] ?? "").trim() || "—",
-        parts: String(row[COL.parts] ?? "").trim() || "—",
+        parts: String(row[COL.maintenance] ?? "").trim() || "—",
         rescheduled: resched,
         dispatched: isDispatched,
-        unassigned: isUnassigned,
+        unassigned: isUnassignedByName,
       };
       pendingTickets.push(ticket);
 
