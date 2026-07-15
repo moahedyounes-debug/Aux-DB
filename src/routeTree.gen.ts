@@ -32,6 +32,7 @@ import { Route as CommerceComplaintsRouteImport } from './routes/commerce-compla
 import { Route as CityBreakdownRouteImport } from './routes/city-breakdown'
 import { Route as CityRouteImport } from './routes/city'
 import { Route as CallEventsRouteImport } from './routes/call-events'
+import { Route as CallCenterAssignmentRouteImport } from './routes/call-center-assignment'
 import { Route as CallCenterRouteImport } from './routes/call-center'
 import { Route as AscPerformanceRouteImport } from './routes/asc-performance'
 import { Route as ActivityLogRouteImport } from './routes/activity-log'
@@ -153,6 +154,11 @@ const CallEventsRoute = CallEventsRouteImport.update({
   path: '/call-events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CallCenterAssignmentRoute = CallCenterAssignmentRouteImport.update({
+  id: '/call-center-assignment',
+  path: '/call-center-assignment',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CallCenterRoute = CallCenterRouteImport.update({
   id: '/call-center',
   path: '/call-center',
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/activity-log': typeof ActivityLogRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
+  '/call-center-assignment': typeof CallCenterAssignmentRoute
   '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
   '/city-breakdown': typeof CityBreakdownRoute
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/activity-log': typeof ActivityLogRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
+  '/call-center-assignment': typeof CallCenterAssignmentRoute
   '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
   '/city-breakdown': typeof CityBreakdownRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/activity-log': typeof ActivityLogRoute
   '/asc-performance': typeof AscPerformanceRoute
   '/call-center': typeof CallCenterRoute
+  '/call-center-assignment': typeof CallCenterAssignmentRoute
   '/call-events': typeof CallEventsRoute
   '/city': typeof CityRoute
   '/city-breakdown': typeof CityBreakdownRoute
@@ -278,6 +287,7 @@ export interface FileRouteTypes {
     | '/activity-log'
     | '/asc-performance'
     | '/call-center'
+    | '/call-center-assignment'
     | '/call-events'
     | '/city'
     | '/city-breakdown'
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/activity-log'
     | '/asc-performance'
     | '/call-center'
+    | '/call-center-assignment'
     | '/call-events'
     | '/city'
     | '/city-breakdown'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '/activity-log'
     | '/asc-performance'
     | '/call-center'
+    | '/call-center-assignment'
     | '/call-events'
     | '/city'
     | '/city-breakdown'
@@ -369,6 +381,7 @@ export interface RootRouteChildren {
   ActivityLogRoute: typeof ActivityLogRoute
   AscPerformanceRoute: typeof AscPerformanceRoute
   CallCenterRoute: typeof CallCenterRoute
+  CallCenterAssignmentRoute: typeof CallCenterAssignmentRoute
   CallEventsRoute: typeof CallEventsRoute
   CityRoute: typeof CityRoute
   CityBreakdownRoute: typeof CityBreakdownRoute
@@ -557,6 +570,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CallEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/call-center-assignment': {
+      id: '/call-center-assignment'
+      path: '/call-center-assignment'
+      fullPath: '/call-center-assignment'
+      preLoaderRoute: typeof CallCenterAssignmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/call-center': {
       id: '/call-center'
       path: '/call-center'
@@ -601,6 +621,7 @@ const rootRouteChildren: RootRouteChildren = {
   ActivityLogRoute: ActivityLogRoute,
   AscPerformanceRoute: AscPerformanceRoute,
   CallCenterRoute: CallCenterRoute,
+  CallCenterAssignmentRoute: CallCenterAssignmentRoute,
   CallEventsRoute: CallEventsRoute,
   CityRoute: CityRoute,
   CityBreakdownRoute: CityBreakdownRoute,
