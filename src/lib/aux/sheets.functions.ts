@@ -265,6 +265,21 @@ function aggregate(rows: string[][]): KpiData {
   const ccBranchMap = new Map<string, number>();
   let ccCompleted = 0;
 
+  // City breakdown
+  const cityMap = new Map<
+    string,
+    {
+      city: string;
+      region: string;
+      total: number;
+      completed: number;
+      pending: number;
+      c48: number;
+      c72: number;
+      products: Map<string, number>;
+    }
+  >();
+
   // Prep last 30 days buckets
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
