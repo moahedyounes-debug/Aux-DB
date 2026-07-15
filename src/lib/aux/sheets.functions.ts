@@ -620,9 +620,18 @@ function aggregate(rows: string[][]): KpiData {
     // ---------------- Warranty claim per repair ticket ----------------
     {
       const productLine = String(row[COL.productLine] ?? "").trim() || "Other";
-      const pl = productLine.toLowerCase();
-      const rate =
-        WARRANTY_RATES.find((r) => pl.includes(r.match))?.rate ?? WARRANTY_DEFAULT_RATE;
+      // Classify by job tier using Maintenance Instructions + Remark + Completion Result
+      const jobText = [
+        row[COL.maintenance],
+        row[COL.remark],
+        row[COL.completionResult],
+        row[COL.rescheduleReason],
+      ]
+        .map((v) => String(v ?? "").trim())
+        .filter(Boolean)
+        .join(" | ");
+      const tierDef = classifyWarrantyTier(jobText);
+      const rate = tierDef.rate;
       const gross = rate;
       let status: WarrantyStatus;
       let deduction = 0;
@@ -653,6 +662,16 @@ function aggregate(rows: string[][]): KpiData {
       if (status === "paid") br.paid++;
       else if (status === "approved") br.approved++;
       else br.submitted++;
+
+      // Tier aggregation
+      const tr = warrantyByTier.get(tierDef.tier)!;
+      tr.claims++;
+      tr.gross += gross;
+      tr.deduction += deduction;
+      tr.net += net;
+      if (status === "paid") tr.paid++;
+      else if (status === "approved") tr.approved++;
+      else tr.submitted++;
 
       const claimDate = done ? parseDate(row[COL.completionTime]) ?? created : created;
       if (claimDate) {
@@ -688,6 +707,8 @@ function aggregate(rows: string[][]): KpiData {
         branch,
         city: cityEarly,
         productLine,
+        tier: tierDef.tier,
+        tierLabel: tierDef.label,
         createdAt: created ? created.toISOString().slice(0, 10) : "—",
         completedAt:
           done && parseDate(row[COL.completionTime])
