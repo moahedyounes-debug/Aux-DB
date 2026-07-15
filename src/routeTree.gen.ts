@@ -22,6 +22,7 @@ import { Route as ObmAnalysisRouteImport } from './routes/obm-analysis'
 import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
 import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as InstallationAnalysisRouteImport } from './routes/installation-analysis'
+import { Route as ExportCenterRouteImport } from './routes/export-center'
 import { Route as DistrictsMapRouteImport } from './routes/districts-map'
 import { Route as DeepInsightsRouteImport } from './routes/deep-insights'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
@@ -99,6 +100,11 @@ const InstallationAnalysisRoute = InstallationAnalysisRouteImport.update({
   path: '/installation-analysis',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExportCenterRoute = ExportCenterRouteImport.update({
+  id: '/export-center',
+  path: '/export-center',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DistrictsMapRoute = DistrictsMapRouteImport.update({
   id: '/districts-map',
   path: '/districts-map',
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
+  '/export-center': typeof ExportCenterRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
+  '/export-center': typeof ExportCenterRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/daily-operations': typeof DailyOperationsRoute
   '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
+  '/export-center': typeof ExportCenterRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/daily-operations'
     | '/deep-insights'
     | '/districts-map'
+    | '/export-center'
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/daily-operations'
     | '/deep-insights'
     | '/districts-map'
+    | '/export-center'
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/daily-operations'
     | '/deep-insights'
     | '/districts-map'
+    | '/export-center'
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
@@ -327,6 +339,7 @@ export interface RootRouteChildren {
   DailyOperationsRoute: typeof DailyOperationsRoute
   DeepInsightsRoute: typeof DeepInsightsRoute
   DistrictsMapRoute: typeof DistrictsMapRoute
+  ExportCenterRoute: typeof ExportCenterRoute
   InstallationAnalysisRoute: typeof InstallationAnalysisRoute
   KpisRoute: typeof KpisRoute
   MonthlyTrendsRoute: typeof MonthlyTrendsRoute
@@ -435,6 +448,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstallationAnalysisRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/export-center': {
+      id: '/export-center'
+      path: '/export-center'
+      fullPath: '/export-center'
+      preLoaderRoute: typeof ExportCenterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/districts-map': {
       id: '/districts-map'
       path: '/districts-map'
@@ -527,6 +547,7 @@ const rootRouteChildren: RootRouteChildren = {
   DailyOperationsRoute: DailyOperationsRoute,
   DeepInsightsRoute: DeepInsightsRoute,
   DistrictsMapRoute: DistrictsMapRoute,
+  ExportCenterRoute: ExportCenterRoute,
   InstallationAnalysisRoute: InstallationAnalysisRoute,
   KpisRoute: KpisRoute,
   MonthlyTrendsRoute: MonthlyTrendsRoute,
