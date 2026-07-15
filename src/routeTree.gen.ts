@@ -20,6 +20,7 @@ import { Route as RejectedReturnedRouteImport } from './routes/rejected-returned
 import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
 import { Route as ObmAnalysisRouteImport } from './routes/obm-analysis'
 import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
+import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as InstallationAnalysisRouteImport } from './routes/installation-analysis'
 import { Route as ExportCenterRouteImport } from './routes/export-center'
 import { Route as DistrictsMapRouteImport } from './routes/districts-map'
@@ -93,6 +94,11 @@ const ObmAnalysisRoute = ObmAnalysisRouteImport.update({
 const MonthlyTrendsRoute = MonthlyTrendsRouteImport.update({
   id: '/monthly-trends',
   path: '/monthly-trends',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KpisRoute = KpisRouteImport.update({
+  id: '/kpis',
+  path: '/kpis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InstallationAnalysisRoute = InstallationAnalysisRouteImport.update({
@@ -209,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
+  '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
@@ -241,6 +248,7 @@ export interface FileRoutesByTo {
   '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
+  '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
@@ -274,6 +282,7 @@ export interface FileRoutesById {
   '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
+  '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/obm-analysis': typeof ObmAnalysisRoute
   '/pending-analysis': typeof PendingAnalysisRoute
@@ -308,6 +317,7 @@ export interface FileRouteTypes {
     | '/districts-map'
     | '/export-center'
     | '/installation-analysis'
+    | '/kpis'
     | '/monthly-trends'
     | '/obm-analysis'
     | '/pending-analysis'
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/districts-map'
     | '/export-center'
     | '/installation-analysis'
+    | '/kpis'
     | '/monthly-trends'
     | '/obm-analysis'
     | '/pending-analysis'
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
     | '/districts-map'
     | '/export-center'
     | '/installation-analysis'
+    | '/kpis'
     | '/monthly-trends'
     | '/obm-analysis'
     | '/pending-analysis'
@@ -405,6 +417,7 @@ export interface RootRouteChildren {
   DistrictsMapRoute: typeof DistrictsMapRoute
   ExportCenterRoute: typeof ExportCenterRoute
   InstallationAnalysisRoute: typeof InstallationAnalysisRoute
+  KpisRoute: typeof KpisRoute
   MonthlyTrendsRoute: typeof MonthlyTrendsRoute
   ObmAnalysisRoute: typeof ObmAnalysisRoute
   PendingAnalysisRoute: typeof PendingAnalysisRoute
@@ -497,6 +510,13 @@ declare module '@tanstack/react-router' {
       path: '/monthly-trends'
       fullPath: '/monthly-trends'
       preLoaderRoute: typeof MonthlyTrendsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kpis': {
+      id: '/kpis'
+      path: '/kpis'
+      fullPath: '/kpis'
+      preLoaderRoute: typeof KpisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/installation-analysis': {
@@ -653,6 +673,7 @@ const rootRouteChildren: RootRouteChildren = {
   DistrictsMapRoute: DistrictsMapRoute,
   ExportCenterRoute: ExportCenterRoute,
   InstallationAnalysisRoute: InstallationAnalysisRoute,
+  KpisRoute: KpisRoute,
   MonthlyTrendsRoute: MonthlyTrendsRoute,
   ObmAnalysisRoute: ObmAnalysisRoute,
   PendingAnalysisRoute: PendingAnalysisRoute,
