@@ -442,6 +442,9 @@ export interface AscRemarkRow {
   remark: string;
   updated: string;
   by: string;
+  branch?: string;
+  status?: string;
+  worker?: string;
 }
 export interface AscRemarksSummary {
   fetchedAt: string;
@@ -458,14 +461,22 @@ export const getAscRemarks = createServerFn({ method: "GET" }).handler(
     return cached("ascremarks", async () => {
       try {
         const rows = await fetchRange("ASC Remarks!A2:D");
+        const idx = await fetchTicketIndex();
         const parsed: AscRemarkRow[] = rows
           .filter((r) => r[0])
-          .map((r) => ({
-            ticket: String(r[0] ?? "").trim(),
-            remark: String(r[1] ?? "").trim(),
-            updated: String(r[2] ?? "").trim(),
-            by: String(r[3] ?? "").trim(),
-          }));
+          .map((r) => {
+            const ticket = String(r[0] ?? "").trim();
+            const info = idx.get(ticket);
+            return {
+              ticket,
+              remark: String(r[1] ?? "").trim(),
+              updated: String(r[2] ?? "").trim(),
+              by: String(r[3] ?? "").trim(),
+              branch: info?.branch,
+              status: info?.status,
+              worker: info?.worker,
+            };
+          });
 
         const byAuthorMap = new Map<string, number>();
         let withRemarks = 0;
