@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { fetchTicketIndex } from "./tabs.functions";
 
 const SHEET_ID = "1x796CMZf8b3RUNkqsanO56F_Wmo75L2uLzIlgE65doY";
 const RANGE = "Sheet1!A2:AE"; // skip header row (columns A..AE)
