@@ -151,6 +151,49 @@ function SatisfactionPage() {
       {data.error && (
         <p className="mt-4 text-xs text-destructive">Data error: {data.error}</p>
       )}
+
+      <div className="mt-6">
+        <ChartCard
+          title="Recent Surveys"
+          subtitle="Merged with live ticket status from the main sheet"
+          exportRows={data.recent.map((r) => ({
+            Ticket: r.ticket, Customer: r.customer, Avg: r.avg, Agent: r.agent,
+            Branch: r.branch ?? "", Status: r.status ?? "", Worker: r.worker ?? "",
+            Saved: r.savedAt,
+          }))}
+        >
+          <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
+            <table className="min-w-full text-sm">
+              <thead className="sticky top-0 bg-background">
+                <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                  <th className="py-2 pr-4 text-start">Ticket</th>
+                  <th className="py-2 pr-4 text-start">Customer</th>
+                  <th className="py-2 pr-4 text-end">Avg</th>
+                  <th className="py-2 pr-4 text-start">Branch</th>
+                  <th className="py-2 pr-4 text-start">Status</th>
+                  <th className="py-2 pr-4 text-start">Worker</th>
+                  <th className="py-2 pr-4 text-start">Agent</th>
+                  <th className="py-2 pr-4 text-start">Saved</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.recent.map((r, i) => (
+                  <tr key={`${r.ticket}-${i}`} className="border-b border-border/60 last:border-0">
+                    <td className="py-2 pr-4 font-mono text-xs">{r.ticket}</td>
+                    <td className="py-2 pr-4">{r.customer}</td>
+                    <td className="py-2 pr-4 text-end tabular-nums">{r.avg}</td>
+                    <td className="py-2 pr-4 text-xs">{r.branch || "—"}</td>
+                    <td className="py-2 pr-4 text-xs">{r.status || "—"}</td>
+                    <td className="py-2 pr-4 text-xs">{r.worker || "—"}</td>
+                    <td className="py-2 pr-4 text-xs">{r.agent || "—"}</td>
+                    <td className="py-2 pr-4 text-xs text-muted-foreground">{r.savedAt}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </ChartCard>
+      </div>
     </DashboardLayout>
   );
 }
