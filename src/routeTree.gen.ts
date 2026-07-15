@@ -38,6 +38,7 @@ import { Route as AscPerformanceRouteImport } from './routes/asc-performance'
 import { Route as ActivityLogRouteImport } from './routes/activity-log'
 import { Route as AccessRouteImport } from './routes/access'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicSheetReadRouteImport } from './routes/api/public/sheet-read'
 import { Route as ApiPublicAccessCheckRouteImport } from './routes/api/public/access-check'
 
 const WhatsappRoute = WhatsappRouteImport.update({
@@ -185,6 +186,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSheetReadRoute = ApiPublicSheetReadRouteImport.update({
+  id: '/api/public/sheet-read',
+  path: '/api/public/sheet-read',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAccessCheckRoute = ApiPublicAccessCheckRouteImport.update({
   id: '/api/public/access-check',
   path: '/api/public/access-check',
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/warranty-payments': typeof WarrantyPaymentsRoute
   '/whatsapp': typeof WhatsappRoute
   '/api/public/access-check': typeof ApiPublicAccessCheckRoute
+  '/api/public/sheet-read': typeof ApiPublicSheetReadRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -254,6 +261,7 @@ export interface FileRoutesByTo {
   '/warranty-payments': typeof WarrantyPaymentsRoute
   '/whatsapp': typeof WhatsappRoute
   '/api/public/access-check': typeof ApiPublicAccessCheckRoute
+  '/api/public/sheet-read': typeof ApiPublicSheetReadRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -287,6 +295,7 @@ export interface FileRoutesById {
   '/warranty-payments': typeof WarrantyPaymentsRoute
   '/whatsapp': typeof WhatsappRoute
   '/api/public/access-check': typeof ApiPublicAccessCheckRoute
+  '/api/public/sheet-read': typeof ApiPublicSheetReadRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -321,6 +330,7 @@ export interface FileRouteTypes {
     | '/warranty-payments'
     | '/whatsapp'
     | '/api/public/access-check'
+    | '/api/public/sheet-read'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -353,6 +363,7 @@ export interface FileRouteTypes {
     | '/warranty-payments'
     | '/whatsapp'
     | '/api/public/access-check'
+    | '/api/public/sheet-read'
   id:
     | '__root__'
     | '/'
@@ -385,6 +396,7 @@ export interface FileRouteTypes {
     | '/warranty-payments'
     | '/whatsapp'
     | '/api/public/access-check'
+    | '/api/public/sheet-read'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -418,6 +430,7 @@ export interface RootRouteChildren {
   WarrantyPaymentsRoute: typeof WarrantyPaymentsRoute
   WhatsappRoute: typeof WhatsappRoute
   ApiPublicAccessCheckRoute: typeof ApiPublicAccessCheckRoute
+  ApiPublicSheetReadRoute: typeof ApiPublicSheetReadRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -625,6 +638,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sheet-read': {
+      id: '/api/public/sheet-read'
+      path: '/api/public/sheet-read'
+      fullPath: '/api/public/sheet-read'
+      preLoaderRoute: typeof ApiPublicSheetReadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/access-check': {
       id: '/api/public/access-check'
       path: '/api/public/access-check'
@@ -666,6 +686,7 @@ const rootRouteChildren: RootRouteChildren = {
   WarrantyPaymentsRoute: WarrantyPaymentsRoute,
   WhatsappRoute: WhatsappRoute,
   ApiPublicAccessCheckRoute: ApiPublicAccessCheckRoute,
+  ApiPublicSheetReadRoute: ApiPublicSheetReadRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
