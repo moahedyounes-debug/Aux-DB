@@ -39,10 +39,10 @@ export interface NavPage {
 
 export const NAV_PAGES: NavPage[] = [
   { path: "/", label: "KPI Overview", icon: LayoutDashboard, active: true },
-  { path: "/kpis", label: "KPI Scorecard", icon: ClipboardList },
-  { path: "/monthly-trends", label: "Monthly Trends", icon: TrendingUp },
-  { path: "/daily-operations", label: "Daily Operations", icon: CalendarClock },
-  { path: "/pending-analysis", label: "Pending Analysis", icon: AlarmClock },
+  { path: "/kpis", label: "KPI Scorecard", icon: ClipboardList, active: true },
+  { path: "/monthly-trends", label: "Monthly Trends", icon: TrendingUp, active: true },
+  { path: "/daily-operations", label: "Daily Operations", icon: CalendarClock, active: true },
+  { path: "/pending-analysis", label: "Pending Analysis", icon: AlarmClock, active: true },
   { path: "/deep-insights", label: "Deep Insights", icon: Microscope },
   { path: "/obm-analysis", label: "OBM Analysis", icon: Boxes },
   { path: "/spare-parts", label: "Spare Parts", icon: Package },
