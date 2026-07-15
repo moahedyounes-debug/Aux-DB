@@ -709,6 +709,30 @@ function aggregate(rows: string[][]): KpiData {
     })
     .sort((a, b) => b.total - a.total);
 
+  installationTickets.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const installation: InstallationSummary = {
+    total: installationTickets.length,
+    pending: installationTickets.filter((t) => !t.completed).length,
+    completed: instCompleted,
+    scheduledToday: instScheduledToday,
+    avgLeadDays:
+      instLeadDaysCount > 0
+        ? Math.round((instLeadDaysSum / instLeadDaysCount) * 10) / 10
+        : 0,
+    byProduct: Array.from(instProductMap.entries())
+      .map(([product, count]) => ({ product, count }))
+      .sort((a, b) => b.count - a.count),
+    byCity: Array.from(instCityMap.entries())
+      .map(([city, s]) => ({ city, ...s }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15),
+    byBranch: Array.from(instBranchMap.entries())
+      .map(([branch, s]) => ({ branch, ...s }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15),
+    tickets: installationTickets,
+  };
+
   const branches: BranchKpi[] = Array.from(branchStats.entries())
     .map(([branch, s]) => ({
       branch,
@@ -734,6 +758,7 @@ function aggregate(rows: string[][]): KpiData {
     pending: pendingSummary,
     callCenter,
     cities,
+    installation,
   };
 }
 
