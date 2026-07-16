@@ -34,6 +34,17 @@ export function clearAccess() {
   } catch {}
 }
 
+export function saveAccess(access: AccessRecord, remember = true) {
+  if (typeof window === "undefined") return;
+  const record = { ...access, savedAt: Date.now() };
+  const storage = remember ? window.localStorage : window.sessionStorage;
+  const otherStorage = remember ? window.sessionStorage : window.localStorage;
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(record));
+    otherStorage.removeItem(STORAGE_KEY);
+  } catch {}
+}
+
 /**
  * Client-side access hook. Reads the session persisted by the standalone
  * login page (index.html) from localStorage/sessionStorage.
@@ -58,7 +69,12 @@ export function useAccess() {
     setAccess(null);
   }, []);
 
-  return { access, ready, signOut };
+  const signIn = useCallback((record: AccessRecord, remember = true) => {
+    saveAccess(record, remember);
+    setAccess({ ...record, savedAt: Date.now() });
+  }, []);
+
+  return { access, ready, signIn, signOut };
 }
 
 /**

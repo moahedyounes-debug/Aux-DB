@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 const SPREADSHEET_ID = "1x796CMZf8b3RUNkqsanO56F_Wmo75L2uLzIlgE65doY";
 const RANGE = "Access!A2:F400";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
+const SUPERUSER_ALIASES = new Set(["moahedyounes@gmail.com"]);
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -65,6 +66,18 @@ function toRecord(row: string[]): AccessRecord {
   };
 }
 
+function superUserRecord(email: string): AccessRecord {
+  return {
+    email,
+    asc: "All",
+    branch: "Always CC",
+    isAdmin: true,
+    parts: "All",
+    callCenter: true,
+    isAllAccess: true,
+  };
+}
+
 export const Route = createFileRoute("/api/public/access-check")({
   server: {
     handlers: {
@@ -79,6 +92,9 @@ export const Route = createFileRoute("/api/public/access-check")({
           }
           const rows = await fetchAccessRows();
           const match = rows.find((r) => (r[0] ?? "").trim().toLowerCase() === email);
+          if (!match && SUPERUSER_ALIASES.has(email)) {
+            return json({ ok: true, access: superUserRecord(email) });
+          }
           if (!match) {
             return json({ ok: false, error: "not_authorized" }, 403);
           }
