@@ -256,29 +256,37 @@ function KpisPage() {
     for (const r of filteredRows) {
       const k = key(r);
       if (!k) continue;
+      // Skip cancelled tickets — they don't count toward pending or SLA.
+      if (isCancelled(r)) continue;
       const e = map.get(k) ?? { total: 0, completed: 0, pending: 0, withHrs: 0, hrsSum: 0, pending7d: 0, pendingOver24: 0, u24: 0, u48: 0, u72: 0 };
       e.total++;
       const done = isCompleted(r);
       if (done) e.completed++;
-      if (isPending(r)) {
-        e.pending++;
-        const age = pendingAgeDays(r, now);
-        if (Number.isFinite(age)) {
-          if (age * 24 > SLA_48) e.pendingOver24++;
-          if (age > 6) e.pending7d++;
+      // Compute lifespan hours from creation → (completion for closed, now for pending).
+      const createdRaw = r[COL.createdAt];
+      const createdMs = createdRaw ? new Date(String(createdRaw).replace(" ", "T")).getTime() : NaN;
+      let lifeHours = NaN;
+      if (Number.isFinite(createdMs)) {
+        if (done) {
+          const endRaw = r[COL.completedAt];
+          const endMs = endRaw ? new Date(String(endRaw).replace(" ", "T")).getTime() : NaN;
+          if (Number.isFinite(endMs) && endMs >= createdMs) lifeHours = (endMs - createdMs) / 3_600_000;
+          else lifeHours = serviceHours(r); // fallback to explicit column
+        } else if (isPending(r)) {
+          e.pending++;
+          lifeHours = (now - createdMs) / 3_600_000;
         }
       }
-      const h = serviceHours(r);
-      if (done && Number.isFinite(h)) {
+      if (done && Number.isFinite(lifeHours)) {
         e.withHrs++;
-        e.hrsSum += h;
-        if (h <= SLA_24) e.u24++;
-        if (h <= SLA_48) e.u48++;
-        if (h <= SLA_72) e.u72++;
-        // Closed tickets that took longer than 48h also count as pending for the month.
-        if (h > SLA_48) e.pendingOver24++;
-        // Closed tickets that took longer than 6 days count as >7D pending for the month.
-        if (h / 24 > 6) e.pending7d++;
+        e.hrsSum += lifeHours;
+        if (lifeHours <= SLA_24) e.u24++;
+        if (lifeHours <= SLA_48) e.u48++;
+        if (lifeHours <= SLA_72) e.u72++;
+      }
+      if (Number.isFinite(lifeHours)) {
+        if (lifeHours > SLA_48) e.pendingOver24++;
+        if (lifeHours / 24 > 7) e.pending7d++;
       }
       map.set(k, e);
     }
@@ -290,23 +298,28 @@ function KpisPage() {
     const map = new Map<string, Map<string, number>>();
     const now = Date.now();
     for (const r of filteredRows) {
+      if (isCancelled(r)) continue;
       let qualifies = false;
+      const createdRaw = r[COL.createdAt];
+      const createdMs = createdRaw ? new Date(String(createdRaw).replace(" ", "T")).getTime() : NaN;
+      if (!Number.isFinite(createdMs)) continue;
       if (isPending(r)) {
-        const age = pendingAgeDays(r, now);
-        if (Number.isFinite(age) && age > 6) qualifies = true;
+        const days = (now - createdMs) / 86_400_000;
+        if (days > 7) qualifies = true;
       } else if (isCompleted(r)) {
-        const h = serviceHours(r);
-        if (Number.isFinite(h) && h / 24 > 6) qualifies = true;
+        const endRaw = r[COL.completedAt];
+        const endMs = endRaw ? new Date(String(endRaw).replace(" ", "T")).getTime() : NaN;
+        const days = Number.isFinite(endMs) && endMs >= createdMs
+          ? (endMs - createdMs) / 86_400_000
+          : serviceHours(r) / 24;
+        if (Number.isFinite(days) && days > 7) qualifies = true;
       }
       if (!qualifies) continue;
       const fw = firstWord(r[COL.asc] || "");
       const fwU = fw.toUpperCase();
       if (!fw || fwU === "AUTHORIZED") continue;
       const company = fwU.startsWith("HMA") ? "HMA" : fw;
-      const raw = r[COL.createdAt];
-      if (!raw) continue;
-      const d = new Date(String(raw).replace(" ", "T"));
-      if (!Number.isFinite(d.getTime())) continue;
+      const d = new Date(createdMs);
       const mk = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
       if (!map.has(company)) map.set(company, new Map());
       const inner = map.get(company)!;
