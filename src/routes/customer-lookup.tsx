@@ -17,6 +17,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
+import { shortBranch } from "@/hooks/use-global-filters";
 import { readTable } from "@/lib/sheets-client";
 import { partsQueryOptions } from "@/lib/aux/queries";
 import { cn } from "@/lib/utils";
@@ -156,7 +157,7 @@ function CustomerLookupPage() {
         title: `Ticket ${t[COL.ticket]}`,
         subtitle: `${t[COL.serviceType] || "Service"} · ${t[COL.product] || ""}`.trim(),
         status: t[COL.status] || t[COL.phase],
-        branch: t[COL.branch],
+        branch: shortBranch(t[COL.branch]),
         worker: t[COL.worker],
         ref: t[COL.ticket],
       });
@@ -183,7 +184,7 @@ function CustomerLookupPage() {
           tel: latest[COL.tel] || "—",
           address: latest[COL.address] || "",
           city: latest[COL.city] || "",
-          branch: latest[COL.branch] || "",
+          branch: shortBranch(latest[COL.branch]),
         }
       : null;
 
@@ -353,7 +354,7 @@ function CustomerLookupPage() {
                       <tr key={t[COL.ticket]} className="border-b border-border/60 last:border-0">
                         <td className="py-2 pr-4 font-mono text-[11px]">{t[COL.ticket]}</td>
                         <td className="py-2 pr-4 text-xs">{t[COL.serviceType]}</td>
-                        <td className="py-2 pr-4 text-xs">{t[COL.branch]}</td>
+                        <td className="py-2 pr-4 text-xs">{shortBranch(t[COL.branch])}</td>
                         <td className="py-2 pr-4 text-xs">{t[COL.worker]}</td>
                         <td className="py-2 pr-4 text-xs">{t[COL.status] || t[COL.phase]}</td>
                         <td className="py-2 pr-4 text-xs text-muted-foreground">{t[COL.createdAt]}</td>

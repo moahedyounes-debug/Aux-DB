@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, Filter, RotateCcw } from "lucide-react";
-import { useGlobalFilters, firstWord } from "@/hooks/use-global-filters";
+import { useGlobalFilters, firstWord, shortBranch } from "@/hooks/use-global-filters";
 import { readTable } from "@/lib/sheets-client";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
 import { Input } from "@/components/ui/input";
@@ -38,16 +38,14 @@ export function SidebarFilters({ collapsed }: { collapsed: boolean }) {
     const b = new Set<string>();
     const m = new Set<string>();
     for (const r of rows) {
-      let spn = r[SPN];
+      const spn = r[SPN];
       if (spn) {
         const fw = firstWord(spn);
         const fwU = fw.toUpperCase();
         if (fwU === "AUTHORIZED") continue;
-        if (fwU.startsWith("HMA")) {
-          spn = `HMA${spn.trim().slice(fw.length)}`;
-        }
-        b.add(spn);
-        const c = firstWord(spn);
+        const label = shortBranch(spn);
+        if (label) b.add(label);
+        const c = fwU.startsWith("HMA") ? "HMA" : fw;
         if (c) a.add(c);
       }
       const raw = r[CREATED];
@@ -60,7 +58,13 @@ export function SidebarFilters({ collapsed }: { collapsed: boolean }) {
     }
     // If a company is picked, narrow branches to that company.
     const branchList = Array.from(b)
-      .filter((v) => filters.asc === "all" || firstWord(v) === filters.asc)
+      .filter((v) => {
+        if (filters.asc === "all") return true;
+        // Short label ends with " - <Company>"
+        const parts = v.split(/\s+-\s+/);
+        const company = parts[parts.length - 1] || "";
+        return company === filters.asc;
+      })
       .sort();
     return {
       ascs: Array.from(a).sort(),

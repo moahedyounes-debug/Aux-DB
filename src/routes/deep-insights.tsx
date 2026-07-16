@@ -27,7 +27,7 @@ import { kpiQueryOptions } from "@/lib/aux/queries";
 import { useKpiData } from "@/hooks/use-kpi-data";
 import { readTable } from "@/lib/sheets-client";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
-import { useGlobalFilters, applyGlobalFilters } from "@/hooks/use-global-filters";
+import { useGlobalFilters, applyGlobalFilters, shortBranch } from "@/hooks/use-global-filters";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/deep-insights")({
@@ -84,7 +84,7 @@ function hrs(r: Row): number {
 }
 
 function branchFromServiceProvider(r: Row): string {
-  return (r[M.asc] || "").trim() || "—";
+  return shortBranch(r[M.asc]) || "—";
 }
 
 function DeepInsightsPage() {
