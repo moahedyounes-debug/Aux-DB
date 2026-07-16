@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { fetchTicketIndex } from "./tabs.functions";
+import { gwFetch } from "./gw-fetch";
 
 const SHEET_ID = "1x796CMZf8b3RUNkqsanO56F_Wmo75L2uLzIlgE65doY";
 const RANGE = "Sheet1!A2:AE"; // skip header row (columns A..AE)
@@ -403,11 +404,12 @@ async function fetchSheetRows(): Promise<string[][]> {
   const lov = process.env.LOVABLE_API_KEY;
   if (!key || !lov) throw new Error("Google Sheets connector not configured");
   const url = `${GATEWAY}/spreadsheets/${SHEET_ID}/values/${RANGE}`;
-  const res = await fetch(url, {
+  const res = await gwFetch(url, {
     headers: {
       Authorization: `Bearer ${lov}`,
       "X-Connection-Api-Key": key,
     },
+    ttlMs: 5 * 60_000,
   });
   if (!res.ok) {
     const body = await res.text();
@@ -1204,8 +1206,9 @@ async function fetchRange(range: string): Promise<string[][]> {
   const lov = process.env.LOVABLE_API_KEY;
   if (!key || !lov) throw new Error("Google Sheets connector not configured");
   const url = `${GATEWAY}/spreadsheets/${SHEET_ID}/values/${range}`;
-  const res = await fetch(url, {
+  const res = await gwFetch(url, {
     headers: { Authorization: `Bearer ${lov}`, "X-Connection-Api-Key": key },
+    ttlMs: 5 * 60_000,
   });
   if (!res.ok) {
     const body = await res.text();
