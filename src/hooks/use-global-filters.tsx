@@ -54,10 +54,17 @@ export function useGlobalFilters(): Ctx {
 }
 
 export interface RowColMap {
-  asc?: string;
+  /** "Service Provider Name" column — first word = company, full value = branch. */
+  spn?: string;
   branch?: string;
   worker?: string;
   createdAt?: string;
+}
+
+export function firstWord(v: string | undefined | null): string {
+  if (!v) return "";
+  const m = String(v).trim().match(/^\S+/);
+  return m ? m[0] : "";
 }
 
 /** Apply the global filters to an array of sheet rows. */
@@ -71,8 +78,13 @@ export function applyGlobalFilters<T extends Record<string, string>>(
   const worker = filters.worker.trim().toLowerCase();
   const wantDate = filters.month !== "all" || from !== null || to !== null;
   return rows.filter((r) => {
-    if (cols.asc && filters.asc !== "all" && r[cols.asc] !== filters.asc) return false;
-    if (cols.branch && filters.branch !== "all" && r[cols.branch] !== filters.branch) return false;
+    if (cols.spn) {
+      const spn = r[cols.spn] || "";
+      if (filters.asc !== "all" && firstWord(spn) !== filters.asc) return false;
+      if (filters.branch !== "all" && spn !== filters.branch) return false;
+    } else if (cols.branch && filters.branch !== "all" && r[cols.branch] !== filters.branch) {
+      return false;
+    }
     if (cols.worker && worker && !(r[cols.worker] || "").toLowerCase().includes(worker)) return false;
     if (wantDate && cols.createdAt) {
       const raw = r[cols.createdAt];

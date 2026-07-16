@@ -164,7 +164,7 @@ function KpisPage() {
   const { filters } = useGlobalFilters();
   const filteredRows = useMemo(
     () => applyGlobalFilters(rows, {
-      asc: COL.asc, branch: COL.branch, worker: COL.worker, createdAt: COL.createdAt,
+      spn: COL.asc, worker: COL.worker, createdAt: COL.createdAt,
     }, filters),
     [rows, filters],
   );

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, Filter, RotateCcw } from "lucide-react";
-import { useGlobalFilters } from "@/hooks/use-global-filters";
+import { useGlobalFilters, firstWord } from "@/hooks/use-global-filters";
 import { readTable } from "@/lib/sheets-client";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
 import { Input } from "@/components/ui/input";
@@ -16,8 +16,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const ASC = "Service Provider Name";
-const BRANCH = "Affiliated Service Center";
+const SPN = "Service Provider Name";
 const CREATED = "Order Creation Time";
 
 export function SidebarFilters({ collapsed }: { collapsed: boolean }) {
@@ -34,13 +33,17 @@ export function SidebarFilters({ collapsed }: { collapsed: boolean }) {
 
   const opts = useMemo(() => {
     if (!q.data) return { ascs: [] as string[], branches: [] as string[], months: [] as string[] };
-    const rows = applyAccessFilter(q.data.rows, access, { asc: ASC, branch: BRANCH });
+    const rows = applyAccessFilter(q.data.rows, access, { asc: SPN });
     const a = new Set<string>();
     const b = new Set<string>();
     const m = new Set<string>();
     for (const r of rows) {
-      if (r[ASC]) a.add(r[ASC]);
-      if (r[BRANCH]) b.add(r[BRANCH]);
+      const spn = r[SPN];
+      if (spn) {
+        b.add(spn);
+        const c = firstWord(spn);
+        if (c) a.add(c);
+      }
       const raw = r[CREATED];
       if (raw) {
         const d = new Date(String(raw).replace(" ", "T"));
@@ -49,12 +52,16 @@ export function SidebarFilters({ collapsed }: { collapsed: boolean }) {
         }
       }
     }
+    // If a company is picked, narrow branches to that company.
+    const branchList = Array.from(b)
+      .filter((v) => filters.asc === "all" || firstWord(v) === filters.asc)
+      .sort();
     return {
       ascs: Array.from(a).sort(),
-      branches: Array.from(b).sort(),
+      branches: branchList,
       months: Array.from(m).sort().reverse(),
     };
-  }, [q.data, access]);
+  }, [q.data, access, filters.asc]);
 
   if (collapsed) {
     return (
