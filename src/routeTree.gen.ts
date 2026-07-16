@@ -17,6 +17,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ShipmentsRouteImport } from './routes/shipments'
 import { Route as SatisfactionRouteImport } from './routes/satisfaction'
 import { Route as RejectedReturnedRouteImport } from './routes/rejected-returned'
+import { Route as ObmAnalysisRouteImport } from './routes/obm-analysis'
 import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
 import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as InstallationAnalysisRouteImport } from './routes/installation-analysis'
@@ -82,6 +83,11 @@ const SatisfactionRoute = SatisfactionRouteImport.update({
 const RejectedReturnedRoute = RejectedReturnedRouteImport.update({
   id: '/rejected-returned',
   path: '/rejected-returned',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ObmAnalysisRoute = ObmAnalysisRouteImport.update({
+  id: '/obm-analysis',
+  path: '/obm-analysis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MonthlyTrendsRoute = MonthlyTrendsRouteImport.update({
@@ -238,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
+  '/obm-analysis': typeof ObmAnalysisRoute
   '/rejected-returned': typeof RejectedReturnedRoute
   '/satisfaction': typeof SatisfactionRoute
   '/shipments': typeof ShipmentsRoute
@@ -274,6 +281,7 @@ export interface FileRoutesByTo {
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
+  '/obm-analysis': typeof ObmAnalysisRoute
   '/rejected-returned': typeof RejectedReturnedRoute
   '/satisfaction': typeof SatisfactionRoute
   '/shipments': typeof ShipmentsRoute
@@ -311,6 +319,7 @@ export interface FileRoutesById {
   '/installation-analysis': typeof InstallationAnalysisRoute
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
+  '/obm-analysis': typeof ObmAnalysisRoute
   '/rejected-returned': typeof RejectedReturnedRoute
   '/satisfaction': typeof SatisfactionRoute
   '/shipments': typeof ShipmentsRoute
@@ -349,6 +358,7 @@ export interface FileRouteTypes {
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
+    | '/obm-analysis'
     | '/rejected-returned'
     | '/satisfaction'
     | '/shipments'
@@ -385,6 +395,7 @@ export interface FileRouteTypes {
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
+    | '/obm-analysis'
     | '/rejected-returned'
     | '/satisfaction'
     | '/shipments'
@@ -421,6 +432,7 @@ export interface FileRouteTypes {
     | '/installation-analysis'
     | '/kpis'
     | '/monthly-trends'
+    | '/obm-analysis'
     | '/rejected-returned'
     | '/satisfaction'
     | '/shipments'
@@ -458,6 +470,7 @@ export interface RootRouteChildren {
   InstallationAnalysisRoute: typeof InstallationAnalysisRoute
   KpisRoute: typeof KpisRoute
   MonthlyTrendsRoute: typeof MonthlyTrendsRoute
+  ObmAnalysisRoute: typeof ObmAnalysisRoute
   RejectedReturnedRoute: typeof RejectedReturnedRoute
   SatisfactionRoute: typeof SatisfactionRoute
   ShipmentsRoute: typeof ShipmentsRoute
@@ -529,6 +542,13 @@ declare module '@tanstack/react-router' {
       path: '/rejected-returned'
       fullPath: '/rejected-returned'
       preLoaderRoute: typeof RejectedReturnedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/obm-analysis': {
+      id: '/obm-analysis'
+      path: '/obm-analysis'
+      fullPath: '/obm-analysis'
+      preLoaderRoute: typeof ObmAnalysisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/monthly-trends': {
@@ -738,6 +758,7 @@ const rootRouteChildren: RootRouteChildren = {
   InstallationAnalysisRoute: InstallationAnalysisRoute,
   KpisRoute: KpisRoute,
   MonthlyTrendsRoute: MonthlyTrendsRoute,
+  ObmAnalysisRoute: ObmAnalysisRoute,
   RejectedReturnedRoute: RejectedReturnedRoute,
   SatisfactionRoute: SatisfactionRoute,
   ShipmentsRoute: ShipmentsRoute,

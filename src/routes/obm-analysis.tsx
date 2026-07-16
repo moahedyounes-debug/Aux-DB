@@ -130,9 +130,13 @@ function OBMPage() {
   const analysis = useMemo(() => {
     const total = rows.length;
     const cancelled = rows.filter(isCancelled);
-    const obmRows = rows
+    const obmRows: (Row & { __model: string; __branch: string; __month: string })[] = rows
       .filter(isOBM)
-      .map((r) => ({ ...r, __model: extractModel(r), __branch: branchOf(r), __month: monthKey(r) }));
+      .map((r) => Object.assign({}, r, {
+        __model: extractModel(r),
+        __branch: branchOf(r),
+        __month: monthKey(r),
+      }));
 
     // By brand
     const brandMap = new Map<string, number>();
