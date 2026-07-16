@@ -184,7 +184,18 @@ function splitCompanyBranch(fullBranch: string): { company: string; branch: stri
 function isMainWarehouse(w: string): boolean {
   const s = (w ?? "").trim();
   if (!s) return false;
+  if (!isValidLabel(s)) return false;
   return !/-\s*(New|Old)$/i.test(s);
+}
+
+/** Reject VLOOKUP errors and other sheet noise from location labels. */
+function isValidLabel(s: string): boolean {
+  const v = String(s ?? "").trim();
+  if (!v) return false;
+  if (v === "-" || v === "—" || v.toLowerCase() === "unknown") return false;
+  if (/^#(N\/A|REF|VALUE|NAME|NULL|DIV\/0)/i.test(v)) return false;
+  if (/VLOOKUP|#N\/A/i.test(v)) return false;
+  return true;
 }
 
 function serialToDate(raw: string): Date | null {
