@@ -609,6 +609,10 @@ function aggregate(rows: string[][]): KpiData {
   for (const row of rows) {
     if (!row || !row[COL.ticket]) continue;
 
+    // Cancelled tickets ("Cancel The Service") are neither closed nor pending;
+    // exclude them from every KPI aggregation.
+    if (isCancelled(row)) continue;
+
     const rawServiceType = String(row[COL.serviceType] ?? "").trim();
     const serviceTypeLower = rawServiceType.toLowerCase();
     const isRepair = serviceTypeLower === "repair" || serviceTypeLower.includes("repair") && !serviceTypeLower.includes("easy");
