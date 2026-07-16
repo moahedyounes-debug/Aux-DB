@@ -650,7 +650,7 @@ function KpisPage() {
     return collect([colKey]);
   };
 
-  type RowKind = "num" | "pct" | "days" | "k" | "m" | "musd";
+  type RowKind = "num" | "pct" | "days" | "k" | "m";
   interface KRow {
     category?: string;
     label: string;
@@ -711,8 +711,8 @@ function KpisPage() {
     { label: "Repair T NPS", kind: "pct",
       value: (c) => npsVal(c, "repair") },
 
-    { category: "Business", label: "Net SVC Cost (M USD)", kind: "musd",
-      value: (c) => svcCostMUSD(c), bp: 0.2 },
+    { category: "Business", label: "Net SVC Cost (K SAR)", kind: "k",
+      value: (c) => svcCostKSAR(c), bp: 0.2 },
     { label: "Net SVC Cost rate (%)", kind: "pct", value: empty, bp: 0.49 },
   ];
 
@@ -720,7 +720,6 @@ function KpisPage() {
     if (v === null || !Number.isFinite(v)) return "—";
     if (kind === "pct") return `${v.toFixed(1)}%`;
     if (kind === "days") return v.toFixed(1);
-    if (kind === "musd") return v.toFixed(2);
     if (kind === "num") return fmt.format(Math.round(v));
     if (kind === "k") return fmt.format(Math.round(v));
     if (kind === "m") return fmt.format(Math.round(v));
