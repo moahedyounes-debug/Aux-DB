@@ -288,7 +288,7 @@ export const getPartsData = createServerFn({ method: "GET" }).handler(
             partCount.set(p.partNumber, pc);
           }
           // Stock per branch × part (based on Service Provider Name)
-          if (p.branch && p.partNumber) {
+          if (p.branch && p.partNumber && isValidLabel(p.branch)) {
             const key = `${p.branch}||${p.partNumber}`;
             const s = branchStockMap.get(key) ?? { location: p.branch, part: p.partNumber, description: p.description, model: p.model, inQty: 0, outQty: 0, stock: 0 };
             if (p.status === "In (Received)") s.inQty += p.qty;
@@ -297,7 +297,7 @@ export const getPartsData = createServerFn({ method: "GET" }).handler(
             branchStockMap.set(key, s);
           }
           // Stock per warehouse × part
-          if (p.warehouse && p.partNumber) {
+          if (p.warehouse && p.partNumber && isValidLabel(p.warehouse)) {
             const key = `${p.warehouse}||${p.partNumber}`;
             const s = warehouseStockMap.get(key) ?? { location: p.warehouse, part: p.partNumber, description: p.description, model: p.model, inQty: 0, outQty: 0, stock: 0 };
             if (p.status === "In (Received)") s.inQty += p.qty;
@@ -314,7 +314,7 @@ export const getPartsData = createServerFn({ method: "GET" }).handler(
             monthlyMap.set(p.partNumber, m);
           }
           // Company → branches map
-          if (p.branch && p.branch !== "Unknown") {
+          if (p.branch && isValidLabel(p.branch)) {
             allBranchesSet.add(p.branch);
             const set = companiesMap.get(p.company) ?? new Set<string>();
             set.add(p.branch);
