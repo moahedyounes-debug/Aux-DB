@@ -19,6 +19,7 @@ import { readTable } from "@/lib/sheets-client";
 import { cn } from "@/lib/utils";
 import { evaluateFormula, formatValue, parseKpiFormulaRow, type KpiFormulaDef } from "@/lib/aux/formula";
 import { Calculator } from "lucide-react";
+import { kpiQueryOptions } from "@/lib/aux/queries";
 
 export const Route = createFileRoute("/kpis")({
   head: () => ({
@@ -40,9 +41,10 @@ export const Route = createFileRoute("/kpis")({
 });
 
 // SLA targets (hours) & thresholds
+const SLA_24 = 24;
 const SLA_48 = 48;
 const SLA_72 = 72;
-const TARGETS = { rate48h: 90, rate72h: 95, pendingRate: 10 };
+const TARGETS = { rate24h: 70, rate48h: 90, rate72h: 95, pendingRate: 10 };
 
 // Column names in Sheet1 of the maintenance sheet
 const COL = {
@@ -92,6 +94,15 @@ function hours(r: Row): number {
   return Number.isFinite(v) ? v : NaN;
 }
 
+function pendingAgeDays(r: Row, now: number): number {
+  const raw = r[COL.createdAt];
+  if (!raw) return NaN;
+  const d = new Date(String(raw).replace(" ", "T"));
+  const t = d.getTime();
+  if (!Number.isFinite(t)) return NaN;
+  return (now - t) / 86_400_000;
+}
+
 function Badge({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
     <span
@@ -114,6 +125,8 @@ function KpisPage() {
     staleTime: 60_000,
     enabled: ready,
   });
+
+  const kpiQuery = useQuery({ ...kpiQueryOptions, enabled: ready });
 
   const formulasQuery = useQuery<KpiFormulaDef[]>({
     queryKey: ["kpi-formulas"],
@@ -151,8 +164,10 @@ function KpisPage() {
     const pending = rows.filter(isPending).length;
     const completedRows = rows.filter(isCompleted);
     const withHrs = completedRows.filter((r) => Number.isFinite(hours(r)));
+    const under24 = withHrs.filter((r) => hours(r) <= SLA_24).length;
     const under48 = withHrs.filter((r) => hours(r) <= SLA_48).length;
     const under72 = withHrs.filter((r) => hours(r) <= SLA_72).length;
+    const rate24 = pct(under24, withHrs.length);
     const rate48 = pct(under48, withHrs.length);
     const rate72 = pct(under72, withHrs.length);
     const avgHours =
@@ -161,9 +176,10 @@ function KpisPage() {
         : 0;
     const branches = new Set(rows.map((r) => r[COL.branch]).filter(Boolean)).size;
     return {
-      total, completed, pending, rate48, rate72, avgHours, branches,
+      total, completed, pending, rate24, rate48, rate72, avgHours, branches,
       pendingRate: pct(pending, total),
       completionRate: pct(completed, total),
+      u24: under24,
       u48: under48,
       u72: under72,
       withHrs: withHrs.length,
@@ -175,6 +191,7 @@ function KpisPage() {
     completed: stats.completed,
     pending: stats.pending,
     with_hrs: stats.withHrs,
+    u24: stats.u24,
     u48: stats.u48,
     u72: stats.u72,
     avg_hours: stats.avgHours,
@@ -195,31 +212,78 @@ function KpisPage() {
   }, [formulasQuery.data, formulaVars]);
 
   const branchTable = useMemo(() => {
-    const map = new Map<string, { total: number; completed: number; pending: number; u48: number; u72: number; withHrs: number }>();
+    const now = Date.now();
+    type Row2 = {
+      total: number; completed: number; pending: number;
+      withHrs: number; u24: number; u48: number; u72: number;
+      hrsSum: number; pending3d: number; pending7d: number;
+    };
+    const map = new Map<string, Row2>();
     for (const r of rows) {
       const key = r[COL.branch] || "—";
-      const entry = map.get(key) ?? { total: 0, completed: 0, pending: 0, u48: 0, u72: 0, withHrs: 0 };
-      entry.total++;
-      if (isCompleted(r)) entry.completed++;
-      if (isPending(r)) entry.pending++;
-      const h = hours(r);
-      if (isCompleted(r) && Number.isFinite(h)) {
-        entry.withHrs++;
-        if (h <= SLA_48) entry.u48++;
-        if (h <= SLA_72) entry.u72++;
+      const e = map.get(key) ?? {
+        total: 0, completed: 0, pending: 0,
+        withHrs: 0, u24: 0, u48: 0, u72: 0,
+        hrsSum: 0, pending3d: 0, pending7d: 0,
+      };
+      e.total++;
+      const done = isCompleted(r);
+      const pend = isPending(r);
+      if (done) e.completed++;
+      if (pend) {
+        e.pending++;
+        const age = pendingAgeDays(r, now);
+        if (Number.isFinite(age)) {
+          if (age > 3) e.pending3d++;
+          if (age > 7) e.pending7d++;
+        }
       }
-      map.set(key, entry);
+      const h = hours(r);
+      if (done && Number.isFinite(h)) {
+        e.withHrs++;
+        e.hrsSum += h;
+        if (h <= SLA_24) e.u24++;
+        if (h <= SLA_48) e.u48++;
+        if (h <= SLA_72) e.u72++;
+      }
+      map.set(key, e);
     }
+    // Warranty amount / csat lookup by branch — matching normalized branch labels.
+    const warrByBranch = new Map<string, number>();
+    const csatByBranch = new Map<string, number>();
+    const wtyQtyByBranch = new Map<string, number>();
+    if (kpiQuery.data) {
+      for (const w of kpiQuery.data.warranty.byBranch) {
+        warrByBranch.set(w.branch, w.net);
+        wtyQtyByBranch.set(w.branch, w.claims);
+      }
+      for (const b of kpiQuery.data.branches) {
+        csatByBranch.set(b.branch, b.csat);
+      }
+    }
+    const findKey = (m: Map<string, number>, branch: string): number | undefined => {
+      if (m.has(branch)) return m.get(branch);
+      const lc = branch.toLowerCase();
+      for (const [k, v] of m) {
+        if (k.toLowerCase() === lc) return v;
+        if (k.toLowerCase().includes(lc) || lc.includes(k.toLowerCase())) return v;
+      }
+      return undefined;
+    };
     return Array.from(map.entries())
       .map(([branch, s]) => ({
         branch,
         ...s,
+        rate24: pct(s.u24, s.withHrs),
         rate48: pct(s.u48, s.withHrs),
         rate72: pct(s.u72, s.withHrs),
-        pendingRate: pct(s.pending, s.total),
+        rtat: s.withHrs > 0 ? s.hrsSum / s.withHrs : 0,
+        csat: findKey(csatByBranch, branch) ?? 0,
+        wtyQty: findKey(wtyQtyByBranch, branch) ?? s.completed,
+        wtyAmount: findKey(warrByBranch, branch) ?? 0,
       }))
       .sort((a, b) => b.total - a.total);
-  }, [rows]);
+  }, [rows, kpiQuery.data]);
 
   const scope = access
     ? access.isAllAccess
@@ -268,6 +332,13 @@ function KpisPage() {
           tone="accent"
         />
         <KpiCard
+          label="24h Rate"
+          value={query.isLoading ? "…" : `${stats.rate24.toFixed(1)}%`}
+          hint={`Target ≥ ${TARGETS.rate24h}%`}
+          icon={Clock}
+          tone={stats.rate24 >= TARGETS.rate24h ? "success" : "warning"}
+        />
+        <KpiCard
           label="48h Rate"
           value={query.isLoading ? "…" : `${stats.rate48.toFixed(1)}%`}
           hint={`Target ≥ ${TARGETS.rate48h}%`}
@@ -287,13 +358,6 @@ function KpisPage() {
           hint="Distinct service centres in scope"
           icon={Building2}
           tone="primary"
-        />
-        <KpiCard
-          label="Access Role"
-          value={access?.isAdmin ? "Admin" : access?.isAllAccess ? "All Access" : "Branch"}
-          hint={access?.email ?? "—"}
-          icon={Users}
-          tone="accent"
         />
       </div>
 
@@ -316,7 +380,7 @@ function KpisPage() {
 
       <ChartCard
         title="Branch Scorecard"
-        subtitle={`Targets — 48h ≥ ${TARGETS.rate48h}% · 72h ≥ ${TARGETS.rate72h}% · Pending ≤ ${TARGETS.pendingRate}%`}
+        subtitle={`Targets — 24h ≥ ${TARGETS.rate24h}% · 48h ≥ ${TARGETS.rate48h}% · 72h ≥ ${TARGETS.rate72h}%`}
       >
         {query.isLoading ? (
           <div className="py-12 text-center text-sm text-muted-foreground">
@@ -331,41 +395,64 @@ function KpisPage() {
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
+                <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b-2 border-border">
+                  <th rowSpan={2} className="py-2 pr-4 text-start align-bottom">Branch</th>
+                  <th colSpan={4} className="py-2 pr-4 text-center border-b border-border/40">SLA Rate</th>
+                  <th rowSpan={2} className="py-2 pr-4 text-end align-bottom">RTAT</th>
+                  <th colSpan={2} className="py-2 pr-4 text-center border-b border-border/40">Pending Q'ty</th>
+                  <th rowSpan={2} className="py-2 pr-4 text-end align-bottom">CSAT</th>
+                  <th colSpan={2} className="py-2 pr-4 text-center border-b border-border/40">Warranty</th>
+                </tr>
                 <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="py-2 pr-4 text-start">Branch</th>
-                  <th className="py-2 pr-4 text-end">Total</th>
-                  <th className="py-2 pr-4 text-end">Completed</th>
-                  <th className="py-2 pr-4 text-end">Pending</th>
-                  <th className="py-2 pr-4 text-end">48h</th>
-                  <th className="py-2 pr-4 text-end">72h</th>
+                  <th className="py-2 pr-4 text-end font-normal">24h</th>
+                  <th className="py-2 pr-4 text-end font-normal">48h</th>
+                  <th className="py-2 pr-4 text-end font-normal">72h</th>
+                  <th className="py-2 pr-4 text-end font-normal">Total</th>
+                  <th className="py-2 pr-4 text-end font-normal">&gt; 3 Day</th>
+                  <th className="py-2 pr-4 text-end font-normal">&gt; 7 Day</th>
+                  <th className="py-2 pr-4 text-end font-normal">Q'ty</th>
+                  <th className="py-2 pr-4 text-end font-normal">Amount</th>
                 </tr>
               </thead>
               <tbody>
                 {branchTable.map((b) => (
                   <tr key={b.branch} className="border-b border-border/60 last:border-0">
                     <td className="py-2.5 pr-4 font-medium text-foreground">{b.branch}</td>
-                    <td className="py-2.5 pr-4 text-end tabular-nums">{fmt.format(b.total)}</td>
-                    <td className="py-2.5 pr-4 text-end tabular-nums text-success">
-                      {fmt.format(b.completed)}
-                    </td>
                     <td className="py-2.5 pr-4 text-end">
-                      <Badge ok={b.pendingRate <= TARGETS.pendingRate}>
-                        {fmt.format(b.pending)} · {b.pendingRate.toFixed(1)}%
-                      </Badge>
+                      {b.withHrs > 0 ? (
+                        <Badge ok={b.rate24 >= TARGETS.rate24h}>{b.rate24.toFixed(1)}%</Badge>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
                     </td>
                     <td className="py-2.5 pr-4 text-end">
                       {b.withHrs > 0 ? (
                         <Badge ok={b.rate48 >= TARGETS.rate48h}>{b.rate48.toFixed(1)}%</Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
                     </td>
                     <td className="py-2.5 pr-4 text-end">
                       {b.withHrs > 0 ? (
                         <Badge ok={b.rate72 >= TARGETS.rate72h}>{b.rate72.toFixed(1)}%</Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                    </td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums">
+                      {b.withHrs > 0 ? `${b.rtat.toFixed(1)}h` : "—"}
+                    </td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums">{fmt.format(b.pending)}</td>
+                    <td className="py-2.5 pr-4 text-end">
+                      {b.pending3d > 0
+                        ? <Badge ok={false}>{fmt.format(b.pending3d)}</Badge>
+                        : <span className="tabular-nums">0</span>}
+                    </td>
+                    <td className="py-2.5 pr-4 text-end">
+                      {b.pending7d > 0
+                        ? <Badge ok={false}>{fmt.format(b.pending7d)}</Badge>
+                        : <span className="tabular-nums">0</span>}
+                    </td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums">
+                      {b.csat > 0 ? b.csat.toFixed(1) : "—"}
+                    </td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums">{fmt.format(b.wtyQty)}</td>
+                    <td className="py-2.5 pr-4 text-end tabular-nums text-success">
+                      {b.wtyAmount > 0 ? sar.format(b.wtyAmount) : "—"}
                     </td>
                   </tr>
                 ))}
