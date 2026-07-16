@@ -44,7 +44,6 @@ export const NAV_PAGES: NavPage[] = [
   { path: "/kpis", label: "KPI Scorecard", icon: ClipboardList, active: true },
   { path: "/monthly-trends", label: "Monthly Trends", icon: TrendingUp, active: true },
   { path: "/daily-operations", label: "Daily Operations", icon: CalendarClock, active: true },
-  { path: "/pending-analysis", label: "Pending Analysis", icon: AlarmClock, active: true },
   { path: "/deep-insights", label: "Deep Insights", icon: Microscope, active: true },
   { path: "/obm-analysis", label: "OBM Analysis", icon: Boxes, active: true },
   { path: "/spare-parts", label: "Spare Parts", icon: Package, active: true },
