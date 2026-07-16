@@ -15,6 +15,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
+import { useKpiData } from "@/hooks/use-kpi-data";
 
 export const Route = createFileRoute("/pending-analysis")({
   loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
@@ -47,7 +48,7 @@ const AGING_COLORS = [
 ];
 
 function PendingAnalysisPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions());
+  const { data } = useKpiData();
   const snap = data.snapshot;
   const PENDING_AGING = data.pendingAging;
   const PENDING_BY_BRANCH = data.pendingByBranch;

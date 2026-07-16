@@ -17,6 +17,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
+import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/monthly-trends")({
@@ -49,7 +50,7 @@ const METRICS = [
 type MetricKey = (typeof METRICS)[number]["key"];
 
 function MonthlyTrendsPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions());
+  const { data } = useKpiData();
   const MONTHLY = data.monthly;
   const [visible, setVisible] = useState<Record<MetricKey, boolean>>({
     total: true,

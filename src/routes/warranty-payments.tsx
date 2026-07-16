@@ -16,6 +16,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
+import { useKpiData } from "@/hooks/use-kpi-data";
 import {
   WARRANTY_TIERS,
   WARRANTY_SLA_DEDUCTION_PCT,
@@ -50,7 +51,7 @@ const sar = new Intl.NumberFormat("en-US", {
 const num = new Intl.NumberFormat("en-US");
 
 function WarrantyPaymentsPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions());
+  const { data } = useKpiData();
   const w = data.warranty;
 
   const tooltipStyle = {

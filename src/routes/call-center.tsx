@@ -15,6 +15,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
+import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/call-center")({
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/call-center")({
 const fmt = new Intl.NumberFormat("en-US");
 
 function CallCenterPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions());
+  const { data } = useKpiData();
   const cc = data.callCenter;
 
   const tooltipStyle = {

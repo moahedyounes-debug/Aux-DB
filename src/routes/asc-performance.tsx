@@ -17,6 +17,7 @@ import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { TARGETS } from "@/lib/aux/mock-data";
 import { kpiQueryOptions } from "@/lib/aux/queries";
+import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/asc-performance")({
@@ -67,7 +68,7 @@ function Badge({
 }
 
 function AscPerformancePage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions());
+  const { data } = useKpiData();
   const branches = data.branches;
 
   const ranked = [...branches].sort((a, b) => b.rate48h - a.rate48h);

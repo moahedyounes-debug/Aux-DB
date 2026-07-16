@@ -28,6 +28,7 @@ import { KpiCard } from "@/components/dashboard/KpiCard";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { TARGETS } from "@/lib/aux/mock-data";
 import { kpiQueryOptions } from "@/lib/aux/queries";
+import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -62,7 +63,7 @@ function fmtPct(n: number) {
 }
 
 function Index() {
-  const { data } = useSuspenseQuery(kpiQueryOptions());
+  const { data } = useKpiData();
   const snap = data.snapshot;
   const MONTHLY = data.monthly;
   const PENDING_BY_REASON = data.pendingByReason;

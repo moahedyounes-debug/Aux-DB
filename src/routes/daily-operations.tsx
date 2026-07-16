@@ -15,6 +15,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
+import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/daily-operations")({
@@ -99,7 +100,7 @@ function AgingBadge({ bucket }: { bucket: string }) {
 }
 
 function DailyOpsPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions());
+  const { data } = useKpiData();
   const p = data.pending;
   const maxAging = Math.max(1, ...p.aging.map((a) => a.count));
 
