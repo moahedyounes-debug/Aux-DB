@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getSheetsKpi, getAssignmentLog, getSatisfactionSurveys } from "./sheets.functions";
+import { getSheetsKpi, getAssignmentLog, getSatisfactionSurveys, type KpiFilters } from "./sheets.functions";
 import {
   getPartsData,
   getAccessData,
@@ -8,9 +8,9 @@ import {
   getAscRemarks,
 } from "./tabs.functions";
 
-export const kpiQueryOptions = queryOptions({
-  queryKey: ["aux", "kpi", "sheets"],
-  queryFn: () => getSheetsKpi(),
+export const kpiQueryOptions = (filters: KpiFilters = {}) => queryOptions({
+  queryKey: ["aux", "kpi", "sheets", filters],
+  queryFn: () => getSheetsKpi({ data: filters }),
   staleTime: 5 * 60_000,
 });
 
