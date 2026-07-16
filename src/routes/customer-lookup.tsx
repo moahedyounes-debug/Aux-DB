@@ -311,7 +311,7 @@ function CustomerLookupPage() {
                       <div className="flex flex-wrap items-baseline gap-2">
                         <span className="text-sm font-medium">{e.title}</span>
                         {e.status && (
-                          <span className={cn(
+                        <span className={cn(
                             "text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded-full",
                             isDone ? "bg-success/15 text-success" : "bg-warning/15 text-warning",
                           )}>
