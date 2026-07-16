@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { gwFetch } from "./gw-fetch";
 
 const SHEET_ID = "1x796CMZf8b3RUNkqsanO56F_Wmo75L2uLzIlgE65doY";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
@@ -9,8 +10,9 @@ async function fetchRange(range: string): Promise<string[][]> {
   const lov = process.env.LOVABLE_API_KEY;
   if (!key || !lov) throw new Error("Google Sheets connector not configured");
   const url = `${GATEWAY}/spreadsheets/${SHEET_ID}/values/${range}`;
-  const res = await fetch(url, {
+  const res = await gwFetch(url, {
     headers: { Authorization: `Bearer ${lov}`, "X-Connection-Api-Key": key },
+    ttlMs: 5 * 60_000,
   });
   if (!res.ok) {
     const body = await res.text();

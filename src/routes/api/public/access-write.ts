@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { invalidateGwCache } from "@/lib/aux/gw-fetch";
 
 const SPREADSHEET_ID = "1x796CMZf8b3RUNkqsanO56F_Wmo75L2uLzIlgE65doY";
 const ACCESS_RANGE = "Access!A2:H400";
@@ -208,25 +209,30 @@ export const Route = createFileRoute("/api/public/access-write")({
           const ok = await isActorAdmin(actor);
           if (!ok) return json({ ok: false, error: "not_admin" }, 403);
 
+          const invalidate = () => invalidateGwCache(SPREADSHEET_ID);
           switch (body.action) {
             case "upsertUser": {
               if (!body.user?.email) return json({ ok: false, error: "missing_user" }, 400);
               const r = await upsertUser(body.user);
+              invalidate();
               return json({ ok: true, result: r });
             }
             case "deleteUser": {
               if (!body.user?.email) return json({ ok: false, error: "missing_email" }, 400);
               const r = await deleteUser(body.user.email);
+              invalidate();
               return json({ ok: true, result: r });
             }
             case "upsertRole": {
               if (!body.role?.name) return json({ ok: false, error: "missing_role" }, 400);
               const r = await upsertRole(body.role.name, body.role.pages ?? []);
+              invalidate();
               return json({ ok: true, result: r });
             }
             case "deleteRole": {
               if (!body.role?.name) return json({ ok: false, error: "missing_role" }, 400);
               const r = await deleteRole(body.role.name);
+              invalidate();
               return json({ ok: true, result: r });
             }
             default:

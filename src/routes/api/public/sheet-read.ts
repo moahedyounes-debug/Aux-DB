@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { gwFetch } from "@/lib/aux/gw-fetch";
 
 // Whitelisted spreadsheets (aliases -> spreadsheet id)
 const SHEETS: Record<string, string> = {
@@ -52,7 +53,7 @@ export const Route = createFileRoute("/api/public/sheet-read")({
 
           if (mode === "meta" || mode === "tabs") {
             const metaUrl = `${GATEWAY}/spreadsheets/${spreadsheetId}?fields=properties.title,sheets.properties(title,sheetId,gridProperties)`;
-            const r = await fetch(metaUrl, { headers });
+            const r = await gwFetch(metaUrl, { headers, ttlMs: 5 * 60_000 });
             if (!r.ok) {
               return json({ ok: false, error: "gateway_error", status: r.status, body: await r.text() }, 502);
             }
@@ -73,9 +74,9 @@ export const Route = createFileRoute("/api/public/sheet-read")({
           }
 
           if (ranges.length === 1) {
-            const r = await fetch(
+            const r = await gwFetch(
               `${GATEWAY}/spreadsheets/${spreadsheetId}/values/${ranges[0]}`,
-              { headers },
+              { headers, ttlMs: 60_000 },
             );
             if (!r.ok) {
               return json({ ok: false, error: "gateway_error", status: r.status, body: await r.text() }, 502);
@@ -85,9 +86,9 @@ export const Route = createFileRoute("/api/public/sheet-read")({
           }
 
           const qs = ranges.map((rn) => `ranges=${encodeURIComponent(rn)}`).join("&");
-          const r = await fetch(
+          const r = await gwFetch(
             `${GATEWAY}/spreadsheets/${spreadsheetId}/values:batchGet?${qs}`,
-            { headers },
+            { headers, ttlMs: 60_000 },
           );
           if (!r.ok) {
             return json({ ok: false, error: "gateway_error", status: r.status, body: await r.text() }, 502);

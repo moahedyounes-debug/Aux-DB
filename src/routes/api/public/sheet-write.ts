@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const SPREADSHEET_ID = "1x796CMZf8b3RUNkqsanO56F_Wmo75L2uLzIlgE65doY";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
+import { invalidateGwCache } from "@/lib/aux/gw-fetch";
 const SUPERUSER_ALIASES = new Set(["moahedyounes@gmail.com"]);
 const ACCESS_RANGE = "Access!A2:H400";
 
@@ -148,10 +149,13 @@ export const Route = createFileRoute("/api/public/sheet-write")({
           if (!ok) return json({ ok: false, error: "not_admin" }, 403);
 
           const tab = body.tab;
+          // Any write invalidates cached Sheet reads for this spreadsheet
+          const invalidate = () => invalidateGwCache(SPREADSHEET_ID);
           switch (body.action) {
             case "ensureTab": {
               if (!body.headers?.length) return json({ ok: false, error: "missing_headers" }, 400);
               await ensureTab(tab, body.headers);
+              invalidate();
               return json({ ok: true });
             }
             case "list": {
@@ -164,6 +168,7 @@ export const Route = createFileRoute("/api/public/sheet-write")({
               const cur = await readTab(tab);
               const heads = cur.headers.length ? cur.headers : (body.headers ?? []);
               const r = await appendRow(tab, heads, body.row);
+              invalidate();
               return json({ ok: true, result: r });
             }
             case "update": {
@@ -172,6 +177,7 @@ export const Route = createFileRoute("/api/public/sheet-write")({
               const heads = cur.headers.length ? cur.headers : (body.headers ?? []);
               const end = colLetter(heads.length || body.row.length);
               const r = await updateRow(tab, body.rowNumber, end, body.row);
+              invalidate();
               return json({ ok: true, result: r });
             }
             case "delete": {
@@ -179,6 +185,7 @@ export const Route = createFileRoute("/api/public/sheet-write")({
               const cur = await readTab(tab);
               const end = colLetter(cur.headers.length || 26);
               const r = await clearRow(tab, body.rowNumber, end);
+              invalidate();
               return json({ ok: true, result: r });
             }
             default:
