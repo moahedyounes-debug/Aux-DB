@@ -111,6 +111,47 @@ function DailyOpsPage() {
   const { data } = useKpiData();
   const p = data.pending;
   const maxAging = Math.max(1, ...p.aging.map((a) => a.count));
+  const [reqTarget, setReqTarget] = useState<import("@/lib/aux/sheets.functions").PendingTicket | null>(null);
+  const [partName, setPartName] = useState("");
+  const [qty, setQty] = useState("1");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const openRequest = (t: import("@/lib/aux/sheets.functions").PendingTicket) => {
+    setReqTarget(t);
+    setPartName("");
+    setQty("1");
+    setNotes("");
+  };
+
+  const submitRequest = async () => {
+    if (!reqTarget) return;
+    if (!partName.trim()) { toast.error("Part Name / Code required"); return; }
+    if (!qty.trim() || Number(qty) <= 0) { toast.error("Quantity must be > 0"); return; }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/public/spare-part-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticket: reqTarget.ticket,
+          branch: reqTarget.branch,
+          worker: reqTarget.worker,
+          partName: partName.trim(),
+          quantity: qty.trim(),
+          notes: notes.trim(),
+        }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || !d.ok) throw new Error(d.detail || d.error || `HTTP ${res.status}`);
+      toast.success(`Spare part request submitted (${d.requestId})`);
+      setReqTarget(null);
+    } catch (e) {
+      toast.error(`Failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const tooltipStyle = {
     background: "var(--color-popover)",
@@ -206,7 +247,7 @@ function DailyOpsPage() {
             Remark: t.remark,
           }))}
         >
-          <PendingTable rows={p.todayTickets} emptyLabel="No visits scheduled for today." />
+          <PendingTable rows={p.todayTickets} emptyLabel="No visits scheduled for today." onRequestParts={openRequest} />
         </ChartCard>
       </section>
 
@@ -225,7 +266,7 @@ function DailyOpsPage() {
             Remark: t.remark,
           }))}
         >
-          <PendingTable rows={p.tickets} emptyLabel="No pending tickets." limit={50} />
+          <PendingTable rows={p.tickets} emptyLabel="No pending tickets." limit={50} onRequestParts={openRequest} />
         </ChartCard>
       </section>
 
