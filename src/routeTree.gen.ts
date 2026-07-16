@@ -23,7 +23,6 @@ import { Route as KpisRouteImport } from './routes/kpis'
 import { Route as InstallationAnalysisRouteImport } from './routes/installation-analysis'
 import { Route as ExportCenterRouteImport } from './routes/export-center'
 import { Route as DistrictsMapRouteImport } from './routes/districts-map'
-import { Route as DeepInsightsRouteImport } from './routes/deep-insights'
 import { Route as DataEditorRouteImport } from './routes/data-editor'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
 import { Route as CustomerLookupRouteImport } from './routes/customer-lookup'
@@ -113,11 +112,6 @@ const ExportCenterRoute = ExportCenterRouteImport.update({
 const DistrictsMapRoute = DistrictsMapRouteImport.update({
   id: '/districts-map',
   path: '/districts-map',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DeepInsightsRoute = DeepInsightsRouteImport.update({
-  id: '/deep-insights',
-  path: '/deep-insights',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DataEditorRoute = DataEditorRouteImport.update({
@@ -238,7 +232,6 @@ export interface FileRoutesByFullPath {
   '/customer-lookup': typeof CustomerLookupRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/data-editor': typeof DataEditorRoute
-  '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
@@ -275,7 +268,6 @@ export interface FileRoutesByTo {
   '/customer-lookup': typeof CustomerLookupRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/data-editor': typeof DataEditorRoute
-  '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
@@ -313,7 +305,6 @@ export interface FileRoutesById {
   '/customer-lookup': typeof CustomerLookupRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/data-editor': typeof DataEditorRoute
-  '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
   '/installation-analysis': typeof InstallationAnalysisRoute
@@ -352,7 +343,6 @@ export interface FileRouteTypes {
     | '/customer-lookup'
     | '/daily-operations'
     | '/data-editor'
-    | '/deep-insights'
     | '/districts-map'
     | '/export-center'
     | '/installation-analysis'
@@ -389,7 +379,6 @@ export interface FileRouteTypes {
     | '/customer-lookup'
     | '/daily-operations'
     | '/data-editor'
-    | '/deep-insights'
     | '/districts-map'
     | '/export-center'
     | '/installation-analysis'
@@ -426,7 +415,6 @@ export interface FileRouteTypes {
     | '/customer-lookup'
     | '/daily-operations'
     | '/data-editor'
-    | '/deep-insights'
     | '/districts-map'
     | '/export-center'
     | '/installation-analysis'
@@ -464,7 +452,6 @@ export interface RootRouteChildren {
   CustomerLookupRoute: typeof CustomerLookupRoute
   DailyOperationsRoute: typeof DailyOperationsRoute
   DataEditorRoute: typeof DataEditorRoute
-  DeepInsightsRoute: typeof DeepInsightsRoute
   DistrictsMapRoute: typeof DistrictsMapRoute
   ExportCenterRoute: typeof ExportCenterRoute
   InstallationAnalysisRoute: typeof InstallationAnalysisRoute
@@ -584,13 +571,6 @@ declare module '@tanstack/react-router' {
       path: '/districts-map'
       fullPath: '/districts-map'
       preLoaderRoute: typeof DistrictsMapRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/deep-insights': {
-      id: '/deep-insights'
-      path: '/deep-insights'
-      fullPath: '/deep-insights'
-      preLoaderRoute: typeof DeepInsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/data-editor': {
@@ -752,7 +732,6 @@ const rootRouteChildren: RootRouteChildren = {
   CustomerLookupRoute: CustomerLookupRoute,
   DailyOperationsRoute: DailyOperationsRoute,
   DataEditorRoute: DataEditorRoute,
-  DeepInsightsRoute: DeepInsightsRoute,
   DistrictsMapRoute: DistrictsMapRoute,
   ExportCenterRoute: ExportCenterRoute,
   InstallationAnalysisRoute: InstallationAnalysisRoute,
