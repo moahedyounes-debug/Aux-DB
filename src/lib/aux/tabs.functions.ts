@@ -198,6 +198,13 @@ function serialToDate(raw: string): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+// Order numbers embed the date: e.g. GD20260615355085 → 2026-06-15
+function monthFromOrder(order: string): string {
+  const m = order.match(/(\d{4})(\d{2})(\d{2})/);
+  if (!m) return "";
+  return `${m[1]}-${m[2]}`;
+}
+
 export const getPartsData = createServerFn({ method: "GET" }).handler(
   async (): Promise<PartsSummary> => {
     return cached("parts", async () => {
@@ -212,10 +219,13 @@ export const getPartsData = createServerFn({ method: "GET" }).handler(
           .map((r) => {
             const fullBranch = String(r[17] ?? "").trim() || String(r[5] ?? "").trim() || "Unknown";
             const { company, branch: branchShort } = splitCompanyBranch(fullBranch);
+            const orderNo = String(r[21] ?? "").trim();
             const d = serialToDate(String(r[22] ?? "").trim());
-            const month = d ? `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}` : "";
+            const month = d
+              ? `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`
+              : monthFromOrder(orderNo);
             return {
-              order: String(r[21] ?? "").trim(),
+              order: orderNo,
               partNumber: String(r[10] ?? "").trim(),
               description: String(r[12] ?? "").trim() || String(r[7] ?? "").trim(),
               model: String(r[9] ?? "").trim(),
