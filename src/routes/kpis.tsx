@@ -220,10 +220,10 @@ function KpisPage() {
   }, [rows, fMonth, fFrom, fTo, fAsc, fBranch, fWorker]);
 
   const stats = useMemo(() => {
-    const total = rows.length;
-    const completed = rows.filter(isCompleted).length;
-    const pending = rows.filter(isPending).length;
-    const completedRows = rows.filter(isCompleted);
+    const total = filteredRows.length;
+    const completed = filteredRows.filter(isCompleted).length;
+    const pending = filteredRows.filter(isPending).length;
+    const completedRows = filteredRows.filter(isCompleted);
     const withHrs = completedRows.filter((r) => Number.isFinite(hours(r)));
     const under24 = withHrs.filter((r) => hours(r) <= SLA_24).length;
     const under48 = withHrs.filter((r) => hours(r) <= SLA_48).length;
@@ -235,7 +235,7 @@ function KpisPage() {
       withHrs.length > 0
         ? withHrs.reduce((s, r) => s + hours(r), 0) / withHrs.length
         : 0;
-    const branches = new Set(rows.map((r) => r[COL.branch]).filter(Boolean)).size;
+    const branches = new Set(filteredRows.map((r) => r[COL.branch]).filter(Boolean)).size;
     return {
       total, completed, pending, rate24, rate48, rate72, avgHours, branches,
       pendingRate: pct(pending, total),
@@ -245,7 +245,7 @@ function KpisPage() {
       u72: under72,
       withHrs: withHrs.length,
     };
-  }, [rows]);
+  }, [filteredRows]);
 
   // Monthly buckets — key = YYYY-MM
   const monthly = useMemo(() => {
@@ -262,7 +262,7 @@ function KpisPage() {
       if (!Number.isFinite(d.getTime())) return null;
       return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
     };
-    for (const r of rows) {
+    for (const r of filteredRows) {
       const k = key(r);
       if (!k) continue;
       const e = map.get(k) ?? { total: 0, completed: 0, pending: 0, withHrs: 0, hrsSum: 0, pending7d: 0 };
@@ -282,7 +282,7 @@ function KpisPage() {
       map.set(k, e);
     }
     return map;
-  }, [rows]);
+  }, [filteredRows]);
 
   const formulaVars = useMemo<Record<string, number>>(() => ({
     total: stats.total,
