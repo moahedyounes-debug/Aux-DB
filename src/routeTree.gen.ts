@@ -39,6 +39,7 @@ import { Route as ActivityLogRouteImport } from './routes/activity-log'
 import { Route as AccessRouteImport } from './routes/access'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicSheetReadRouteImport } from './routes/api/public/sheet-read'
+import { Route as ApiPublicAccessWriteRouteImport } from './routes/api/public/access-write'
 import { Route as ApiPublicAccessCheckRouteImport } from './routes/api/public/access-check'
 
 const WhatsappRoute = WhatsappRouteImport.update({
@@ -191,6 +192,11 @@ const ApiPublicSheetReadRoute = ApiPublicSheetReadRouteImport.update({
   path: '/api/public/sheet-read',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAccessWriteRoute = ApiPublicAccessWriteRouteImport.update({
+  id: '/api/public/access-write',
+  path: '/api/public/access-write',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAccessCheckRoute = ApiPublicAccessCheckRouteImport.update({
   id: '/api/public/access-check',
   path: '/api/public/access-check',
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/warranty-payments': typeof WarrantyPaymentsRoute
   '/whatsapp': typeof WhatsappRoute
   '/api/public/access-check': typeof ApiPublicAccessCheckRoute
+  '/api/public/access-write': typeof ApiPublicAccessWriteRoute
   '/api/public/sheet-read': typeof ApiPublicSheetReadRoute
 }
 export interface FileRoutesByTo {
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/warranty-payments': typeof WarrantyPaymentsRoute
   '/whatsapp': typeof WhatsappRoute
   '/api/public/access-check': typeof ApiPublicAccessCheckRoute
+  '/api/public/access-write': typeof ApiPublicAccessWriteRoute
   '/api/public/sheet-read': typeof ApiPublicSheetReadRoute
 }
 export interface FileRoutesById {
@@ -295,6 +303,7 @@ export interface FileRoutesById {
   '/warranty-payments': typeof WarrantyPaymentsRoute
   '/whatsapp': typeof WhatsappRoute
   '/api/public/access-check': typeof ApiPublicAccessCheckRoute
+  '/api/public/access-write': typeof ApiPublicAccessWriteRoute
   '/api/public/sheet-read': typeof ApiPublicSheetReadRoute
 }
 export interface FileRouteTypes {
@@ -330,6 +339,7 @@ export interface FileRouteTypes {
     | '/warranty-payments'
     | '/whatsapp'
     | '/api/public/access-check'
+    | '/api/public/access-write'
     | '/api/public/sheet-read'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/warranty-payments'
     | '/whatsapp'
     | '/api/public/access-check'
+    | '/api/public/access-write'
     | '/api/public/sheet-read'
   id:
     | '__root__'
@@ -396,6 +407,7 @@ export interface FileRouteTypes {
     | '/warranty-payments'
     | '/whatsapp'
     | '/api/public/access-check'
+    | '/api/public/access-write'
     | '/api/public/sheet-read'
   fileRoutesById: FileRoutesById
 }
@@ -430,6 +442,7 @@ export interface RootRouteChildren {
   WarrantyPaymentsRoute: typeof WarrantyPaymentsRoute
   WhatsappRoute: typeof WhatsappRoute
   ApiPublicAccessCheckRoute: typeof ApiPublicAccessCheckRoute
+  ApiPublicAccessWriteRoute: typeof ApiPublicAccessWriteRoute
   ApiPublicSheetReadRoute: typeof ApiPublicSheetReadRoute
 }
 
@@ -645,6 +658,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSheetReadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/access-write': {
+      id: '/api/public/access-write'
+      path: '/api/public/access-write'
+      fullPath: '/api/public/access-write'
+      preLoaderRoute: typeof ApiPublicAccessWriteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/access-check': {
       id: '/api/public/access-check'
       path: '/api/public/access-check'
@@ -686,6 +706,7 @@ const rootRouteChildren: RootRouteChildren = {
   WarrantyPaymentsRoute: WarrantyPaymentsRoute,
   WhatsappRoute: WhatsappRoute,
   ApiPublicAccessCheckRoute: ApiPublicAccessCheckRoute,
+  ApiPublicAccessWriteRoute: ApiPublicAccessWriteRoute,
   ApiPublicSheetReadRoute: ApiPublicSheetReadRoute,
 }
 export const routeTree = rootRouteImport

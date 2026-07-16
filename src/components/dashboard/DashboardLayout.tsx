@@ -11,6 +11,7 @@ import {
 import { AuxLogo } from "@/components/AuxLogo";
 import { NAV_PAGES } from "@/lib/aux/nav";
 import { cn } from "@/lib/utils";
+import { useAccess, hasPageAccess } from "@/hooks/use-access";
 
 interface DashboardLayoutProps {
   title: string;
@@ -22,6 +23,13 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ title, subtitle, actions, children }: DashboardLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { access } = useAccess();
+
+  const visiblePages = NAV_PAGES.filter((p) => {
+    // Admin-only pages hidden from non-admins.
+    if (p.admin && !(access?.isAdmin || access?.isAllAccess)) return false;
+    return hasPageAccess(access, p.path);
+  });
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
@@ -48,7 +56,7 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
           </button>
         </div>
         <nav className="py-3 px-2 space-y-0.5 overflow-y-auto h-[calc(100vh-4rem)]">
-          {NAV_PAGES.map((page) => {
+          {visiblePages.map((page) => {
             const Icon = page.icon;
             const active = pathname === page.path;
             const isImplemented = page.active === true;

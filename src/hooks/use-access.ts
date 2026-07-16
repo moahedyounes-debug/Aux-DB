@@ -8,6 +8,9 @@ export type AccessRecord = {
   parts: string;
   callCenter: boolean;
   isAllAccess: boolean;
+  role: string;
+  /** Explicit page whitelist. Empty = old behaviour (all pages, filtered by ASC/branch on the data itself). */
+  allowedPages: string[];
   savedAt?: number;
 };
 
@@ -75,6 +78,22 @@ export function useAccess() {
   }, []);
 
   return { access, ready, signIn, signOut };
+}
+
+/**
+ * Returns true if the user is allowed to see the given page path.
+ * Rules:
+ *  - Admin / all-access → every page.
+ *  - allowedPages empty → every page (back-compat with old Access rows).
+ *  - Otherwise → path must be in allowedPages.
+ */
+export function hasPageAccess(access: AccessRecord | null, path: string): boolean {
+  if (!access) return false;
+  if (access.isAdmin || access.isAllAccess) return true;
+  const pages = access.allowedPages ?? [];
+  if (pages.length === 0) return true;
+  if (pages.includes("all")) return true;
+  return pages.includes(path);
 }
 
 /**

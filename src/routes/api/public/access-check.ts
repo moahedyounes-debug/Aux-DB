@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 const SPREADSHEET_ID = "1x796CMZf8b3RUNkqsanO56F_Wmo75L2uLzIlgE65doY";
-const RANGE = "Access!A2:F400";
+// Extended schema: A Email | B ASC | C Branch | D Role | E Pages | F Admin | G Parts | H Call Center
+// Old rows without Role/Pages (only 6 columns) are still supported — they get role="", allowedPages=[].
+const RANGE = "Access!A2:H400";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
 const SUPERUSER_ALIASES = new Set(["moahedyounes@gmail.com"]);
 
@@ -20,6 +22,8 @@ type AccessRecord = {
   parts: string;
   callCenter: boolean;
   isAllAccess: boolean;
+  role: string;
+  allowedPages: string[];
 };
 
 function json(data: unknown, status = 200) {
@@ -52,17 +56,49 @@ async function fetchAccessRows(): Promise<string[][]> {
 }
 
 function toRecord(row: string[]): AccessRecord {
-  const [email = "", asc = "", branch = "", admin = "", parts = "", cc = ""] = row;
-  const isAdmin = admin.trim().toLowerCase() === "yes";
+  // Detect legacy 6-column rows (Email, ASC, Branch, Admin, Parts, CallCenter)
+  // vs new 8-column rows (Email, ASC, Branch, Role, Pages, Admin, Parts, CallCenter).
+  // Heuristic: in legacy rows column D (index 3) is Admin ("Yes"/"No"/""); in new rows
+  // column D is Role (free text). We treat "yes"/"no" in col D as legacy.
+  const col3 = (row[3] ?? "").trim().toLowerCase();
+  const isLegacy = col3 === "yes" || col3 === "no" || (col3 === "" && row.length <= 6);
+  const email = (row[0] ?? "").trim().toLowerCase();
+  const asc = (row[1] ?? "").trim();
+  const branch = (row[2] ?? "").trim();
+  let role = "";
+  let pagesRaw = "";
+  let admin = "";
+  let parts = "";
+  let cc = "";
+  if (isLegacy) {
+    admin = (row[3] ?? "").trim();
+    parts = (row[4] ?? "").trim();
+    cc = (row[5] ?? "").trim();
+  } else {
+    role = (row[3] ?? "").trim();
+    pagesRaw = (row[4] ?? "").trim();
+    admin = (row[5] ?? "").trim();
+    parts = (row[6] ?? "").trim();
+    cc = (row[7] ?? "").trim();
+  }
+  const isAdmin = admin.toLowerCase() === "yes";
   const isAllAccess = asc.trim().toLowerCase() === "all" || isAdmin;
+  const allowedPages = pagesRaw
+    ? pagesRaw
+        .split(/[,\n;]+/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
   return {
-    email: email.trim().toLowerCase(),
-    asc: asc.trim(),
-    branch: branch.trim(),
+    email,
+    asc,
+    branch,
     isAdmin,
-    parts: parts.trim(),
-    callCenter: cc.trim().toLowerCase() === "yes",
+    parts,
+    callCenter: cc.toLowerCase() === "yes",
     isAllAccess,
+    role,
+    allowedPages,
   };
 }
 
@@ -75,6 +111,8 @@ function superUserRecord(email: string): AccessRecord {
     parts: "All",
     callCenter: true,
     isAllAccess: true,
+    role: "Super Admin",
+    allowedPages: ["all"],
   };
 }
 
