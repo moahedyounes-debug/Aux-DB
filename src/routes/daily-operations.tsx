@@ -551,7 +551,15 @@ function PendingTable({
                 )}
               </td>
               <td className="py-2.5 pr-4"><AgingBadge bucket={t.ageBucket} /></td>
-              <td className="py-2.5 pr-4 text-muted-foreground">{t.reason}</td>
+              <td className="py-2.5 pr-4">
+                {!t.reason || t.reason === "—" ? (
+                  <span className="inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium bg-destructive/15 text-destructive">
+                    No Reason
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">{t.reason}</span>
+                )}
+              </td>
               <td className="py-2.5 pr-4 tabular-nums">
                 {t.appointedDate !== "—" ? (
                   <span className="inline-flex rounded-md bg-warning/15 text-warning px-2 py-0.5 text-[11px] font-medium">
