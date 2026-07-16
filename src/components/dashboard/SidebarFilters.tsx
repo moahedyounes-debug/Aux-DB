@@ -108,9 +108,10 @@ export function SidebarFilters({ collapsed }: { collapsed: boolean }) {
       </button>
       {open && (
         <div className={cn("px-3 pb-3 space-y-2.5", q.isLoading && "opacity-70")}>
+          {(() => null)()}
           <FieldLabel>Month</FieldLabel>
           <Select value={filters.month} onValueChange={(v) => set("month", v)}>
-            <SelectTrigger className="h-8 text-xs bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground"><SelectValue /></SelectTrigger>
+            <SelectTrigger className={INPUT_CLS}><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All months</SelectItem>
               {opts.months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
@@ -121,18 +122,18 @@ export function SidebarFilters({ collapsed }: { collapsed: boolean }) {
             <div>
               <FieldLabel>From</FieldLabel>
               <Input type="date" value={filters.from} onChange={(e) => set("from", e.target.value)}
-                className="h-8 text-xs bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground" />
+                className={INPUT_CLS} />
             </div>
             <div>
               <FieldLabel>To</FieldLabel>
               <Input type="date" value={filters.to} onChange={(e) => set("to", e.target.value)}
-                className="h-8 text-xs bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground" />
+                className={INPUT_CLS} />
             </div>
           </div>
 
           <FieldLabel>Company (ASC)</FieldLabel>
           <Select value={filters.asc} onValueChange={(v) => set("asc", v)}>
-            <SelectTrigger className="h-8 text-xs bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground"><SelectValue /></SelectTrigger>
+            <SelectTrigger className={INPUT_CLS}><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All companies</SelectItem>
               {opts.ascs.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
@@ -141,7 +142,7 @@ export function SidebarFilters({ collapsed }: { collapsed: boolean }) {
 
           <FieldLabel>Branch</FieldLabel>
           <Select value={filters.branch} onValueChange={(v) => set("branch", v)}>
-            <SelectTrigger className="h-8 text-xs bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground"><SelectValue /></SelectTrigger>
+            <SelectTrigger className={INPUT_CLS}><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All branches</SelectItem>
               {opts.branches.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
@@ -150,7 +151,7 @@ export function SidebarFilters({ collapsed }: { collapsed: boolean }) {
 
           <FieldLabel>Technician</FieldLabel>
           <Input placeholder="Name…" value={filters.worker} onChange={(e) => set("worker", e.target.value)}
-            className="h-8 text-xs bg-sidebar-accent/30 border-sidebar-border text-sidebar-foreground placeholder:text-sidebar-foreground/50" />
+            className={cn(INPUT_CLS, "placeholder:text-slate-400")} />
 
           <Button variant="outline" size="sm" onClick={reset}
             className="w-full h-8 text-xs mt-1 bg-transparent border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent">
@@ -161,6 +162,9 @@ export function SidebarFilters({ collapsed }: { collapsed: boolean }) {
     </div>
   );
 }
+
+const INPUT_CLS =
+  "h-8 text-xs bg-white border-white/20 text-slate-900 shadow-sm focus-visible:ring-2 focus-visible:ring-primary/40";
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return <Label className="text-[10px] uppercase tracking-wider text-sidebar-foreground/60">{children}</Label>;
