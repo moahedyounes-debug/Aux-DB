@@ -632,9 +632,8 @@ function KpisPage() {
     [monthlyByCompany],
   );
 
-  // Net SVC Cost (M USD) — derived from warranty payments (net SAR → M USD).
-  // SAR→USD peg: 3.75.
-  const svcCostMUSD = (colKey: string): number | null => {
+  // Net SVC Cost (K SAR) — derived from warranty payments (net SAR → K SAR).
+  const svcCostKSAR = (colKey: string): number | null => {
     if (!kpiQuery.data) return null;
     const byMonth = new Map<string, number>();
     for (const w of kpiQuery.data.warranty.byMonth) byMonth.set(w.month, w.net);
@@ -644,7 +643,7 @@ function KpisPage() {
         const v = byMonth.get(k);
         if (v !== undefined) { sum += v; any = true; }
       }
-      return any ? sum / 3.75 / 1_000_000 : null;
+      return any ? sum / 1_000 : null;
     };
     const m = colKey.match(/^(\d{4})TTL$/);
     if (m) return collect(MONTHS_BY_YEAR.get(m[1]) ?? []);
