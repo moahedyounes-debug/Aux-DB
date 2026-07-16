@@ -57,8 +57,8 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
             {collapsed ? <Menu className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
           </button>
         </div>
-        <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
-        <nav className="py-3 px-2 space-y-0.5 overflow-y-auto flex-1">
+        <div className="h-[calc(100vh-4rem)] overflow-y-auto">
+        <nav className="py-3 px-2 space-y-0.5">
           {visiblePages.map((page) => {
             const Icon = page.icon;
             const active = pathname === page.path;
