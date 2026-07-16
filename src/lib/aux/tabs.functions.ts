@@ -218,7 +218,7 @@ function monthFromOrder(order: string): string {
 
 export const getPartsData = createServerFn({ method: "GET" }).handler(
   async (): Promise<PartsSummary> => {
-    return cached("parts", async () => {
+    return cached("parts:transaction-v2", async () => {
       try {
         // Transaction tab: A..AA (27 cols). Column indices:
         // 0 Location · 1 Type · 5 Branch · 7 Part Name · 9 Model · 10 Accessory Code
