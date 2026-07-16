@@ -302,7 +302,6 @@ function DailyOpsPage() {
             Ticket: t.ticket,
             Branch: t.branch,
             Worker: t.worker,
-            Status: t.status,
             Aging: t.ageBucket,
             Reason: t.reason,
             Date: t.appointedDate,
