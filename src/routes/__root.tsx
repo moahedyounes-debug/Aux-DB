@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { LoginGate } from "@/components/LoginGate";
+import { GlobalFiltersProvider } from "@/hooks/use-global-filters";
 
 function NotFoundComponent() {
   return (
@@ -136,7 +137,9 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <LoginGate>
-        <Outlet />
+        <GlobalFiltersProvider>
+          <Outlet />
+        </GlobalFiltersProvider>
       </LoginGate>
       <Toaster richColors position="top-center" />
     </QueryClientProvider>
