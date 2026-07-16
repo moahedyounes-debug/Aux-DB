@@ -693,9 +693,20 @@ function aggregate(rows: string[][]): KpiData {
     if (resched) rescheduledAll++;
 
     // service hours
-    const hrs = Number(String(row[COL.serviceHours] ?? "").trim());
-    const under48 = done && !isNaN(hrs) && hrs <= 48;
-    const under72 = done && !isNaN(hrs) && hrs <= 72;
+    // Prefer the explicit "Service hours(H)" column; when blank, derive from
+    // Completion Time - Order Creation Time so SLA rates aren't skewed by
+    // missing entries.
+    let hrs = Number(String(row[COL.serviceHours] ?? "").trim());
+    if (!Number.isFinite(hrs) || hrs <= 0) {
+      const compAt = parseDate(row[COL.completionTime]);
+      if (created && compAt && compAt.getTime() >= created.getTime()) {
+        hrs = (compAt.getTime() - created.getTime()) / 3_600_000;
+      } else {
+        hrs = NaN;
+      }
+    }
+    const under48 = done && Number.isFinite(hrs) && hrs <= 48;
+    const under72 = done && Number.isFinite(hrs) && hrs <= 72;
 
     let bs = branchStats.get(branch);
     if (!bs) {
@@ -991,18 +1002,21 @@ function aggregate(rows: string[][]): KpiData {
   // Snapshot rates from completed tickets overall
   let totalUnder48 = 0;
   let totalUnder72 = 0;
+  let totalCompletedMonthly = 0;
   for (const m of monthly) {
     totalUnder48 += m.count48h;
     totalUnder72 += m.count72h;
+    totalCompletedMonthly += m.completed;
   }
+  const rateDen = totalCompletedMonthly > 0 ? totalCompletedMonthly : completed;
   const snapshot: Snapshot = {
     total,
     pending,
     completed,
     unassigned,
     pendingNoReason,
-    rate48h: completed > 0 ? Math.round((totalUnder48 / completed) * 1000) / 10 : 0,
-    rate72h: completed > 0 ? Math.round((totalUnder72 / completed) * 1000) / 10 : 0,
+    rate48h: rateDen > 0 ? Math.round((totalUnder48 / rateDen) * 1000) / 10 : 0,
+    rate72h: rateDen > 0 ? Math.round((totalUnder72 / rateDen) * 1000) / 10 : 0,
     rescheduled: rescheduledAll,
   };
 
