@@ -28,9 +28,9 @@ export const satisfactionQueryOptions = queryOptions({
 });
 
 export const partsQueryOptions = queryOptions({
-  queryKey: ["aux", "parts"],
+  queryKey: ["aux", "parts", "transaction-v2"],
   queryFn: () => getPartsData(),
-  staleTime: 5 * 60_000,
+  staleTime: 60_000,
 });
 
 export const accessQueryOptions = queryOptions({

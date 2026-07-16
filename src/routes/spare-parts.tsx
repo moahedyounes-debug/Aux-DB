@@ -151,14 +151,20 @@ function BranchStockTab({ data }: { data: import("@/lib/aux/tabs.functions").Par
         .sort(),
     [data.branchStock],
   );
-  const [branch, setBranch] = useState<string>(branches[0] ?? "");
+  const [branch, setBranch] = useState<string>("all");
   const [q, setQ] = useState("");
+
+  useEffect(() => {
+    if (branch !== "all" && !branches.includes(branch)) setBranch("all");
+  }, [branch, branches]);
+
   const rows = useMemo(() => {
-    const filtered = data.branchStock.filter((r) => r.location === branch);
+    const filtered = branch === "all" ? data.branchStock : data.branchStock.filter((r) => r.location === branch);
     const term = q.trim().toLowerCase();
     const searched = term
       ? filtered.filter(
           (r) =>
+            r.location.toLowerCase().includes(term) ||
             r.part.toLowerCase().includes(term) ||
             r.description.toLowerCase().includes(term) ||
             r.model.toLowerCase().includes(term),
@@ -182,6 +188,7 @@ function BranchStockTab({ data }: { data: import("@/lib/aux/tabs.functions").Par
           <Select value={branch} onValueChange={setBranch}>
             <SelectTrigger><SelectValue placeholder="Select branch" /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">All branches</SelectItem>
               {branches.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -200,6 +207,7 @@ function BranchStockTab({ data }: { data: import("@/lib/aux/tabs.functions").Par
         <table className="w-full text-sm">
           <thead className="bg-muted/40 text-muted-foreground sticky top-0">
             <tr>
+              <th className="p-2 text-left">Branch</th>
               <th className="p-2 text-left">Part #</th>
               <th className="p-2 text-left">Description</th>
               <th className="p-2 text-left">Model</th>
@@ -210,7 +218,8 @@ function BranchStockTab({ data }: { data: import("@/lib/aux/tabs.functions").Par
           </thead>
           <tbody>
             {rows.slice(0, 500).map((r) => (
-              <tr key={r.part + r.model} className="border-t border-border">
+              <tr key={r.location + r.part + r.model} className="border-t border-border">
+                <td className="p-2 text-xs text-muted-foreground">{r.location}</td>
                 <td className="p-2 font-mono text-xs">{r.part}</td>
                 <td className="p-2">{r.description}</td>
                 <td className="p-2 text-xs">{r.model}</td>
@@ -220,7 +229,7 @@ function BranchStockTab({ data }: { data: import("@/lib/aux/tabs.functions").Par
               </tr>
             ))}
             {rows.length === 0 ? (
-              <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">No data for this branch.</td></tr>
+              <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">No data loaded from Transaction tab.</td></tr>
             ) : null}
           </tbody>
         </table>
@@ -232,16 +241,24 @@ function BranchStockTab({ data }: { data: import("@/lib/aux/tabs.functions").Par
 // ---------- Main Warehouse ----------
 function MainWarehouseTab({ data }: { data: import("@/lib/aux/tabs.functions").PartsSummary }) {
   const warehouses = data.mainWarehouses;
-  const [wh, setWh] = useState<string>(warehouses[0] ?? "");
+  const [wh, setWh] = useState<string>("all");
   const [q, setQ] = useState("");
+
+  useEffect(() => {
+    if (wh !== "all" && !warehouses.includes(wh)) setWh("all");
+  }, [wh, warehouses]);
+
   const rows = useMemo(() => {
-    const filtered = data.warehouseStock.filter((r) => r.location === wh);
+    const mainWarehouseSet = new Set(warehouses);
+    const filtered = wh === "all"
+      ? data.warehouseStock.filter((r) => mainWarehouseSet.has(r.location))
+      : data.warehouseStock.filter((r) => r.location === wh);
     const term = q.trim().toLowerCase();
     const searched = term
-      ? filtered.filter((r) => r.part.toLowerCase().includes(term) || r.description.toLowerCase().includes(term) || r.model.toLowerCase().includes(term))
+      ? filtered.filter((r) => r.location.toLowerCase().includes(term) || r.part.toLowerCase().includes(term) || r.description.toLowerCase().includes(term) || r.model.toLowerCase().includes(term))
       : filtered;
     return searched.sort((a, b) => b.stock - a.stock);
-  }, [data.warehouseStock, wh, q]);
+  }, [data.warehouseStock, warehouses, wh, q]);
 
   return (
     <ChartCard
@@ -255,6 +272,7 @@ function MainWarehouseTab({ data }: { data: import("@/lib/aux/tabs.functions").P
           <Select value={wh} onValueChange={setWh}>
             <SelectTrigger><SelectValue placeholder="Select warehouse" /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">All main warehouses</SelectItem>
               {warehouses.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -272,6 +290,7 @@ function MainWarehouseTab({ data }: { data: import("@/lib/aux/tabs.functions").P
         <table className="w-full text-sm">
           <thead className="bg-muted/40 text-muted-foreground sticky top-0">
             <tr>
+              <th className="p-2 text-left">Warehouse</th>
               <th className="p-2 text-left">Part #</th>
               <th className="p-2 text-left">Description</th>
               <th className="p-2 text-left">Model</th>
@@ -282,7 +301,8 @@ function MainWarehouseTab({ data }: { data: import("@/lib/aux/tabs.functions").P
           </thead>
           <tbody>
             {rows.slice(0, 500).map((r) => (
-              <tr key={r.part + r.model} className="border-t border-border">
+              <tr key={r.location + r.part + r.model} className="border-t border-border">
+                <td className="p-2 text-xs text-muted-foreground">{r.location}</td>
                 <td className="p-2 font-mono text-xs">{r.part}</td>
                 <td className="p-2">{r.description}</td>
                 <td className="p-2 text-xs">{r.model}</td>
@@ -292,7 +312,7 @@ function MainWarehouseTab({ data }: { data: import("@/lib/aux/tabs.functions").P
               </tr>
             ))}
             {rows.length === 0 ? (
-              <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">No stock recorded for this warehouse.</td></tr>
+              <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">No main warehouse stock loaded from Transaction tab.</td></tr>
             ) : null}
           </tbody>
         </table>
