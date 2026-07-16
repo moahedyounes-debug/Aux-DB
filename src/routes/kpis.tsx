@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Activity,
   CheckCircle2,
@@ -14,6 +14,10 @@ import {
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
 import { readTable } from "@/lib/sheets-client";
 import { cn } from "@/lib/utils";
@@ -59,6 +63,7 @@ const COL = {
   createdAt: "Order Creation Time",
   completedAt: "Completion time",
   completionResult: "Completion Result",
+  worker: "Worker Name",
 } as const;
 
 const fmt = new Intl.NumberFormat("en-US");
