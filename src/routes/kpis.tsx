@@ -690,8 +690,10 @@ function KpisPage() {
     { category: "CIC", label: "Consultation Satisfaction (Point)", kind: "num", value: empty, bp: 4.5 },
     { label: "Consultation resolution (%)", kind: "pct", value: empty },
 
-    { category: "NPS", label: "CIC T NPS", kind: "pct", value: empty },
-    { label: "Repair T NPS", kind: "pct", value: empty },
+    { category: "NPS", label: "CIC T NPS", kind: "pct",
+      value: (c) => npsVal(c, "cic") },
+    { label: "Repair T NPS", kind: "pct",
+      value: (c) => npsVal(c, "repair") },
 
     { category: "Business", label: "Net SVC Cost (M USD)", kind: "num", value: empty, bp: 0.2 },
     { label: "Net SVC Cost rate (%)", kind: "pct", value: empty, bp: 0.49 },
