@@ -274,6 +274,32 @@ function KpisPage() {
     return map;
   }, [filteredRows]);
 
+  // Months actually present in the filtered dataset — used to drive both the
+  // scorecard columns and the year-total (YYYY TTL) aggregations.
+  const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const { MONTH_COLS, MONTHS_BY_YEAR } = useMemo(() => {
+    const byYear = new Map<string, string[]>();
+    for (const k of monthly.keys()) {
+      const [y] = k.split("-");
+      if (!byYear.has(y)) byYear.set(y, []);
+      byYear.get(y)!.push(k);
+    }
+    const years = Array.from(byYear.keys()).sort();
+    for (const y of years) byYear.get(y)!.sort();
+    const cols: Array<{ key: string; label: string; kind: "m" | "ttl" | "sep" }> = [];
+    for (const y of years) {
+      const yy = y.slice(2);
+      const months = byYear.get(y)!;
+      months.forEach((mk, i) => {
+        const monthIdx = parseInt(mk.split("-")[1], 10) - 1;
+        const name = MONTH_NAMES[monthIdx] ?? mk;
+        cols.push({ key: mk, label: i === 0 ? `${yy}' ${name}` : name, kind: "m" });
+      });
+      cols.push({ key: `${y}TTL`, label: `${yy} TTL`, kind: "ttl" });
+    }
+    return { MONTH_COLS: cols, MONTHS_BY_YEAR: byYear };
+  }, [monthly]);
+
   // Monthly RTAT per main city (Riyadh / Jeddah / Khobar) — average service
   // hours (converted to days) of closed tickets whose Location resolves to
   // that city.
@@ -314,8 +340,8 @@ function KpisPage() {
       }
       return withHrs > 0 ? hrsSum / withHrs / 24 : null;
     };
-    if (colKey === "24TTL") return collect(["2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12"]);
-    if (colKey === "25TTL") return collect(["2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"]);
+    const m = colKey.match(/^(\d{4})TTL$/);
+    if (m) return collect(MONTHS_BY_YEAR.get(m[1]) ?? []);
     return collect([colKey]);
   };
 
@@ -424,18 +450,6 @@ function KpisPage() {
       : `${access.asc}${access.branch ? " · " + access.branch : ""}`
     : "—";
 
-  // ---- Monthly scorecard layout (matches uploaded reference) ----
-  const MONTH_COLS: Array<{ key: string; label: string; kind: "m" | "ttl" | "sep" }> = [
-    { key: "2024-01", label: "24' Jan", kind: "m" },
-    { key: "2024-02", label: "Feb", kind: "m" },
-    { key: "2024-03", label: "Mar", kind: "m" },
-    { key: "24TTL", label: "24 TTL", kind: "ttl" },
-    { key: "2025-01", label: "25' Jan", kind: "m" },
-    { key: "2025-02", label: "Feb", kind: "m" },
-    { key: "2025-03", label: "Mar", kind: "m" },
-    { key: "25TTL", label: "25 TTL", kind: "ttl" },
-  ];
-
   const monthVal = (key: string, field: "total" | "completed" | "pending" | "pending7d" | "rtat"): number | null => {
     const collect = (ks: string[]) => {
       let total = 0, completed = 0, pending = 0, pending7d = 0, withHrs = 0, hrsSum = 0;
@@ -455,8 +469,8 @@ function KpisPage() {
       if (field === "rtat") return withHrs > 0 ? hrsSum / withHrs / 24 : null;
       return null;
     };
-    if (key === "24TTL") return collect(["2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12"]);
-    if (key === "25TTL") return collect(["2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"]);
+    const m = key.match(/^(\d{4})TTL$/);
+    if (m) return collect(MONTHS_BY_YEAR.get(m[1]) ?? []);
     return collect([key]);
   };
 
@@ -639,8 +653,12 @@ function KpisPage() {
                 <tr className="bg-muted/40 text-muted-foreground">
                   <th rowSpan={2} className="py-2 px-3 text-start font-semibold border border-border" colSpan={2}>Category</th>
                   <th rowSpan={2} className="py-2 px-2 text-center font-semibold border border-border">vs PY</th>
-                  <th colSpan={4} className="py-2 px-2 text-center font-semibold border border-border">2024</th>
-                  <th colSpan={4} className="py-2 px-2 text-center font-semibold border border-border">2025</th>
+                  {Array.from(MONTHS_BY_YEAR.keys()).sort().map((y) => {
+                    const span = (MONTHS_BY_YEAR.get(y)?.length ?? 0) + 1;
+                    return (
+                      <th key={y} colSpan={span} className="py-2 px-2 text-center font-semibold border border-border">{y}</th>
+                    );
+                  })}
                   <th colSpan={3} className="py-2 px-2 text-center font-semibold border border-border bg-muted/70">Target</th>
                 </tr>
                 <tr className="bg-muted/30 text-muted-foreground">
