@@ -972,7 +972,9 @@ function aggregate(rows: string[][]): KpiData {
       }
       m.total++;
       if (done) m.completed++;
-      else m.pending++;
+      // Pending for the month = any ticket in that month not closed within 24h
+      // (still open, or eventually closed but took longer than 24h).
+      if (!(done && Number.isFinite(hrs) && hrs <= 24)) m.pending++;
       if (under48) m.count48h++;
       if (under72) m.count72h++;
       if (resched) m.rescheduled++;
