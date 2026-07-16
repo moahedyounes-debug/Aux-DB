@@ -725,7 +725,7 @@ function KpisPage() {
                       <th key={y} colSpan={span} className="py-2 px-2 text-center font-semibold border border-border">{y}</th>
                     );
                   })}
-                  <th colSpan={3} className="py-2 px-2 text-center font-semibold border border-border bg-muted/70">Target</th>
+                  <th colSpan={2} className="py-2 px-2 text-center font-semibold border border-border bg-muted/70">Comparisons</th>
                 </tr>
                 <tr className="bg-muted/30 text-muted-foreground">
                   {MONTH_COLS.map((c) => (
@@ -733,8 +733,7 @@ function KpisPage() {
                       {c.label}
                     </th>
                   ))}
-                  <th className="py-1.5 px-2 text-center font-medium border border-border">vs BP</th>
-                  <th className="py-1.5 px-2 text-center font-medium border border-border">BP</th>
+                  <th className="py-1.5 px-2 text-center font-medium border border-border">vs LM</th>
                   <th className="py-1.5 px-2 text-center font-medium border border-border">vs BP</th>
                 </tr>
               </thead>
@@ -753,8 +752,13 @@ function KpisPage() {
                     if (r.category) lastCat = r.category;
                     const showCat = r.category && !seenCat.has(r.category);
                     if (showCat) seenCat.add(r.category!);
-                    const ttl25 = r.value("25TTL");
-                    const vsBP = r.bp != null && ttl25 != null && r.bp !== 0 ? (ttl25 / r.bp) * 100 : null;
+                    const monthKeys = MONTH_COLS.filter((c) => c.kind === "m").map((c) => c.key);
+                    const curKey = monthKeys[monthKeys.length - 1];
+                    const prevKey = monthKeys[monthKeys.length - 2];
+                    const curVal = curKey ? r.value(curKey) : null;
+                    const prevVal = prevKey ? r.value(prevKey) : null;
+                    const vsLM = curVal != null && prevVal != null && prevVal !== 0 ? (curVal / prevVal) * 100 : null;
+                    const vsBP = r.bp != null && curVal != null && r.bp !== 0 ? (curVal / r.bp) * 100 : null;
                     return (
                       <tr key={idx} className="border border-border hover:bg-muted/20">
                         {showCat && (
@@ -775,10 +779,7 @@ function KpisPage() {
                           );
                         })}
                         <td className="py-1.5 px-2 text-center tabular-nums border border-border">
-                          {vsBP != null ? <span className={cn("inline-block rounded px-1.5 py-0.5", vsBP >= 100 ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive")}>{vsBP.toFixed(0)}%</span> : "—"}
-                        </td>
-                        <td className="py-1.5 px-2 text-center tabular-nums border border-border text-muted-foreground">
-                          {r.bp != null ? r.bp : "—"}
+                          {vsLM != null ? <span className={cn("inline-block rounded px-1.5 py-0.5", vsLM >= 100 ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive")}>{vsLM.toFixed(0)}%</span> : "—"}
                         </td>
                         <td className="py-1.5 px-2 text-center tabular-nums border border-border">
                           {vsBP != null ? <span className={cn("inline-block rounded px-1.5 py-0.5", vsBP >= 100 ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive")}>{vsBP.toFixed(0)}%</span> : "—"}
