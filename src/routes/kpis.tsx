@@ -69,28 +69,20 @@ const pct = (n: number, d: number) => (d > 0 ? (n / d) * 100 : 0);
 
 type Row = Record<string, string>;
 
+// Classification is driven solely by the "Completion Result" column:
+//   closed    → one of the 5 whitelisted results (Install, On-site Explanation,
+//               Phone Explanation, Troubleshooting, Value-added Services)
+//   cancelled → "Cancel The Service"
+//   pending   → blank
+import { classifyCompletion } from "@/lib/aux/completion";
 function isCompleted(r: Row): boolean {
-  const s = (r[COL.status] || "").toLowerCase();
-  const p = (r[COL.phase] || "").toLowerCase();
-  return (
-    s.includes("completed") ||
-    s.includes("finished") ||
-    s.includes("closed") ||
-    p.includes("completed") ||
-    !!r[COL.completedAt]?.trim()
-  );
+  return classifyCompletion(r[COL.completionResult]) === "closed";
+}
+function isCancelled(r: Row): boolean {
+  return classifyCompletion(r[COL.completionResult]) === "cancelled";
 }
 function isPending(r: Row): boolean {
-  if (isCompleted(r)) return false;
-  const s = (r[COL.status] || "").toLowerCase();
-  return (
-    s.includes("pending") ||
-    s.includes("not assigned") ||
-    s.includes("assigned") ||
-    s.includes("in progress") ||
-    s.includes("processing") ||
-    s.trim().length > 0
-  );
+  return classifyCompletion(r[COL.completionResult]) === "pending";
 }
 function hours(r: Row): number {
   const v = parseFloat(r[COL.hours] || "");

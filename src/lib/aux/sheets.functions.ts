@@ -389,10 +389,20 @@ function isTruthy(v: string | undefined): boolean {
   return s !== "" && s !== "0" && s !== "no" && s !== "false" && s !== "not rescheduled";
 }
 
+import { isClosedResult, isCancelledResult } from "./completion";
+
+/**
+ * A ticket is "completed" (closed) ONLY when its Completion Result is one of
+ * the 5 whitelisted values (Install, On-site Explanation, Phone Explanation,
+ * Troubleshooting, Value-added Services). Any other non-blank result — most
+ * notably "Cancel The Service" — is NOT a closed ticket. Blank = pending.
+ */
 function isCompleted(row: string[]): boolean {
-  const compTime = row[COL.completionTime];
-  const compRes = row[COL.completionResult];
-  return Boolean((compTime && String(compTime).trim()) || (compRes && String(compRes).trim()));
+  return isClosedResult(row[COL.completionResult]);
+}
+
+function isCancelled(row: string[]): boolean {
+  return isCancelledResult(row[COL.completionResult]);
 }
 
 // simple in-memory cache to avoid hammering Sheets on every request
@@ -598,6 +608,10 @@ function aggregate(rows: string[][]): KpiData {
 
   for (const row of rows) {
     if (!row || !row[COL.ticket]) continue;
+
+    // Cancelled tickets ("Cancel The Service") are neither closed nor pending;
+    // exclude them from every KPI aggregation.
+    if (isCancelled(row)) continue;
 
     const rawServiceType = String(row[COL.serviceType] ?? "").trim();
     const serviceTypeLower = rawServiceType.toLowerCase();
