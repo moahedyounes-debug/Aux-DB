@@ -15,7 +15,7 @@ export interface GwFetchOptions {
   headers?: Record<string, string>;
   method?: string;
   body?: string;
-  /** cache TTL in ms for successful GETs (default 60_000). Set 0 to disable. */
+  /** cache TTL in ms for successful GETs (default 5 minutes). Set 0 to disable. */
   ttlMs?: number;
   /** max retry attempts on 429/5xx (default 4) */
   maxRetries?: number;
@@ -23,13 +23,13 @@ export interface GwFetchOptions {
 
 export async function gwFetch(url: string, opts: GwFetchOptions = {}): Promise<Response> {
   const method = opts.method ?? "GET";
-  const ttl = opts.ttlMs ?? 60_000;
+  const ttl = opts.ttlMs ?? 5 * 60_000;
   const key = `${method} ${url}`;
+  const staleHit = method === "GET" && ttl > 0 ? cache.get(key) : undefined;
 
   if (method === "GET" && ttl > 0) {
-    const hit = cache.get(key);
-    if (hit && Date.now() - hit.at < hit.ttl) {
-      return new Response(hit.body, { status: hit.status });
+    if (staleHit && Date.now() - staleHit.at < staleHit.ttl) {
+      return new Response(staleHit.body, { status: staleHit.status });
     }
     const pending = inflight.get(key);
     if (pending) return (await pending).clone();
@@ -51,7 +51,10 @@ export async function gwFetch(url: string, opts: GwFetchOptions = {}): Promise<R
         }
         return res;
       }
-      if (attempt >= maxRetries) return res;
+      if (attempt >= maxRetries) {
+        if (staleHit) return new Response(staleHit.body, { status: staleHit.status });
+        return res;
+      }
       const retryAfter = Number(res.headers.get("retry-after"));
       const backoff = Number.isFinite(retryAfter) && retryAfter > 0
         ? retryAfter * 1000

@@ -407,6 +407,7 @@ function isCancelled(row: string[]): boolean {
 
 // simple in-memory cache to avoid hammering Sheets on every request
 let cache: { at: number; data: KpiData } | null = null;
+let rowsCache: { at: number; rows: string[][] } | null = null;
 const CACHE_MS = 5 * 60_000;
 
 // ---- Global filter support ---------------------------------------------
@@ -471,18 +472,25 @@ async function fetchSheetRows(): Promise<string[][]> {
   const lov = process.env.LOVABLE_API_KEY;
   if (!key || !lov) throw new Error("Google Sheets connector not configured");
   const url = `${GATEWAY}/spreadsheets/${SHEET_ID}/values/${RANGE}`;
-  const res = await gwFetch(url, {
-    headers: {
-      Authorization: `Bearer ${lov}`,
-      "X-Connection-Api-Key": key,
-    },
-    ttlMs: 5 * 60_000,
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Sheets fetch failed [${res.status}]: ${body.slice(0, 200)}`);
+  let json: { values?: string[][] };
+  try {
+    const res = await gwFetch(url, {
+      headers: {
+        Authorization: `Bearer ${lov}`,
+        "X-Connection-Api-Key": key,
+      },
+      ttlMs: 15 * 60_000,
+    });
+    if (!res.ok) {
+      if (rowsCache) return rowsCache.rows;
+      const body = await res.text();
+      throw new Error(`Sheets fetch failed [${res.status}]: ${body.slice(0, 200)}`);
+    }
+    json = (await res.json()) as { values?: string[][] };
+  } catch (err) {
+    if (rowsCache) return rowsCache.rows;
+    throw err;
   }
-  const json = (await res.json()) as { values?: string[][] };
   const raw = json.values ?? [];
   // Global company normalization:
   //  - Drop rows whose Service Provider Name starts with "AUTHORIZED".
@@ -498,6 +506,7 @@ async function fetchSheetRows(): Promise<string[][]> {
     }
     out.push(row);
   }
+  rowsCache = { at: Date.now(), rows: out };
   return out;
 }
 
