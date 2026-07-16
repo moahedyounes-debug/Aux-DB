@@ -286,7 +286,7 @@ function KpisPage() {
       }
       if (Number.isFinite(lifeHours)) {
         if (lifeHours > SLA_48) e.pendingOver24++;
-        if (lifeHours / 24 > 7) e.pending7d++;
+        if (lifeHours > SLA_48) e.pending7d++;
       }
       map.set(k, e);
     }
@@ -305,14 +305,14 @@ function KpisPage() {
       if (!Number.isFinite(createdMs)) continue;
       if (isPending(r)) {
         const days = (now - createdMs) / 86_400_000;
-        if (days > 7) qualifies = true;
+        if (days * 24 > SLA_48) qualifies = true;
       } else if (isCompleted(r)) {
         const endRaw = r[COL.completedAt];
         const endMs = endRaw ? new Date(String(endRaw).replace(" ", "T")).getTime() : NaN;
-        const days = Number.isFinite(endMs) && endMs >= createdMs
-          ? (endMs - createdMs) / 86_400_000
-          : serviceHours(r) / 24;
-        if (Number.isFinite(days) && days > 7) qualifies = true;
+        const hrs = Number.isFinite(endMs) && endMs >= createdMs
+          ? (endMs - createdMs) / 3_600_000
+          : serviceHours(r);
+        if (Number.isFinite(hrs) && hrs > SLA_48) qualifies = true;
       }
       if (!qualifies) continue;
       const fw = firstWord(r[COL.asc] || "");
@@ -592,7 +592,7 @@ function KpisPage() {
 
     { label: "TTL Pending Q'ty", bold: true, kind: "num",
       value: (c) => monthVal(c, "pending"), bp: 1742 },
-    { label: ">7D", indent: 1, kind: "num",
+    { label: ">48 Hr", indent: 1, kind: "num",
       value: (c) => monthVal(c, "pending7d"), bp: 997 },
     ...companies.map((co) => ({
       label: co,
