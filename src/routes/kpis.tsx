@@ -713,7 +713,6 @@ function KpisPage() {
 
     { category: "Business", label: "Net SVC Cost (K SAR)", kind: "k",
       value: (c) => svcCostKSAR(c), bp: 0.2 },
-    { label: "Net SVC Cost rate (%)", kind: "pct", value: empty, bp: 0.49 },
   ];
 
   const fmtCell = (v: number | null, kind: RowKind): string => {
