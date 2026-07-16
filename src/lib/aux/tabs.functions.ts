@@ -27,7 +27,7 @@ async function fetchPartsRange(range: string): Promise<string[][]> {
   const key = process.env.GOOGLE_SHEETS_API_KEY;
   const lov = process.env.LOVABLE_API_KEY;
   if (!key || !lov) throw new Error("Google Sheets connector not configured");
-  const url = `${GATEWAY}/spreadsheets/${PARTS_SHEET_ID}/values/${range}`;
+  const url = `${GATEWAY}/spreadsheets/${PARTS_SHEET_ID}/values/${range}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`;
   const res = await gwFetch(url, {
     headers: { Authorization: `Bearer ${lov}`, "X-Connection-Api-Key": key },
     ttlMs: 5 * 60_000,
@@ -36,8 +36,8 @@ async function fetchPartsRange(range: string): Promise<string[][]> {
     const body = await res.text();
     throw new Error(`Parts sheet fetch failed [${res.status}]: ${body.slice(0, 200)}`);
   }
-  const json = (await res.json()) as { values?: string[][] };
-  return json.values ?? [];
+  const json = (await res.json()) as { values?: (string | number | boolean | null)[][] };
+  return (json.values ?? []).map((row) => row.map((v) => (v == null ? "" : String(v))));
 }
 
 const cache = new Map<string, { at: number; data: unknown }>();
