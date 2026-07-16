@@ -2,12 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Package } from "lucide-react";
+import { Package, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { checkPartStock, type StockCheckResult } from "@/lib/aux/parts-stock.functions";
 import {
   ResponsiveContainer,
   BarChart,
@@ -112,22 +113,53 @@ function DailyOpsPage() {
   const p = data.pending;
   const maxAging = Math.max(1, ...p.aging.map((a) => a.count));
   const [reqTarget, setReqTarget] = useState<import("@/lib/aux/sheets.functions").PendingTicket | null>(null);
-  const [partName, setPartName] = useState("");
+  const [partCode, setPartCode] = useState("");
+  const [model, setModel] = useState("");
   const [qty, setQty] = useState("1");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [stock, setStock] = useState<StockCheckResult | null>(null);
 
   const openRequest = (t: import("@/lib/aux/sheets.functions").PendingTicket) => {
     setReqTarget(t);
-    setPartName("");
+    setPartCode("");
+    setModel("");
     setQty("1");
     setNotes("");
+    setStock(null);
+  };
+
+  const runStockCheck = async (): Promise<StockCheckResult | null> => {
+    if (!reqTarget) return null;
+    setChecking(true);
+    try {
+      const res = await checkPartStock({ data: { branch: reqTarget.branch, partCode: partCode.trim(), model: model.trim() } });
+      setStock(res);
+      return res;
+    } catch (e) {
+      toast.error(`Stock check failed: ${e instanceof Error ? e.message : String(e)}`);
+      return null;
+    } finally {
+      setChecking(false);
+    }
   };
 
   const submitRequest = async () => {
     if (!reqTarget) return;
-    if (!partName.trim()) { toast.error("Part Name / Code required"); return; }
+    if (!partCode.trim() && !model.trim()) { toast.error("Part Code or Model required"); return; }
     if (!qty.trim() || Number(qty) <= 0) { toast.error("Quantity must be > 0"); return; }
+    // Run stock check first (unless already run for these values)
+    let s = stock;
+    if (!s) {
+      s = await runStockCheck();
+      if (!s) return;
+    }
+    if (s.totalReceivedQty > 0) {
+      // Warn; require another click to confirm
+      toast.warning(`Branch already has ${s.totalReceivedQty} in stock — review then click Submit again to proceed.`);
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch("/api/public/spare-part-request", {
@@ -137,9 +169,39 @@ function DailyOpsPage() {
           ticket: reqTarget.ticket,
           branch: reqTarget.branch,
           worker: reqTarget.worker,
-          partName: partName.trim(),
+          partCode: partCode.trim(),
+          model: model.trim(),
           quantity: qty.trim(),
           notes: notes.trim(),
+        }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || !d.ok) throw new Error(d.detail || d.error || `HTTP ${res.status}`);
+      toast.success(`Spare part request submitted (${d.requestId})`);
+      setReqTarget(null);
+    } catch (e) {
+      toast.error(`Failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const forceSubmit = async () => {
+    if (!reqTarget) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/public/spare-part-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticket: reqTarget.ticket,
+          branch: reqTarget.branch,
+          worker: reqTarget.worker,
+          partCode: partCode.trim(),
+          model: model.trim(),
+          quantity: qty.trim(),
+          notes: notes.trim(),
+          confirmed: true,
         }),
       });
       const d = await res.json().catch(() => ({}));
