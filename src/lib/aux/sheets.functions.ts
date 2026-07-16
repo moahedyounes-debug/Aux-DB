@@ -859,7 +859,8 @@ function aggregate(rows: string[][]): KpiData {
     // for the Daily Operations queue. Rejected / cancelled / closed are excluded.
     else if (
       isPendingResult(row[COL.completionResult]) &&
-      !/return|reject|cancel|close/i.test(status)
+      !/return|reject|cancel|close/i.test(status) &&
+      String(row[COL.serviceProvider] ?? "").trim() !== ""
     ) {
       pending++;
       const statusLower = status.toLowerCase();
