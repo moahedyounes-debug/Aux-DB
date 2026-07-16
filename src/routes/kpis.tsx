@@ -221,10 +221,13 @@ function KpisPage() {
   );
 
   const stats = useMemo(() => {
-    const total = filteredRows.length;
-    const completed = filteredRows.filter(isCompleted).length;
-    const pending = filteredRows.filter(isPending).length;
-    const completedRows = filteredRows.filter(isCompleted);
+    // Exclude cancelled tickets from every card metric so the summary
+    // matches the monthly table (which already skips cancelled rows).
+    const scopedRows = filteredRows.filter((r) => !isCancelled(r));
+    const total = scopedRows.length;
+    const completed = scopedRows.filter(isCompleted).length;
+    const pending = scopedRows.filter(isPending).length;
+    const completedRows = scopedRows.filter(isCompleted);
     const withHrs = completedRows.filter((r) => Number.isFinite(serviceHours(r)));
     const under24 = withHrs.filter((r) => serviceHours(r) <= SLA_24).length;
     const under48 = withHrs.filter((r) => serviceHours(r) <= SLA_48).length;
@@ -239,12 +242,12 @@ function KpisPage() {
         ? withHrs.reduce((s, r) => s + serviceHours(r), 0) / withHrs.length
         : 0;
     const branches = new Set(
-      filteredRows.map((r) => shortBranch(r[COL.branch])).filter(Boolean),
+      scopedRows.map((r) => shortBranch(r[COL.branch])).filter(Boolean),
     ).size;
     // Spec: Pending rate = tickets created in the period with no completion
     // result yet AND already older than 24h, over total created.
     const now = Date.now();
-    const pendingOver24 = filteredRows.filter((r) => {
+    const pendingOver24 = scopedRows.filter((r) => {
       if (!isPending(r)) return false;
       const age = pendingAgeDays(r, now);
       return Number.isFinite(age) && age * 24 > 24;
