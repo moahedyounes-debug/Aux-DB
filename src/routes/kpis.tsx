@@ -20,7 +20,7 @@ import { readTable } from "@/lib/sheets-client";
 import { cn } from "@/lib/utils";
 import { evaluateFormula, formatValue, parseKpiFormulaRow, type KpiFormulaDef } from "@/lib/aux/formula";
 import { Calculator } from "lucide-react";
-import { kpiQueryOptions } from "@/lib/aux/queries";
+import { kpiQueryOptions, satisfactionQueryOptions } from "@/lib/aux/queries";
 
 export const Route = createFileRoute("/kpis")({
   head: () => ({
@@ -158,6 +158,29 @@ function KpisPage() {
   });
 
   const kpiQuery = useQuery({ ...kpiQueryOptions(), enabled: ready });
+  const satisfactionQuery = useQuery({ ...satisfactionQueryOptions, enabled: ready });
+
+  const npsByMonth = useMemo(() => {
+    const map = new Map<string, { cic: number; repair: number }>();
+    for (const m of satisfactionQuery.data?.byMonth ?? []) {
+      map.set(m.month, { cic: m.cicNps, repair: m.repairNps });
+    }
+    return map;
+  }, [satisfactionQuery.data]);
+
+  const npsVal = (key: string, kind: "cic" | "repair"): number | null => {
+    const collect = (ks: string[]) => {
+      const vals: number[] = [];
+      for (const k of ks) {
+        const e = npsByMonth.get(k);
+        if (e) vals.push(kind === "cic" ? e.cic : e.repair);
+      }
+      return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+    };
+    const m = key.match(/^(\d{4})TTL$/);
+    if (m) return collect(MONTHS_BY_YEAR.get(m[1]) ?? []);
+    return collect([key]);
+  };
 
   const formulasQuery = useQuery<KpiFormulaDef[]>({
     queryKey: ["kpi-formulas"],
@@ -667,8 +690,10 @@ function KpisPage() {
     { category: "CIC", label: "Consultation Satisfaction (Point)", kind: "num", value: empty, bp: 4.5 },
     { label: "Consultation resolution (%)", kind: "pct", value: empty },
 
-    { category: "NPS", label: "CIC T NPS", kind: "pct", value: empty },
-    { label: "Repair T NPS", kind: "pct", value: empty },
+    { category: "NPS", label: "CIC T NPS", kind: "pct",
+      value: (c) => npsVal(c, "cic") },
+    { label: "Repair T NPS", kind: "pct",
+      value: (c) => npsVal(c, "repair") },
 
     { category: "Business", label: "Net SVC Cost (M USD)", kind: "num", value: empty, bp: 0.2 },
     { label: "Net SVC Cost rate (%)", kind: "pct", value: empty, bp: 0.49 },

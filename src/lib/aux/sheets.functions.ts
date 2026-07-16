@@ -1457,6 +1457,8 @@ export interface SurveyMonthRow {
   month: string;
   surveys: number;
   avgScore: number;
+  cicNps: number;    // NPS from Q5 only (overall AUX satisfaction)
+  repairNps: number; // NPS from average of Q1..Q4
 }
 export interface SatisfactionSummary {
   fetchedAt: string;
@@ -1518,7 +1520,7 @@ export const getSatisfactionSurveys = createServerFn({ method: "GET" }).handler(
       let sum = 0, count = 0, promoters = 0, passives = 0, detractors = 0;
       const perQAcc = { q1: [0, 0], q2: [0, 0], q3: [0, 0], q4: [0, 0], q5: [0, 0] } as Record<string, [number, number]>;
       const byAgentMap = new Map<string, { count: number; sum: number; p: number; d: number }>();
-      const byMonthMap = new Map<string, { count: number; sum: number }>();
+      const byMonthMap = new Map<string, { count: number; sum: number; q5p: number; q5d: number; q5n: number; rp: number; rd: number; rn: number }>();
 
       for (const r of parsed) {
         if (r.avg > 0) { sum += r.avg; count++; }
@@ -1540,8 +1542,20 @@ export const getSatisfactionSurveys = createServerFn({ method: "GET" }).handler(
         const m = r.savedAt.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
         if (m) {
           const key = `${m[3]}-${m[1].padStart(2, "0")}`;
-          const mm = byMonthMap.get(key) ?? { count: 0, sum: 0 };
+          const mm = byMonthMap.get(key) ?? { count: 0, sum: 0, q5p: 0, q5d: 0, q5n: 0, rp: 0, rd: 0, rn: 0 };
           mm.count++; mm.sum += r.avg;
+          if (r.q5 > 0) {
+            mm.q5n++;
+            if (r.q5 >= 9) mm.q5p++;
+            else if (r.q5 <= 6) mm.q5d++;
+          }
+          const rq = [r.q1, r.q2, r.q3, r.q4].filter((v) => v > 0);
+          if (rq.length) {
+            const rAvg = rq.reduce((a, b) => a + b, 0) / rq.length;
+            mm.rn++;
+            if (rAvg >= 9) mm.rp++;
+            else if (rAvg <= 6) mm.rd++;
+          }
           byMonthMap.set(key, mm);
         }
       }
@@ -1571,6 +1585,8 @@ export const getSatisfactionSurveys = createServerFn({ method: "GET" }).handler(
         .map(([month, v]) => ({
           month, surveys: v.count,
           avgScore: v.count ? Math.round((v.sum / v.count) * 10) / 10 : 0,
+          cicNps: v.q5n ? Math.round(((v.q5p - v.q5d) / v.q5n) * 100) : 0,
+          repairNps: v.rn ? Math.round(((v.rp - v.rd) / v.rn) * 100) : 0,
         }))
         .sort((a, b) => a.month.localeCompare(b.month));
 
