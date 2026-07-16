@@ -449,9 +449,25 @@ function DailyOpsPage() {
                 <div><span className="block text-[10px] uppercase">Branch</span><span className="text-foreground">{reqTarget.branch}</span></div>
                 <div><span className="block text-[10px] uppercase">Worker</span><span className="text-foreground">{reqTarget.worker}</span></div>
               </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="part-name">Part Name / Code</Label>
-                <Input id="part-name" value={partName} onChange={(e) => setPartName(e.target.value)} placeholder="e.g. Model: ASWH-24 · 12220030043971" />
+              <div className="grid grid-cols-2 gap-2">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="part-model">Model</Label>
+                  <Input
+                    id="part-model"
+                    value={model}
+                    onChange={(e) => { setModel(e.target.value); setStock(null); }}
+                    placeholder="e.g. ASWH-24"
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="part-code">Part Code</Label>
+                  <Input
+                    id="part-code"
+                    value={partCode}
+                    onChange={(e) => { setPartCode(e.target.value); setStock(null); }}
+                    placeholder="e.g. 12220030043971"
+                  />
+                </div>
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="part-qty">Quantity</Label>
@@ -461,11 +477,47 @@ function DailyOpsPage() {
                 <Label htmlFor="part-notes">Notes</Label>
                 <Textarea id="part-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Optional" />
               </div>
+              {stock && (
+                stock.totalReceivedQty > 0 ? (
+                  <div className="rounded-md border border-warning/40 bg-warning/10 text-warning p-3 text-xs flex gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div className="grid gap-1">
+                      <p className="font-medium">
+                        Branch already has {stock.totalReceivedQty} unit(s) in stock ({stock.matchCount} record{stock.matchCount === 1 ? "" : "s"}).
+                      </p>
+                      <ul className="text-[11px] opacity-90 list-disc ps-4 max-h-24 overflow-y-auto">
+                        {stock.matches.slice(0, 5).map((m, i) => (
+                          <li key={i}>
+                            {m.partNumber || "—"} {m.model && `· ${m.model}`} · Qty {m.qty} · Rcvd {m.receivingDate || "—"}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="opacity-80">Use existing stock, or press "Request Anyway" to proceed.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-success/40 bg-success/10 text-success p-3 text-xs flex gap-2 items-center">
+                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                    <span>No matching stock at this branch — safe to request.</span>
+                  </div>
+                )
+              )}
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReqTarget(null)} disabled={submitting}>Cancel</Button>
-            <Button onClick={submitRequest} disabled={submitting}>{submitting ? "Submitting…" : "Submit Request"}</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setReqTarget(null)} disabled={submitting || checking}>Cancel</Button>
+            <Button variant="secondary" onClick={runStockCheck} disabled={submitting || checking || (!partCode.trim() && !model.trim())}>
+              {checking ? (<><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />Checking…</>) : "Check Stock"}
+            </Button>
+            {stock && stock.totalReceivedQty > 0 ? (
+              <Button variant="destructive" onClick={forceSubmit} disabled={submitting}>
+                {submitting ? "Submitting…" : "Request Anyway"}
+              </Button>
+            ) : (
+              <Button onClick={submitRequest} disabled={submitting || checking}>
+                {submitting ? "Submitting…" : "Submit Request"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
