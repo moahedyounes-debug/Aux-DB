@@ -40,6 +40,7 @@ import { Route as AscPerformanceRouteImport } from './routes/asc-performance'
 import { Route as ActivityLogRouteImport } from './routes/activity-log'
 import { Route as AccessRouteImport } from './routes/access'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicSparePartRequestRouteImport } from './routes/api/public/spare-part-request'
 import { Route as ApiPublicSheetWriteRouteImport } from './routes/api/public/sheet-write'
 import { Route as ApiPublicSheetReadRouteImport } from './routes/api/public/sheet-read'
 import { Route as ApiPublicAccessWriteRouteImport } from './routes/api/public/access-write'
@@ -200,6 +201,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSparePartRequestRoute =
+  ApiPublicSparePartRequestRouteImport.update({
+    id: '/api/public/spare-part-request',
+    path: '/api/public/spare-part-request',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicSheetWriteRoute = ApiPublicSheetWriteRouteImport.update({
   id: '/api/public/sheet-write',
   path: '/api/public/sheet-write',
@@ -257,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/api/public/access-write': typeof ApiPublicAccessWriteRoute
   '/api/public/sheet-read': typeof ApiPublicSheetReadRoute
   '/api/public/sheet-write': typeof ApiPublicSheetWriteRoute
+  '/api/public/spare-part-request': typeof ApiPublicSparePartRequestRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -294,6 +302,7 @@ export interface FileRoutesByTo {
   '/api/public/access-write': typeof ApiPublicAccessWriteRoute
   '/api/public/sheet-read': typeof ApiPublicSheetReadRoute
   '/api/public/sheet-write': typeof ApiPublicSheetWriteRoute
+  '/api/public/spare-part-request': typeof ApiPublicSparePartRequestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -332,6 +341,7 @@ export interface FileRoutesById {
   '/api/public/access-write': typeof ApiPublicAccessWriteRoute
   '/api/public/sheet-read': typeof ApiPublicSheetReadRoute
   '/api/public/sheet-write': typeof ApiPublicSheetWriteRoute
+  '/api/public/spare-part-request': typeof ApiPublicSparePartRequestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -371,6 +381,7 @@ export interface FileRouteTypes {
     | '/api/public/access-write'
     | '/api/public/sheet-read'
     | '/api/public/sheet-write'
+    | '/api/public/spare-part-request'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -408,6 +419,7 @@ export interface FileRouteTypes {
     | '/api/public/access-write'
     | '/api/public/sheet-read'
     | '/api/public/sheet-write'
+    | '/api/public/spare-part-request'
   id:
     | '__root__'
     | '/'
@@ -445,6 +457,7 @@ export interface FileRouteTypes {
     | '/api/public/access-write'
     | '/api/public/sheet-read'
     | '/api/public/sheet-write'
+    | '/api/public/spare-part-request'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -483,6 +496,7 @@ export interface RootRouteChildren {
   ApiPublicAccessWriteRoute: typeof ApiPublicAccessWriteRoute
   ApiPublicSheetReadRoute: typeof ApiPublicSheetReadRoute
   ApiPublicSheetWriteRoute: typeof ApiPublicSheetWriteRoute
+  ApiPublicSparePartRequestRoute: typeof ApiPublicSparePartRequestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -704,6 +718,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/spare-part-request': {
+      id: '/api/public/spare-part-request'
+      path: '/api/public/spare-part-request'
+      fullPath: '/api/public/spare-part-request'
+      preLoaderRoute: typeof ApiPublicSparePartRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sheet-write': {
       id: '/api/public/sheet-write'
       path: '/api/public/sheet-write'
@@ -771,6 +792,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAccessWriteRoute: ApiPublicAccessWriteRoute,
   ApiPublicSheetReadRoute: ApiPublicSheetReadRoute,
   ApiPublicSheetWriteRoute: ApiPublicSheetWriteRoute,
+  ApiPublicSparePartRequestRoute: ApiPublicSparePartRequestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
