@@ -2,12 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Package } from "lucide-react";
+import { Package, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { checkPartStock, type StockCheckResult } from "@/lib/aux/parts-stock.functions";
 import {
   ResponsiveContainer,
   BarChart,
@@ -112,22 +113,53 @@ function DailyOpsPage() {
   const p = data.pending;
   const maxAging = Math.max(1, ...p.aging.map((a) => a.count));
   const [reqTarget, setReqTarget] = useState<import("@/lib/aux/sheets.functions").PendingTicket | null>(null);
-  const [partName, setPartName] = useState("");
+  const [partCode, setPartCode] = useState("");
+  const [model, setModel] = useState("");
   const [qty, setQty] = useState("1");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [stock, setStock] = useState<StockCheckResult | null>(null);
 
   const openRequest = (t: import("@/lib/aux/sheets.functions").PendingTicket) => {
     setReqTarget(t);
-    setPartName("");
+    setPartCode("");
+    setModel("");
     setQty("1");
     setNotes("");
+    setStock(null);
+  };
+
+  const runStockCheck = async (): Promise<StockCheckResult | null> => {
+    if (!reqTarget) return null;
+    setChecking(true);
+    try {
+      const res = await checkPartStock({ data: { branch: reqTarget.branch, partCode: partCode.trim(), model: model.trim() } });
+      setStock(res);
+      return res;
+    } catch (e) {
+      toast.error(`Stock check failed: ${e instanceof Error ? e.message : String(e)}`);
+      return null;
+    } finally {
+      setChecking(false);
+    }
   };
 
   const submitRequest = async () => {
     if (!reqTarget) return;
-    if (!partName.trim()) { toast.error("Part Name / Code required"); return; }
+    if (!partCode.trim() && !model.trim()) { toast.error("Part Code or Model required"); return; }
     if (!qty.trim() || Number(qty) <= 0) { toast.error("Quantity must be > 0"); return; }
+    // Run stock check first (unless already run for these values)
+    let s = stock;
+    if (!s) {
+      s = await runStockCheck();
+      if (!s) return;
+    }
+    if (s.totalReceivedQty > 0) {
+      // Warn; require another click to confirm
+      toast.warning(`Branch already has ${s.totalReceivedQty} in stock — review then click Submit again to proceed.`);
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch("/api/public/spare-part-request", {
@@ -137,9 +169,39 @@ function DailyOpsPage() {
           ticket: reqTarget.ticket,
           branch: reqTarget.branch,
           worker: reqTarget.worker,
-          partName: partName.trim(),
+          partCode: partCode.trim(),
+          model: model.trim(),
           quantity: qty.trim(),
           notes: notes.trim(),
+        }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || !d.ok) throw new Error(d.detail || d.error || `HTTP ${res.status}`);
+      toast.success(`Spare part request submitted (${d.requestId})`);
+      setReqTarget(null);
+    } catch (e) {
+      toast.error(`Failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const forceSubmit = async () => {
+    if (!reqTarget) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/public/spare-part-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticket: reqTarget.ticket,
+          branch: reqTarget.branch,
+          worker: reqTarget.worker,
+          partCode: partCode.trim(),
+          model: model.trim(),
+          quantity: qty.trim(),
+          notes: notes.trim(),
+          confirmed: true,
         }),
       });
       const d = await res.json().catch(() => ({}));
@@ -387,9 +449,25 @@ function DailyOpsPage() {
                 <div><span className="block text-[10px] uppercase">Branch</span><span className="text-foreground">{reqTarget.branch}</span></div>
                 <div><span className="block text-[10px] uppercase">Worker</span><span className="text-foreground">{reqTarget.worker}</span></div>
               </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="part-name">Part Name / Code</Label>
-                <Input id="part-name" value={partName} onChange={(e) => setPartName(e.target.value)} placeholder="e.g. Model: ASWH-24 · 12220030043971" />
+              <div className="grid grid-cols-2 gap-2">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="part-model">Model</Label>
+                  <Input
+                    id="part-model"
+                    value={model}
+                    onChange={(e) => { setModel(e.target.value); setStock(null); }}
+                    placeholder="e.g. ASWH-24"
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="part-code">Part Code</Label>
+                  <Input
+                    id="part-code"
+                    value={partCode}
+                    onChange={(e) => { setPartCode(e.target.value); setStock(null); }}
+                    placeholder="e.g. 12220030043971"
+                  />
+                </div>
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="part-qty">Quantity</Label>
@@ -399,11 +477,47 @@ function DailyOpsPage() {
                 <Label htmlFor="part-notes">Notes</Label>
                 <Textarea id="part-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Optional" />
               </div>
+              {stock && (
+                stock.totalReceivedQty > 0 ? (
+                  <div className="rounded-md border border-warning/40 bg-warning/10 text-warning p-3 text-xs flex gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div className="grid gap-1">
+                      <p className="font-medium">
+                        Branch already has {stock.totalReceivedQty} unit(s) in stock ({stock.matchCount} record{stock.matchCount === 1 ? "" : "s"}).
+                      </p>
+                      <ul className="text-[11px] opacity-90 list-disc ps-4 max-h-24 overflow-y-auto">
+                        {stock.matches.slice(0, 5).map((m, i) => (
+                          <li key={i}>
+                            {m.partNumber || "—"} {m.model && `· ${m.model}`} · Qty {m.qty} · Rcvd {m.receivingDate || "—"}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="opacity-80">Use existing stock, or press "Request Anyway" to proceed.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-success/40 bg-success/10 text-success p-3 text-xs flex gap-2 items-center">
+                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                    <span>No matching stock at this branch — safe to request.</span>
+                  </div>
+                )
+              )}
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReqTarget(null)} disabled={submitting}>Cancel</Button>
-            <Button onClick={submitRequest} disabled={submitting}>{submitting ? "Submitting…" : "Submit Request"}</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setReqTarget(null)} disabled={submitting || checking}>Cancel</Button>
+            <Button variant="secondary" onClick={runStockCheck} disabled={submitting || checking || (!partCode.trim() && !model.trim())}>
+              {checking ? (<><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />Checking…</>) : "Check Stock"}
+            </Button>
+            {stock && stock.totalReceivedQty > 0 ? (
+              <Button variant="destructive" onClick={forceSubmit} disabled={submitting}>
+                {submitting ? "Submitting…" : "Request Anyway"}
+              </Button>
+            ) : (
+              <Button onClick={submitRequest} disabled={submitting || checking}>
+                {submitting ? "Submitting…" : "Submit Request"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

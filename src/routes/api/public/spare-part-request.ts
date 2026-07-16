@@ -9,7 +9,7 @@ const HEADERS = [
   "Ticket #",
   "Branch",
   "Worker",
-  "Part Name / Code",
+  "Part Code",
   "Quantity",
   "Notes",
   "Status",
@@ -18,6 +18,7 @@ const HEADERS = [
   "Receive Date",
   "Last Updated",
   "AWB",
+  "Model",
 ];
 
 const CORS = {
@@ -63,14 +64,14 @@ async function ensureTabWithHeaders() {
   }
   // Ensure header row exists / is correct
   const cur = await fetch(
-    `${GATEWAY}/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(TAB)}!A1:N1`,
+    `${GATEWAY}/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(TAB)}!A1:O1`,
     { headers: gwHeaders() },
   );
   const d = (await cur.json()) as { values?: string[][] };
   const first = (d.values?.[0] ?? []).filter(Boolean);
-  if (first.length === 0) {
+  if (first.length < HEADERS.length) {
     await fetch(
-      `${GATEWAY}/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(TAB)}!A1:N1?valueInputOption=USER_ENTERED`,
+      `${GATEWAY}/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(TAB)}!A1:O1?valueInputOption=USER_ENTERED`,
       { method: "PUT", headers: gwHeaders(), body: JSON.stringify({ values: [HEADERS] }) },
     );
   }
@@ -80,9 +81,11 @@ type Body = {
   ticket?: string;
   branch?: string;
   worker?: string;
-  partName?: string;
+  partCode?: string;
+  model?: string;
   quantity?: number | string;
   notes?: string;
+  confirmed?: boolean;
 };
 
 function fmtDate(d: Date) {
@@ -97,10 +100,11 @@ export const Route = createFileRoute("/api/public/spare-part-request")({
         try {
           const body = (await request.json()) as Body;
           const ticket = String(body.ticket ?? "").trim();
-          const partName = String(body.partName ?? "").trim();
+          const partCode = String(body.partCode ?? "").trim();
+          const model = String(body.model ?? "").trim();
           const quantity = String(body.quantity ?? "").trim();
           if (!ticket) return json({ ok: false, error: "missing_ticket" }, 400);
-          if (!partName) return json({ ok: false, error: "missing_part" }, 400);
+          if (!partCode && !model) return json({ ok: false, error: "missing_part" }, 400);
           if (!quantity) return json({ ok: false, error: "missing_quantity" }, 400);
 
           await ensureTabWithHeaders();
@@ -114,7 +118,7 @@ export const Route = createFileRoute("/api/public/spare-part-request")({
             ticket,
             String(body.branch ?? "").trim(),
             String(body.worker ?? "").trim(),
-            partName,
+            partCode,
             quantity,
             String(body.notes ?? "").trim(),
             "New",
@@ -123,9 +127,10 @@ export const Route = createFileRoute("/api/public/spare-part-request")({
             "",
             dateStr,
             "",
+            model,
           ];
           const r = await fetch(
-            `${GATEWAY}/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(TAB)}!A:N:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+            `${GATEWAY}/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(TAB)}!A:O:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
             { method: "POST", headers: gwHeaders(), body: JSON.stringify({ values: [row] }) },
           );
           if (!r.ok) {
