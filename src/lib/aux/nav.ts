@@ -26,6 +26,7 @@ import {
   LayoutGrid,
   Settings2,
   ShieldCheck,
+  Database,
   type LucideIcon,
 } from "lucide-react";
 
@@ -66,4 +67,5 @@ export const NAV_PAGES: NavPage[] = [
   { path: "/custom-dashboard", label: "Custom Dashboard", icon: LayoutGrid, active: true },
   { path: "/control-panel", label: "Control Panel", icon: Settings2, admin: true, active: true },
   { path: "/access", label: "Access", icon: ShieldCheck, admin: true, active: true },
+  { path: "/data-editor", label: "Data Editor", icon: Database, admin: true, active: true },
 ];

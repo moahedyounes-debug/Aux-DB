@@ -25,6 +25,7 @@ import { Route as InstallationAnalysisRouteImport } from './routes/installation-
 import { Route as ExportCenterRouteImport } from './routes/export-center'
 import { Route as DistrictsMapRouteImport } from './routes/districts-map'
 import { Route as DeepInsightsRouteImport } from './routes/deep-insights'
+import { Route as DataEditorRouteImport } from './routes/data-editor'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
 import { Route as CustomDashboardRouteImport } from './routes/custom-dashboard'
 import { Route as CostsRouteImport } from './routes/costs'
@@ -38,6 +39,7 @@ import { Route as AscPerformanceRouteImport } from './routes/asc-performance'
 import { Route as ActivityLogRouteImport } from './routes/activity-log'
 import { Route as AccessRouteImport } from './routes/access'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicSheetWriteRouteImport } from './routes/api/public/sheet-write'
 import { Route as ApiPublicSheetReadRouteImport } from './routes/api/public/sheet-read'
 import { Route as ApiPublicAccessWriteRouteImport } from './routes/api/public/access-write'
 import { Route as ApiPublicAccessCheckRouteImport } from './routes/api/public/access-check'
@@ -122,6 +124,11 @@ const DeepInsightsRoute = DeepInsightsRouteImport.update({
   path: '/deep-insights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DataEditorRoute = DataEditorRouteImport.update({
+  id: '/data-editor',
+  path: '/data-editor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DailyOperationsRoute = DailyOperationsRouteImport.update({
   id: '/daily-operations',
   path: '/daily-operations',
@@ -187,6 +194,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSheetWriteRoute = ApiPublicSheetWriteRouteImport.update({
+  id: '/api/public/sheet-write',
+  path: '/api/public/sheet-write',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSheetReadRoute = ApiPublicSheetReadRouteImport.update({
   id: '/api/public/sheet-read',
   path: '/api/public/sheet-read',
@@ -217,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
   '/daily-operations': typeof DailyOperationsRoute
+  '/data-editor': typeof DataEditorRoute
   '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
@@ -236,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/api/public/access-check': typeof ApiPublicAccessCheckRoute
   '/api/public/access-write': typeof ApiPublicAccessWriteRoute
   '/api/public/sheet-read': typeof ApiPublicSheetReadRoute
+  '/api/public/sheet-write': typeof ApiPublicSheetWriteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -251,6 +265,7 @@ export interface FileRoutesByTo {
   '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
   '/daily-operations': typeof DailyOperationsRoute
+  '/data-editor': typeof DataEditorRoute
   '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
@@ -270,6 +285,7 @@ export interface FileRoutesByTo {
   '/api/public/access-check': typeof ApiPublicAccessCheckRoute
   '/api/public/access-write': typeof ApiPublicAccessWriteRoute
   '/api/public/sheet-read': typeof ApiPublicSheetReadRoute
+  '/api/public/sheet-write': typeof ApiPublicSheetWriteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -286,6 +302,7 @@ export interface FileRoutesById {
   '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
   '/daily-operations': typeof DailyOperationsRoute
+  '/data-editor': typeof DataEditorRoute
   '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
@@ -305,6 +322,7 @@ export interface FileRoutesById {
   '/api/public/access-check': typeof ApiPublicAccessCheckRoute
   '/api/public/access-write': typeof ApiPublicAccessWriteRoute
   '/api/public/sheet-read': typeof ApiPublicSheetReadRoute
+  '/api/public/sheet-write': typeof ApiPublicSheetWriteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -322,6 +340,7 @@ export interface FileRouteTypes {
     | '/costs'
     | '/custom-dashboard'
     | '/daily-operations'
+    | '/data-editor'
     | '/deep-insights'
     | '/districts-map'
     | '/export-center'
@@ -341,6 +360,7 @@ export interface FileRouteTypes {
     | '/api/public/access-check'
     | '/api/public/access-write'
     | '/api/public/sheet-read'
+    | '/api/public/sheet-write'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -356,6 +376,7 @@ export interface FileRouteTypes {
     | '/costs'
     | '/custom-dashboard'
     | '/daily-operations'
+    | '/data-editor'
     | '/deep-insights'
     | '/districts-map'
     | '/export-center'
@@ -375,6 +396,7 @@ export interface FileRouteTypes {
     | '/api/public/access-check'
     | '/api/public/access-write'
     | '/api/public/sheet-read'
+    | '/api/public/sheet-write'
   id:
     | '__root__'
     | '/'
@@ -390,6 +412,7 @@ export interface FileRouteTypes {
     | '/costs'
     | '/custom-dashboard'
     | '/daily-operations'
+    | '/data-editor'
     | '/deep-insights'
     | '/districts-map'
     | '/export-center'
@@ -409,6 +432,7 @@ export interface FileRouteTypes {
     | '/api/public/access-check'
     | '/api/public/access-write'
     | '/api/public/sheet-read'
+    | '/api/public/sheet-write'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -425,6 +449,7 @@ export interface RootRouteChildren {
   CostsRoute: typeof CostsRoute
   CustomDashboardRoute: typeof CustomDashboardRoute
   DailyOperationsRoute: typeof DailyOperationsRoute
+  DataEditorRoute: typeof DataEditorRoute
   DeepInsightsRoute: typeof DeepInsightsRoute
   DistrictsMapRoute: typeof DistrictsMapRoute
   ExportCenterRoute: typeof ExportCenterRoute
@@ -444,6 +469,7 @@ export interface RootRouteChildren {
   ApiPublicAccessCheckRoute: typeof ApiPublicAccessCheckRoute
   ApiPublicAccessWriteRoute: typeof ApiPublicAccessWriteRoute
   ApiPublicSheetReadRoute: typeof ApiPublicSheetReadRoute
+  ApiPublicSheetWriteRoute: typeof ApiPublicSheetWriteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -560,6 +586,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeepInsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/data-editor': {
+      id: '/data-editor'
+      path: '/data-editor'
+      fullPath: '/data-editor'
+      preLoaderRoute: typeof DataEditorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/daily-operations': {
       id: '/daily-operations'
       path: '/daily-operations'
@@ -651,6 +684,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sheet-write': {
+      id: '/api/public/sheet-write'
+      path: '/api/public/sheet-write'
+      fullPath: '/api/public/sheet-write'
+      preLoaderRoute: typeof ApiPublicSheetWriteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sheet-read': {
       id: '/api/public/sheet-read'
       path: '/api/public/sheet-read'
@@ -689,6 +729,7 @@ const rootRouteChildren: RootRouteChildren = {
   CostsRoute: CostsRoute,
   CustomDashboardRoute: CustomDashboardRoute,
   DailyOperationsRoute: DailyOperationsRoute,
+  DataEditorRoute: DataEditorRoute,
   DeepInsightsRoute: DeepInsightsRoute,
   DistrictsMapRoute: DistrictsMapRoute,
   ExportCenterRoute: ExportCenterRoute,
@@ -708,6 +749,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAccessCheckRoute: ApiPublicAccessCheckRoute,
   ApiPublicAccessWriteRoute: ApiPublicAccessWriteRoute,
   ApiPublicSheetReadRoute: ApiPublicSheetReadRoute,
+  ApiPublicSheetWriteRoute: ApiPublicSheetWriteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
