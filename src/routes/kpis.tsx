@@ -592,7 +592,7 @@ function KpisPage() {
 
     { label: "TTL Pending Q'ty", bold: true, kind: "num",
       value: (c) => monthVal(c, "pending"), bp: 1742 },
-    { label: ">7D", indent: 1, kind: "num",
+    { label: ">48 Hr", indent: 1, kind: "num",
       value: (c) => monthVal(c, "pending7d"), bp: 997 },
     ...companies.map((co) => ({
       label: co,
