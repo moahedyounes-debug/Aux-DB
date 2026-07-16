@@ -15,7 +15,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
-import { useGlobalFilters, applyGlobalFilters } from "@/hooks/use-global-filters";
+import { useGlobalFilters, applyGlobalFilters, shortBranch } from "@/hooks/use-global-filters";
 import { readTable } from "@/lib/sheets-client";
 import { cn } from "@/lib/utils";
 import { evaluateFormula, formatValue, parseKpiFormulaRow, type KpiFormulaDef } from "@/lib/aux/formula";
