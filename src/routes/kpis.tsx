@@ -20,7 +20,7 @@ import { readTable } from "@/lib/sheets-client";
 import { cn } from "@/lib/utils";
 import { evaluateFormula, formatValue, parseKpiFormulaRow, type KpiFormulaDef } from "@/lib/aux/formula";
 import { Calculator } from "lucide-react";
-import { kpiQueryOptions } from "@/lib/aux/queries";
+import { kpiQueryOptions, satisfactionQueryOptions } from "@/lib/aux/queries";
 
 export const Route = createFileRoute("/kpis")({
   head: () => ({
