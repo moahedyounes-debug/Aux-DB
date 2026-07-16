@@ -297,7 +297,7 @@ function CustomerLookupPage() {
               <ol className="relative border-s border-border ps-6 space-y-4">
                 {results.events.map((e, i) => {
                   const Icon = e.kind === "ticket" ? TicketIcon : Package;
-                  const isDone = normText(e.status).match(/complete|closed|received/);
+                  const isDone = normText(e.status ?? "").match(/complete|closed|received/);
                   return (
                     <li key={`${e.kind}-${e.ref}-${i}`} className="relative">
                       <span
