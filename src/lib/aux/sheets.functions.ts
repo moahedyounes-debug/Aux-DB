@@ -865,10 +865,10 @@ function aggregate(rows: string[][]): KpiData {
 
     if (done) completed++;
     // Only tickets with a truly blank Completion Result count as pending
-    // for the Daily Operations queue. Rejected / cancelled / closed are excluded.
+    // for the Daily Operations queue. Rejected / cancelled / closed / completed are excluded.
     else if (
       isPendingResult(row[COL.completionResult]) &&
-      !/return|reject|cancel|close/i.test(status) &&
+      !/return|reject|cancel|close|completed/i.test(status) &&
       String(row[COL.serviceProvider] ?? "").trim() !== ""
     ) {
       pending++;
