@@ -397,66 +397,55 @@ function KpisPage() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b-2 border-border">
-                  <th rowSpan={2} className="py-2 pr-4 text-start align-bottom">Branch</th>
-                  <th colSpan={4} className="py-2 pr-4 text-center border-b border-border/40">SLA Rate</th>
-                  <th rowSpan={2} className="py-2 pr-4 text-end align-bottom">RTAT</th>
-                  <th colSpan={2} className="py-2 pr-4 text-center border-b border-border/40">Pending Q'ty</th>
-                  <th rowSpan={2} className="py-2 pr-4 text-end align-bottom">CSAT</th>
-                  <th colSpan={2} className="py-2 pr-4 text-center border-b border-border/40">Warranty</th>
-                </tr>
-                <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="py-2 pr-4 text-end font-normal">24h</th>
-                  <th className="py-2 pr-4 text-end font-normal">48h</th>
-                  <th className="py-2 pr-4 text-end font-normal">72h</th>
-                  <th className="py-2 pr-4 text-end font-normal">Total</th>
-                  <th className="py-2 pr-4 text-end font-normal">&gt; 3 Day</th>
-                  <th className="py-2 pr-4 text-end font-normal">&gt; 7 Day</th>
-                  <th className="py-2 pr-4 text-end font-normal">Q'ty</th>
-                  <th className="py-2 pr-4 text-end font-normal">Amount</th>
+                  <th className="py-2 pr-4 text-start">KPIs</th>
+                  <th className="py-2 pr-4 text-end">Value</th>
+                  <th className="py-2 pr-4 text-end">Target</th>
+                  <th className="py-2 pr-4 text-end">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {branchTable.map((b) => (
-                  <tr key={b.branch} className="border-b border-border/60 last:border-0">
-                    <td className="py-2.5 pr-4 font-medium text-foreground">{b.branch}</td>
-                    <td className="py-2.5 pr-4 text-end">
-                      {b.withHrs > 0 ? (
-                        <Badge ok={b.rate24 >= TARGETS.rate24h}>{b.rate24.toFixed(1)}%</Badge>
-                      ) : <span className="text-xs text-muted-foreground">—</span>}
-                    </td>
-                    <td className="py-2.5 pr-4 text-end">
-                      {b.withHrs > 0 ? (
-                        <Badge ok={b.rate48 >= TARGETS.rate48h}>{b.rate48.toFixed(1)}%</Badge>
-                      ) : <span className="text-xs text-muted-foreground">—</span>}
-                    </td>
-                    <td className="py-2.5 pr-4 text-end">
-                      {b.withHrs > 0 ? (
-                        <Badge ok={b.rate72 >= TARGETS.rate72h}>{b.rate72.toFixed(1)}%</Badge>
-                      ) : <span className="text-xs text-muted-foreground">—</span>}
-                    </td>
-                    <td className="py-2.5 pr-4 text-end tabular-nums">
-                      {b.withHrs > 0 ? `${b.rtat.toFixed(1)}h` : "—"}
-                    </td>
-                    <td className="py-2.5 pr-4 text-end tabular-nums">{fmt.format(b.pending)}</td>
-                    <td className="py-2.5 pr-4 text-end">
-                      {b.pending3d > 0
-                        ? <Badge ok={false}>{fmt.format(b.pending3d)}</Badge>
-                        : <span className="tabular-nums">0</span>}
-                    </td>
-                    <td className="py-2.5 pr-4 text-end">
-                      {b.pending7d > 0
-                        ? <Badge ok={false}>{fmt.format(b.pending7d)}</Badge>
-                        : <span className="tabular-nums">0</span>}
-                    </td>
-                    <td className="py-2.5 pr-4 text-end tabular-nums">
-                      {b.csat > 0 ? b.csat.toFixed(1) : "—"}
-                    </td>
-                    <td className="py-2.5 pr-4 text-end tabular-nums">{fmt.format(b.wtyQty)}</td>
-                    <td className="py-2.5 pr-4 text-end tabular-nums text-success">
-                      {b.wtyAmount > 0 ? sar.format(b.wtyAmount) : "—"}
-                    </td>
-                  </tr>
-                ))}
+                {(() => {
+                  const totals = branchTable.reduce(
+                    (a, b) => ({
+                      u24: a.u24 + b.u24, u48: a.u48 + b.u48, u72: a.u72 + b.u72,
+                      withHrs: a.withHrs + b.withHrs, hrsSum: a.hrsSum + b.hrsSum,
+                      pending3d: a.pending3d + b.pending3d, pending7d: a.pending7d + b.pending7d,
+                      wtyQty: a.wtyQty + b.wtyQty, wtyAmount: a.wtyAmount + b.wtyAmount,
+                      csatSum: a.csatSum + (b.csat > 0 ? b.csat : 0),
+                      csatN: a.csatN + (b.csat > 0 ? 1 : 0),
+                    }),
+                    { u24: 0, u48: 0, u72: 0, withHrs: 0, hrsSum: 0, pending3d: 0, pending7d: 0, wtyQty: 0, wtyAmount: 0, csatSum: 0, csatN: 0 },
+                  );
+                  const r24 = pct(totals.u24, totals.withHrs);
+                  const r48 = pct(totals.u48, totals.withHrs);
+                  const r72 = pct(totals.u72, totals.withHrs);
+                  const rtat = totals.withHrs > 0 ? totals.hrsSum / totals.withHrs : 0;
+                  const csatAvg = totals.csatN > 0 ? totals.csatSum / totals.csatN : 0;
+                  const kpis: Array<{ label: string; value: string; target: string; ok: boolean | null; group?: string }> = [
+                    { label: "24Hr Rate", value: totals.withHrs > 0 ? `${r24.toFixed(1)}%` : "—", target: `≥ ${TARGETS.rate24h}%`, ok: totals.withHrs > 0 ? r24 >= TARGETS.rate24h : null },
+                    { label: "48Hr Rate", value: totals.withHrs > 0 ? `${r48.toFixed(1)}%` : "—", target: `≥ ${TARGETS.rate48h}%`, ok: totals.withHrs > 0 ? r48 >= TARGETS.rate48h : null },
+                    { label: "72Hr Rate", value: totals.withHrs > 0 ? `${r72.toFixed(1)}%` : "—", target: `≥ ${TARGETS.rate72h}%`, ok: totals.withHrs > 0 ? r72 >= TARGETS.rate72h : null },
+                    { label: "RTAT", value: totals.withHrs > 0 ? `${rtat.toFixed(1)}h` : "—", target: `≤ ${SLA_48}h`, ok: totals.withHrs > 0 ? rtat <= SLA_48 : null },
+                    { label: "Pending Q'ty > 3 Day", value: fmt.format(totals.pending3d), target: "0", ok: totals.pending3d === 0, group: "Pending Order Q'ty (closed over)" },
+                    { label: "Pending Q'ty > 7 Day", value: fmt.format(totals.pending7d), target: "0", ok: totals.pending7d === 0 },
+                    { label: "CSAT", value: csatAvg > 0 ? csatAvg.toFixed(2) : "—", target: "≥ 4.5", ok: csatAvg > 0 ? csatAvg >= 4.5 : null },
+                    { label: "W'ty Q'ty", value: fmt.format(totals.wtyQty), target: "—", ok: null, group: "Warranty" },
+                    { label: "W'ty Amount", value: totals.wtyAmount > 0 ? sar.format(totals.wtyAmount) : "—", target: "—", ok: null },
+                  ];
+                  return kpis.map((k, i) => (
+                    <tr key={k.label} className={cn("border-b border-border/60 last:border-0", k.group && i > 0 && "border-t-2 border-t-border/80")}>
+                      <td className="py-2.5 pr-4 font-medium text-foreground">
+                        {k.group && <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">{k.group}</div>}
+                        {k.label}
+                      </td>
+                      <td className="py-2.5 pr-4 text-end tabular-nums font-semibold">{k.value}</td>
+                      <td className="py-2.5 pr-4 text-end text-xs text-muted-foreground tabular-nums">{k.target}</td>
+                      <td className="py-2.5 pr-4 text-end">
+                        {k.ok === null ? <span className="text-xs text-muted-foreground">—</span> : <Badge ok={k.ok}>{k.ok ? "On Target" : "Off Target"}</Badge>}
+                      </td>
+                    </tr>
+                  ));
+                })()}
               </tbody>
             </table>
           </div>
