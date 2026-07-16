@@ -86,6 +86,9 @@ type Body = {
   quantity?: number | string;
   notes?: string;
   confirmed?: boolean;
+  status?: string;
+  dispatchDate?: string;
+  awb?: string;
 };
 
 type PatchBody = {
@@ -198,7 +201,6 @@ export const Route = createFileRoute("/api/public/spare-part-request")({
           const partCode = String(body.partCode ?? "").trim();
           const model = String(body.model ?? "").trim();
           const quantity = String(body.quantity ?? "").trim();
-          if (!ticket) return json({ ok: false, error: "missing_ticket" }, 400);
           if (!partCode && !model) return json({ ok: false, error: "missing_part" }, 400);
           if (!quantity) return json({ ok: false, error: "missing_quantity" }, 400);
 
@@ -216,12 +218,12 @@ export const Route = createFileRoute("/api/public/spare-part-request")({
             partCode,
             quantity,
             String(body.notes ?? "").trim(),
-            "New",
+            String(body.status ?? "Requested").trim(),
             dateStr,
-            "",
+            String(body.dispatchDate ?? "").trim(),
             "",
             dateStr,
-            "",
+            String(body.awb ?? "").trim(),
             model,
           ];
           const r = await fetch(
