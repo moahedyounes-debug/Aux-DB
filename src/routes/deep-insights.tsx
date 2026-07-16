@@ -97,7 +97,7 @@ function DeepInsightsPage() {
     if (!maint.data) return [];
     const scoped = applyAccessFilter(maint.data.rows, access, { asc: M.asc, branch: M.branch });
     return applyGlobalFilters(scoped, {
-      asc: M.asc, branch: M.branch, worker: M.worker, createdAt: M.createdAt,
+      spn: M.asc, worker: M.worker, createdAt: M.createdAt,
     }, gFilters);
   }, [maint.data, access, gFilters]);
 
