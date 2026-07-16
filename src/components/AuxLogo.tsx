@@ -16,12 +16,14 @@ export function AuxLogo({ className, variant = "dark", showWordmark = true }: Au
 
   return (
     <div className={`flex items-center gap-2.5 ${className ?? ""}`}>
-      <img
-        src={logoAsset.url}
-        alt="AUX"
-        className="h-full w-auto object-contain"
-        draggable={false}
-      />
+      <div className={isLight ? "flex h-full items-center rounded-md bg-white px-2 py-1 shadow-sm" : "flex h-full items-center"}>
+        <img
+          src={logoAsset.url}
+          alt="AUX"
+          className="h-full w-auto object-contain"
+          draggable={false}
+        />
+      </div>
       {showWordmark && (
         <div className="flex flex-col leading-none">
           <span className={`text-[10px] font-semibold tracking-[0.24em] ${subFill}`}>
