@@ -653,8 +653,12 @@ function KpisPage() {
                 <tr className="bg-muted/40 text-muted-foreground">
                   <th rowSpan={2} className="py-2 px-3 text-start font-semibold border border-border" colSpan={2}>Category</th>
                   <th rowSpan={2} className="py-2 px-2 text-center font-semibold border border-border">vs PY</th>
-                  <th colSpan={4} className="py-2 px-2 text-center font-semibold border border-border">2024</th>
-                  <th colSpan={4} className="py-2 px-2 text-center font-semibold border border-border">2025</th>
+                  {Array.from(MONTHS_BY_YEAR.keys()).sort().map((y) => {
+                    const span = (MONTHS_BY_YEAR.get(y)?.length ?? 0) + 1;
+                    return (
+                      <th key={y} colSpan={span} className="py-2 px-2 text-center font-semibold border border-border">{y}</th>
+                    );
+                  })}
                   <th colSpan={3} className="py-2 px-2 text-center font-semibold border border-border bg-muted/70">Target</th>
                 </tr>
                 <tr className="bg-muted/30 text-muted-foreground">
