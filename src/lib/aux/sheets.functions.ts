@@ -399,6 +399,63 @@ function isCompleted(row: string[]): boolean {
 let cache: { at: number; data: KpiData } | null = null;
 const CACHE_MS = 5 * 60_000;
 
+// ---- Global filter support ---------------------------------------------
+export interface KpiFilters {
+  month?: string;   // "YYYY-MM" or "all"/undefined
+  from?: string;    // "YYYY-MM-DD"
+  to?: string;      // "YYYY-MM-DD" (inclusive)
+  asc?: string;     // first word of "Service Provider Name", or "all"
+  branch?: string;  // full "Service Provider Name", or "all"
+  worker?: string;  // substring match, case-insensitive
+}
+
+function firstWord(v: string | undefined | null): string {
+  if (!v) return "";
+  const m = String(v).trim().match(/^\S+/);
+  return m ? m[0] : "";
+}
+
+function isFilterActive(f: KpiFilters | undefined): boolean {
+  if (!f) return false;
+  return Boolean(
+    (f.month && f.month !== "all") ||
+    f.from || f.to ||
+    (f.asc && f.asc !== "all") ||
+    (f.branch && f.branch !== "all") ||
+    (f.worker && f.worker.trim()),
+  );
+}
+
+function filterRows(rows: string[][], f: KpiFilters): string[][] {
+  const from = f.from ? new Date(f.from).getTime() : null;
+  const to = f.to ? new Date(f.to).getTime() + 86_400_000 : null;
+  const worker = (f.worker ?? "").trim().toLowerCase();
+  const wantDate = (f.month && f.month !== "all") || from !== null || to !== null;
+  const wantAsc = f.asc && f.asc !== "all" ? f.asc : null;
+  const wantBranch = f.branch && f.branch !== "all" ? f.branch : null;
+  return rows.filter((row) => {
+    const spn = row[COL.serviceProvider] || "";
+    if (wantAsc && firstWord(spn) !== wantAsc) return false;
+    if (wantBranch && spn !== wantBranch) return false;
+    if (worker) {
+      const w = String(row[COL.workerName] || "").toLowerCase();
+      if (!w.includes(worker)) return false;
+    }
+    if (wantDate) {
+      const d = parseDate(row[COL.orderCreation]);
+      if (!d) return false;
+      const t = d.getTime();
+      if (f.month && f.month !== "all") {
+        const mk = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+        if (mk !== f.month) return false;
+      }
+      if (from !== null && t < from) return false;
+      if (to !== null && t >= to) return false;
+    }
+    return true;
+  });
+}
+
 async function fetchSheetRows(): Promise<string[][]> {
   const key = process.env.GOOGLE_SHEETS_API_KEY;
   const lov = process.env.LOVABLE_API_KEY;
@@ -1083,12 +1140,26 @@ function aggregate(rows: string[][]): KpiData {
   };
 }
 
-export const getSheetsKpi = createServerFn({ method: "GET" }).handler(async (): Promise<KpiData> => {
-  if (cache && Date.now() - cache.at < CACHE_MS) return cache.data;
+export const getSheetsKpi = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown): KpiFilters => {
+    const d = (data ?? {}) as Record<string, unknown>;
+    return {
+      month: typeof d.month === "string" ? d.month : undefined,
+      from: typeof d.from === "string" ? d.from : undefined,
+      to: typeof d.to === "string" ? d.to : undefined,
+      asc: typeof d.asc === "string" ? d.asc : undefined,
+      branch: typeof d.branch === "string" ? d.branch : undefined,
+      worker: typeof d.worker === "string" ? d.worker : undefined,
+    };
+  })
+  .handler(async ({ data: filters }): Promise<KpiData> => {
+  const active = isFilterActive(filters);
+  if (!active && cache && Date.now() - cache.at < CACHE_MS) return cache.data;
   try {
     const rows = await fetchSheetRows();
-    const data = aggregate(rows);
-    cache = { at: Date.now(), data };
+    const filtered = active ? filterRows(rows, filters) : rows;
+    const data = aggregate(filtered);
+    if (!active) cache = { at: Date.now(), data };
     return data;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

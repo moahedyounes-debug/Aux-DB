@@ -17,9 +17,10 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
+import { useKpiData } from "@/hooks/use-kpi-data";
 
 export const Route = createFileRoute("/costs")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "Cost Center — AUX ASC Dashboard" },
@@ -37,7 +38,7 @@ const sar = new Intl.NumberFormat("en-US", { style: "currency", currency: "SAR",
 const num = new Intl.NumberFormat("en-US");
 
 function CostsPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useKpiData();
   const w = data.warranty;
   const dedRate = w.gross ? Math.round((w.deduction / w.gross) * 100) : 0;
   const costPerTicket = w.totalClaims ? Math.round(w.net / w.totalClaims) : 0;

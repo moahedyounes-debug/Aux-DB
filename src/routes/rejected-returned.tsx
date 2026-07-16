@@ -8,9 +8,10 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
+import { useKpiData } from "@/hooks/use-kpi-data";
 
 export const Route = createFileRoute("/rejected-returned")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "Rejected / Returned — AUX ASC Dashboard" },
@@ -26,7 +27,7 @@ const num = new Intl.NumberFormat("en-US");
 const COLORS = ["#ef4444", "#f97316", "#eab308", "#8b5cf6", "#06b6d4", "#10b981", "#ec4899", "#6366f1"];
 
 function RejectedPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useKpiData();
   const rescheduledCount = data.snapshot.rescheduled;
   const totalTickets = data.snapshot.total;
   const reschedRate = totalTickets > 0

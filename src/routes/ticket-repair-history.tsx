@@ -6,10 +6,11 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
+import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/ticket-repair-history")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "Ticket Repair History — AUX ASC Dashboard" },
@@ -24,7 +25,7 @@ export const Route = createFileRoute("/ticket-repair-history")({
 const num = new Intl.NumberFormat("en-US");
 
 function HistoryPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useKpiData();
   // Combine all ticket sources into one searchable log
   const all = useMemo(() => {
     const rows: Array<{

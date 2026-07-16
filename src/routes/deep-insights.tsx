@@ -24,13 +24,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TARGETS } from "@/lib/aux/mock-data";
 import { kpiQueryOptions } from "@/lib/aux/queries";
+import { useKpiData } from "@/hooks/use-kpi-data";
 import { readTable } from "@/lib/sheets-client";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
 import { useGlobalFilters, applyGlobalFilters } from "@/hooks/use-global-filters";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/deep-insights")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "Deep Insights — AUX ASC Dashboard" },
@@ -83,7 +84,7 @@ function hrs(r: Row): number {
 }
 
 function DeepInsightsPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useKpiData();
   const { access, ready } = useAccess();
   const { filters: gFilters } = useGlobalFilters();
   const maint = useQuery({

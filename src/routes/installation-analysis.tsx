@@ -14,10 +14,11 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
+import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/installation-analysis")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "Installation Analysis — AUX ASC Dashboard" },
@@ -39,7 +40,7 @@ export const Route = createFileRoute("/installation-analysis")({
 const fmt = new Intl.NumberFormat("en-US");
 
 function InstallationPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useKpiData();
   const inst = data.installation;
 
   const tooltipStyle = {
