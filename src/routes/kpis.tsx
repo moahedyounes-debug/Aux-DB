@@ -509,6 +509,54 @@ function KpisPage() {
         </div>
       )}
 
+      <div className="surface-card p-4 grid gap-3 md:grid-cols-6 grid-cols-2">
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">Month</Label>
+          <Select value={fMonth} onValueChange={setFMonth}>
+            <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All months</SelectItem>
+              {opts.months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">From</Label>
+          <Input type="date" value={fFrom} onChange={(e) => setFFrom(e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">To</Label>
+          <Input type="date" value={fTo} onChange={(e) => setFTo(e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">Company (ASC)</Label>
+          <Select value={fAsc} onValueChange={setFAsc}>
+            <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All companies</SelectItem>
+              {opts.ascs.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">Branch</Label>
+          <Select value={fBranch} onValueChange={setFBranch}>
+            <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All branches</SelectItem>
+              {opts.branches.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">Technician</Label>
+          <div className="flex gap-2">
+            <Input placeholder="Name…" value={fWorker} onChange={(e) => setFWorker(e.target.value)} />
+            <Button variant="outline" size="sm" onClick={() => { setFMonth("all"); setFFrom(""); setFTo(""); setFAsc("all"); setFBranch("all"); setFWorker(""); }}>Reset</Button>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard
           label="Total Tickets"
