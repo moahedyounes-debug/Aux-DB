@@ -62,6 +62,7 @@ const COL = {
   completionResult: "Completion Result",
   worker: "Worker Name",
   location: "Location",
+  tel: "Tel",
 } as const;
 
 const fmt = new Intl.NumberFormat("en-US");
@@ -293,6 +294,57 @@ function KpisPage() {
     return map;
   }, [filteredRows]);
 
+  // Reclaim: same customer (Tel) with same Service Type returning within 90 days.
+  // Bucket = the month of the *later* (reclaimed) ticket.
+  const reclaimByMonth = useMemo(() => {
+    const RECLAIM_WINDOW_MS = 90 * 86_400_000;
+    const monthKey = (ms: number): string => {
+      const d = new Date(ms);
+      return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    };
+    const normTel = (s: string) =>
+      String(s ?? "").replace(/\D/g, "").replace(/^966/, "0").replace(/^0+/, "0");
+    const normSt = (s: string) => String(s ?? "").trim().toLowerCase();
+
+    type Entry = { ms: number };
+    const groups = new Map<string, Entry[]>();
+    const closedByMonth = new Map<string, number>();
+
+    for (const r of filteredRows) {
+      if (!isCompleted(r)) continue;
+      const raw = r[COL.createdAt];
+      if (!raw) continue;
+      const ms = new Date(String(raw).replace(" ", "T")).getTime();
+      if (!Number.isFinite(ms)) continue;
+      const mk = monthKey(ms);
+      closedByMonth.set(mk, (closedByMonth.get(mk) ?? 0) + 1);
+      const tel = normTel(r[COL.tel] || "");
+      const st = normSt(r[COL.serviceType] || "");
+      if (!tel || !st) continue;
+      const gk = `${tel}::${st}`;
+      if (!groups.has(gk)) groups.set(gk, []);
+      groups.get(gk)!.push({ ms });
+    }
+
+    const reclaimByMonthMap = new Map<string, number>();
+    for (const entries of groups.values()) {
+      if (entries.length < 2) continue;
+      entries.sort((a, b) => a.ms - b.ms);
+      for (let i = 1; i < entries.length; i++) {
+        if (entries[i].ms - entries[i - 1].ms <= RECLAIM_WINDOW_MS) {
+          const mk = monthKey(entries[i].ms);
+          reclaimByMonthMap.set(mk, (reclaimByMonthMap.get(mk) ?? 0) + 1);
+        }
+      }
+    }
+
+    const merged = new Map<string, { reclaims: number; closed: number }>();
+    for (const [mk, closed] of closedByMonth) {
+      merged.set(mk, { reclaims: reclaimByMonthMap.get(mk) ?? 0, closed });
+    }
+    return merged;
+  }, [filteredRows]);
+
   // Per-company monthly breakdown of currently-pending tickets older than 6 days.
   const monthlyByCompany = useMemo(() => {
     const map = new Map<string, Map<string, number>>();
@@ -504,19 +556,23 @@ function KpisPage() {
       : `${access.asc}${access.branch ? " · " + access.branch : ""}`
     : "—";
 
-  const monthVal = (key: string, field: "total" | "completed" | "pending" | "pending7d" | "rtat" | "rate24" | "rate48" | "rate72"): number | null => {
+  const monthVal = (key: string, field: "total" | "completed" | "pending" | "pending7d" | "rtat" | "rate24" | "rate48" | "rate72" | "reclaim"): number | null => {
     const collect = (ks: string[]) => {
       let total = 0, completed = 0, pending = 0, pending7d = 0, withHrs = 0, hrsSum = 0, pendingOver24 = 0;
       let u24 = 0, u48 = 0, u72 = 0;
+      let reclaims = 0, reclaimClosed = 0;
       let any = false;
       for (const k of ks) {
         const e = monthly.get(k);
-        if (!e) continue;
-        any = true;
-        total += e.total; completed += e.completed; pending += e.pending;
-        pending7d += e.pending7d; withHrs += e.withHrs; hrsSum += e.hrsSum;
-        pendingOver24 += e.pendingOver24;
-        u24 += e.u24; u48 += e.u48; u72 += e.u72;
+        if (e) {
+          any = true;
+          total += e.total; completed += e.completed; pending += e.pending;
+          pending7d += e.pending7d; withHrs += e.withHrs; hrsSum += e.hrsSum;
+          pendingOver24 += e.pendingOver24;
+          u24 += e.u24; u48 += e.u48; u72 += e.u72;
+        }
+        const rc = reclaimByMonth.get(k);
+        if (rc) { any = true; reclaims += rc.reclaims; reclaimClosed += rc.closed; }
       }
       if (!any) return null;
       if (field === "total") return total;
@@ -527,6 +583,7 @@ function KpisPage() {
       if (field === "rate24") return completed > 0 ? (u24 / completed) * 100 : null;
       if (field === "rate48") return completed > 0 ? (u48 / completed) * 100 : null;
       if (field === "rate72") return completed > 0 ? (u72 / completed) * 100 : null;
+      if (field === "reclaim") return reclaimClosed > 0 ? (reclaims / reclaimClosed) * 100 : null;
       return null;
     };
     const m = key.match(/^(\d{4})TTL$/);
@@ -576,7 +633,8 @@ function KpisPage() {
 
     { category: "Strengthen Basic competence", label: "Repair Q'ty (K)", kind: "num",
       value: (c) => { const v = monthVal(c, "completed"); return v === null ? null : v; } },
-    { label: "Reclaim Total (%)", kind: "pct", value: empty, bp: 3.5 },
+    { label: "Reclaim Total (%)", kind: "pct",
+      value: (c) => monthVal(c, "reclaim"), bp: 3.5 },
 
     { label: "RTAT (Day)", bold: true, kind: "days",
       value: (c) => monthVal(c, "rtat"), bp: 2 },
