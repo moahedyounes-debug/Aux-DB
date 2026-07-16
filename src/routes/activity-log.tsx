@@ -8,6 +8,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { activityQueryOptions } from "@/lib/aux/queries";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/activity-log")({
   loader: ({ context }) => context.queryClient.ensureQueryData(activityQueryOptions),
@@ -24,6 +25,19 @@ const num = new Intl.NumberFormat("en-US");
 
 function ActivityPage() {
   const { data } = useSuspenseQuery(activityQueryOptions);
+  const userSort = useSort(data.byUser, {
+    email: (u) => u.email,
+    count: (u) => u.count,
+    lastSeen: (u) => u.lastSeen,
+  });
+  const recentView = data.recent.slice(0, 100);
+  const recentSort = useSort(recentView, {
+    timestamp: (r) => r.timestamp,
+    email: (r) => r.email,
+    asc: (r) => r.asc,
+    page: (r) => r.page,
+    action: (r) => r.action,
+  });
   return (
     <DashboardLayout title="Activity Log" subtitle="Who's using the dashboard (live from ActiveUsers tab)">
       {data.error ? (
@@ -66,13 +80,13 @@ function ActivityPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-muted-foreground sticky top-0">
                 <tr>
-                  <th className="p-2 text-left">User</th>
-                  <th className="p-2 text-right">Events</th>
-                  <th className="p-2 text-left">Last Seen</th>
+                  <SortableTh sortKey="email" currentKey={userSort.sortKey} currentDir={userSort.sortDir} onSort={userSort.toggle} className="p-2 text-left">User</SortableTh>
+                  <SortableTh sortKey="count" align="end" currentKey={userSort.sortKey} currentDir={userSort.sortDir} onSort={userSort.toggle} className="p-2 text-right">Events</SortableTh>
+                  <SortableTh sortKey="lastSeen" currentKey={userSort.sortKey} currentDir={userSort.sortDir} onSort={userSort.toggle} className="p-2 text-left">Last Seen</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {data.byUser.map((u) => (
+                {userSort.sorted.map((u) => (
                   <tr key={u.email} className="border-t border-border">
                     <td className="p-2 font-mono text-xs">{u.email}</td>
                     <td className="p-2 text-right">{num.format(u.count)}</td>
@@ -90,15 +104,15 @@ function ActivityPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground sticky top-0">
               <tr>
-                <th className="p-2 text-left">Time</th>
-                <th className="p-2 text-left">User</th>
-                <th className="p-2 text-left">ASC</th>
-                <th className="p-2 text-left">Page</th>
-                <th className="p-2 text-left">Action</th>
+                <SortableTh sortKey="timestamp" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="p-2 text-left">Time</SortableTh>
+                <SortableTh sortKey="email" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="p-2 text-left">User</SortableTh>
+                <SortableTh sortKey="asc" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="p-2 text-left">ASC</SortableTh>
+                <SortableTh sortKey="page" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="p-2 text-left">Page</SortableTh>
+                <SortableTh sortKey="action" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="p-2 text-left">Action</SortableTh>
               </tr>
             </thead>
             <tbody>
-              {data.recent.slice(0, 100).map((r, i) => (
+              {recentSort.sorted.map((r, i) => (
                 <tr key={`${r.email}-${i}`} className="border-t border-border">
                   <td className="p-2 text-xs text-muted-foreground">{r.timestamp}</td>
                   <td className="p-2 font-mono text-xs">{r.email}</td>

@@ -30,6 +30,7 @@ import { TARGETS } from "@/lib/aux/mock-data";
 import { kpiQueryOptions } from "@/lib/aux/queries";
 import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
@@ -68,6 +69,15 @@ function Index() {
   const MONTHLY = data.monthly;
   const PENDING_BY_REASON = data.pendingByReason;
   const pendingRate = snap.total > 0 ? (snap.pending / snap.total) * 100 : 0;
+  const monthlySort = useSort(MONTHLY, {
+    label: (m) => m.label,
+    total: (m) => m.total,
+    completed: (m) => m.completed,
+    pending: (m) => m.pending,
+    rate48h: (m) => m.rate48h,
+    rate72h: (m) => m.rate72h,
+    rescheduled: (m) => m.rescheduled,
+  });
   const [mode, setMode] = useState<TimeMode>("percent");
   const [filter, setFilter] = useState<KpiFilter>("all");
 
@@ -338,17 +348,17 @@ function Index() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="text-start text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="py-2 pr-4 text-start">Month</th>
-                  <th className="py-2 pr-4 text-end">Total</th>
-                  <th className="py-2 pr-4 text-end">Completed</th>
-                  <th className="py-2 pr-4 text-end">Pending</th>
-                  <th className="py-2 pr-4 text-end">48h %</th>
-                  <th className="py-2 pr-4 text-end">72h %</th>
-                  <th className="py-2 pr-4 text-end">Rescheduled</th>
+                  <SortableTh sortKey="label" currentKey={monthlySort.sortKey} currentDir={monthlySort.sortDir} onSort={monthlySort.toggle} className="py-2 pr-4 text-start">Month</SortableTh>
+                  <SortableTh sortKey="total" align="end" currentKey={monthlySort.sortKey} currentDir={monthlySort.sortDir} onSort={monthlySort.toggle} className="py-2 pr-4 text-end">Total</SortableTh>
+                  <SortableTh sortKey="completed" align="end" currentKey={monthlySort.sortKey} currentDir={monthlySort.sortDir} onSort={monthlySort.toggle} className="py-2 pr-4 text-end">Completed</SortableTh>
+                  <SortableTh sortKey="pending" align="end" currentKey={monthlySort.sortKey} currentDir={monthlySort.sortDir} onSort={monthlySort.toggle} className="py-2 pr-4 text-end">Pending</SortableTh>
+                  <SortableTh sortKey="rate48h" align="end" currentKey={monthlySort.sortKey} currentDir={monthlySort.sortDir} onSort={monthlySort.toggle} className="py-2 pr-4 text-end">48h %</SortableTh>
+                  <SortableTh sortKey="rate72h" align="end" currentKey={monthlySort.sortKey} currentDir={monthlySort.sortDir} onSort={monthlySort.toggle} className="py-2 pr-4 text-end">72h %</SortableTh>
+                  <SortableTh sortKey="rescheduled" align="end" currentKey={monthlySort.sortKey} currentDir={monthlySort.sortDir} onSort={monthlySort.toggle} className="py-2 pr-4 text-end">Rescheduled</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {MONTHLY.map((m) => (
+                {monthlySort.sorted.map((m) => (
                   <tr key={m.month} className="border-b border-border/60 last:border-0">
                     <td className="py-2 pr-4 font-medium text-foreground">{m.label}</td>
                     <td className="py-2 pr-4 text-end tabular-nums">{fmtInt(m.total)}</td>

@@ -7,6 +7,7 @@ import { useAccess } from "@/hooks/use-access";
 import { toast } from "sonner";
 import { evaluateFormula, formatValue, KPI_FORMULA_HEADERS, type FormulaFormat } from "@/lib/aux/formula";
 import { cn } from "@/lib/utils";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/data-editor")({
   head: () => ({
@@ -143,6 +144,24 @@ function DataEditorPage() {
   }
 
   const hiddenIdx = headers.findIndex((h) => h.toLowerCase() === "hidden");
+
+  // Build rows with original index for sorting while preserving row number for edit/delete
+  const indexedRows = useMemo(
+    () => rows.map((r, i) => ({ r, rowNumber: i + 2 })),
+    [rows],
+  );
+  const getters = useMemo(() => {
+    const g: Record<string, (row: { r: string[] }) => unknown> = {};
+    headers.forEach((h, ci) => {
+      g[`c${ci}`] = (row) => {
+        const v = row.r[ci] ?? "";
+        const n = Number(v);
+        return !Number.isNaN(n) && v.trim() !== "" ? n : v;
+      };
+    });
+    return g;
+  }, [headers]);
+  const dataSort = useSort(indexedRows, getters);
 
   return (
     <DashboardLayout title="Data Editor" subtitle="Manage companies, OBM models and KPI formulas — writes directly to Google Sheets">
@@ -286,8 +305,17 @@ function DataEditorPage() {
           <table className="min-w-full text-sm">
             <thead className="bg-muted/40">
               <tr className="text-xs uppercase tracking-wider text-muted-foreground">
-                {headers.map((h) => (
-                  <th key={h} className="py-2 px-3 text-start">{h}</th>
+                {headers.map((h, ci) => (
+                  <SortableTh
+                    key={h}
+                    sortKey={`c${ci}`}
+                    currentKey={dataSort.sortKey}
+                    currentDir={dataSort.sortDir}
+                    onSort={dataSort.toggle}
+                    className="py-2 px-3 text-start"
+                  >
+                    {h}
+                  </SortableTh>
                 ))}
                 <th className="py-2 px-3 text-end">Actions</th>
               </tr>
@@ -302,8 +330,7 @@ function DataEditorPage() {
               {!query.isLoading && rows.length === 0 && (
                 <tr><td colSpan={headers.length + 1} className="py-8 text-center text-muted-foreground">No rows yet — click <b>New row</b> to add one.</td></tr>
               )}
-              {rows.map((r, i) => {
-                const rowNumber = i + 2;
+              {dataSort.sorted.map(({ r, rowNumber }) => {
                 const hidden = hiddenIdx >= 0 && (r[hiddenIdx] ?? "").trim().toLowerCase() === "yes";
                 return (
                   <tr key={rowNumber} className={cn("border-t border-border/60", hidden && "opacity-50")}>

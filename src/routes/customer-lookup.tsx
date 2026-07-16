@@ -21,6 +21,7 @@ import { shortBranch } from "@/hooks/use-global-filters";
 import { readTable } from "@/lib/sheets-client";
 import { partsQueryOptions } from "@/lib/aux/queries";
 import { cn } from "@/lib/utils";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/customer-lookup")({
   head: () => ({
@@ -210,6 +211,16 @@ function CustomerLookupPage() {
     setCommitted(q.trim());
   }
 
+  const ticketSort = useSort(results?.tickets ?? [], {
+    ticket: (t) => t[COL.ticket],
+    service: (t) => t[COL.serviceType],
+    branch: (t) => shortBranch(t[COL.branch]),
+    worker: (t) => t[COL.worker],
+    status: (t) => t[COL.status] || t[COL.phase],
+    created: (t) => t[COL.createdAt],
+    hours: (t) => parseFloat(t[COL.hours] || "") || 0,
+  });
+
   return (
     <DashboardLayout
       title="Customer Lookup"
@@ -340,17 +351,17 @@ function CustomerLookupPage() {
                 <table className="min-w-full text-sm">
                   <thead>
                     <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                      <th className="py-2 pr-4 text-start">Ticket</th>
-                      <th className="py-2 pr-4 text-start">Service</th>
-                      <th className="py-2 pr-4 text-start">Branch</th>
-                      <th className="py-2 pr-4 text-start">Worker</th>
-                      <th className="py-2 pr-4 text-start">Status</th>
-                      <th className="py-2 pr-4 text-start">Created</th>
-                      <th className="py-2 pr-4 text-start">Hours</th>
+                      <SortableTh sortKey="ticket" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2 pr-4 text-start">Ticket</SortableTh>
+                      <SortableTh sortKey="service" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2 pr-4 text-start">Service</SortableTh>
+                      <SortableTh sortKey="branch" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2 pr-4 text-start">Branch</SortableTh>
+                      <SortableTh sortKey="worker" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2 pr-4 text-start">Worker</SortableTh>
+                      <SortableTh sortKey="status" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2 pr-4 text-start">Status</SortableTh>
+                      <SortableTh sortKey="created" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2 pr-4 text-start">Created</SortableTh>
+                      <SortableTh sortKey="hours" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2 pr-4 text-start">Hours</SortableTh>
                     </tr>
                   </thead>
                   <tbody>
-                    {results.tickets.map((t) => (
+                    {ticketSort.sorted.map((t) => (
                       <tr key={t[COL.ticket]} className="border-b border-border/60 last:border-0">
                         <td className="py-2 pr-4 font-mono text-[11px]">{t[COL.ticket]}</td>
                         <td className="py-2 pr-4 text-xs">{t[COL.serviceType]}</td>

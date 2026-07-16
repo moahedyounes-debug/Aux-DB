@@ -18,6 +18,7 @@ import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
 import { useKpiData } from "@/hooks/use-kpi-data";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/costs")({
   loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
@@ -40,6 +41,12 @@ const num = new Intl.NumberFormat("en-US");
 function CostsPage() {
   const { data } = useKpiData();
   const w = data.warranty;
+  const tierSort = useSort(w.byTier, {
+    tier: (t) => t.label,
+    rate: (t) => t.rate,
+    claims: (t) => t.claims,
+    net: (t) => t.net,
+  });
   const dedRate = w.gross ? Math.round((w.deduction / w.gross) * 100) : 0;
   const costPerTicket = w.totalClaims ? Math.round(w.net / w.totalClaims) : 0;
   const topBranches = [...w.byBranch].sort((a, b) => b.net - a.net).slice(0, 12);
@@ -105,14 +112,14 @@ function CostsPage() {
             <table className="w-full text-sm">
               <thead className="text-xs uppercase text-muted-foreground border-b sticky top-0 bg-card">
                 <tr>
-                  <th className="text-start py-2 px-2">Tier</th>
-                  <th className="text-end py-2 px-2">Rate</th>
-                  <th className="text-end py-2 px-2">Claims</th>
-                  <th className="text-end py-2 px-2">Net Cost</th>
+                  <SortableTh sortKey="tier" currentKey={tierSort.sortKey} currentDir={tierSort.sortDir} onSort={tierSort.toggle} className="text-start py-2 px-2">Tier</SortableTh>
+                  <SortableTh sortKey="rate" align="end" currentKey={tierSort.sortKey} currentDir={tierSort.sortDir} onSort={tierSort.toggle} className="text-end py-2 px-2">Rate</SortableTh>
+                  <SortableTh sortKey="claims" align="end" currentKey={tierSort.sortKey} currentDir={tierSort.sortDir} onSort={tierSort.toggle} className="text-end py-2 px-2">Claims</SortableTh>
+                  <SortableTh sortKey="net" align="end" currentKey={tierSort.sortKey} currentDir={tierSort.sortDir} onSort={tierSort.toggle} className="text-end py-2 px-2">Net Cost</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {w.byTier.map((t) => (
+                {tierSort.sorted.map((t) => (
                   <tr key={t.tier} className="border-b last:border-0">
                     <td className="py-2 px-2">
                       <div className="font-medium">{t.label}</div>

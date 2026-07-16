@@ -9,6 +9,7 @@ import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
 import { useKpiData } from "@/hooks/use-kpi-data";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/rejected-returned")({
   loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
@@ -37,6 +38,13 @@ function RejectedPage() {
   const cancelledTickets = data.callCenter.tickets.filter((t) =>
     t.status.toLowerCase().includes("cancel") || t.status.toLowerCase().includes("reject"),
   );
+  const cancelledView = cancelledTickets.slice(0, 100);
+  const cancelledSort = useSort(cancelledView, {
+    ticket: (t) => t.ticket,
+    branch: (t) => t.branch,
+    status: (t) => t.status,
+    reason: (t) => t.reason,
+  });
 
   // Reasons breakdown (from pending reasons that are rejection/reschedule related)
   const reasons = data.pending.reasons.filter((r) =>
@@ -124,14 +132,14 @@ function RejectedPage() {
             <table className="min-w-full text-sm">
               <thead className="sticky top-0 bg-background">
                 <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="py-2 pr-4 text-start">Ticket</th>
-                  <th className="py-2 pr-4 text-start">Branch</th>
-                  <th className="py-2 pr-4 text-start">Status</th>
-                  <th className="py-2 pr-4 text-start">Reason</th>
+                  <SortableTh sortKey="ticket" currentKey={cancelledSort.sortKey} currentDir={cancelledSort.sortDir} onSort={cancelledSort.toggle} className="py-2 pr-4 text-start">Ticket</SortableTh>
+                  <SortableTh sortKey="branch" currentKey={cancelledSort.sortKey} currentDir={cancelledSort.sortDir} onSort={cancelledSort.toggle} className="py-2 pr-4 text-start">Branch</SortableTh>
+                  <SortableTh sortKey="status" currentKey={cancelledSort.sortKey} currentDir={cancelledSort.sortDir} onSort={cancelledSort.toggle} className="py-2 pr-4 text-start">Status</SortableTh>
+                  <SortableTh sortKey="reason" currentKey={cancelledSort.sortKey} currentDir={cancelledSort.sortDir} onSort={cancelledSort.toggle} className="py-2 pr-4 text-start">Reason</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {cancelledTickets.slice(0, 100).map((t) => (
+                {cancelledSort.sorted.map((t) => (
                   <tr key={t.ticket} className="border-b border-border/60 last:border-0">
                     <td className="py-2 pr-4 font-mono text-[11px] text-muted-foreground">{t.ticket}</td>
                     <td className="py-2 pr-4 text-xs">{t.branch}</td>

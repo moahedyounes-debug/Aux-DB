@@ -17,6 +17,7 @@ import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
 import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/call-center")({
   loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
@@ -43,6 +44,16 @@ const fmt = new Intl.NumberFormat("en-US");
 function CallCenterPage() {
   const { data } = useKpiData();
   const cc = data.callCenter;
+  const ticketsView = cc.tickets.slice(0, 100);
+  const ticketsSort = useSort(ticketsView, {
+    ticket: (t) => t.ticket,
+    branch: (t) => t.branch,
+    type: (t) => t.serviceType,
+    status: (t) => t.status,
+    reason: (t) => t.reason,
+    created: (t) => t.createdAt,
+    completed: (t) => (t.completed ? 1 : 0),
+  });
 
   const tooltipStyle = {
     background: "var(--color-popover)",
@@ -140,17 +151,17 @@ function CallCenterPage() {
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                    <th className="py-2 pr-4 text-start">Ticket #</th>
-                    <th className="py-2 pr-4 text-start">Branch</th>
-                    <th className="py-2 pr-4 text-start">Type</th>
-                    <th className="py-2 pr-4 text-start">Status</th>
-                    <th className="py-2 pr-4 text-start">Reason</th>
-                    <th className="py-2 pr-4 text-start">Created</th>
-                    <th className="py-2 pr-4 text-center">Completed</th>
+                    <SortableTh sortKey="ticket" currentKey={ticketsSort.sortKey} currentDir={ticketsSort.sortDir} onSort={ticketsSort.toggle} className="py-2 pr-4 text-start">Ticket #</SortableTh>
+                    <SortableTh sortKey="branch" currentKey={ticketsSort.sortKey} currentDir={ticketsSort.sortDir} onSort={ticketsSort.toggle} className="py-2 pr-4 text-start">Branch</SortableTh>
+                    <SortableTh sortKey="type" currentKey={ticketsSort.sortKey} currentDir={ticketsSort.sortDir} onSort={ticketsSort.toggle} className="py-2 pr-4 text-start">Type</SortableTh>
+                    <SortableTh sortKey="status" currentKey={ticketsSort.sortKey} currentDir={ticketsSort.sortDir} onSort={ticketsSort.toggle} className="py-2 pr-4 text-start">Status</SortableTh>
+                    <SortableTh sortKey="reason" currentKey={ticketsSort.sortKey} currentDir={ticketsSort.sortDir} onSort={ticketsSort.toggle} className="py-2 pr-4 text-start">Reason</SortableTh>
+                    <SortableTh sortKey="created" currentKey={ticketsSort.sortKey} currentDir={ticketsSort.sortDir} onSort={ticketsSort.toggle} className="py-2 pr-4 text-start">Created</SortableTh>
+                    <SortableTh sortKey="completed" align="center" currentKey={ticketsSort.sortKey} currentDir={ticketsSort.sortDir} onSort={ticketsSort.toggle} className="py-2 pr-4 text-center">Completed</SortableTh>
                   </tr>
                 </thead>
                 <tbody>
-                  {cc.tickets.slice(0, 100).map((t) => (
+                  {ticketsSort.sorted.map((t) => (
                     <tr key={t.ticket} className="border-b border-border/60 last:border-0">
                       <td className="py-2 pr-4 font-mono text-xs text-muted-foreground">{t.ticket}</td>
                       <td className="py-2 pr-4">{t.branch}</td>

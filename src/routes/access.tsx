@@ -8,6 +8,7 @@ import { accessQueryOptions } from "@/lib/aux/queries";
 import { useAccess } from "@/hooks/use-access";
 import { NAV_PAGES } from "@/lib/aux/nav";
 import { toast } from "sonner";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/access")({
   loader: ({ context }) => context.queryClient.ensureQueryData(accessQueryOptions),
@@ -81,6 +82,17 @@ function AccessPage() {
         (u.role || "").toLowerCase().includes(q),
     );
   }, [data.users, search]);
+
+  const userSort = useSort(filteredUsers, {
+    email: (u) => u.email,
+    asc: (u) => u.asc,
+    branch: (u) => u.branch,
+    role: (u) => u.role,
+    pages: (u) => u.pages.length,
+    adminAccess: (u) => u.adminAccess,
+    parts: (u) => u.parts,
+    callCenter: (u) => u.callCenter,
+  });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["aux", "access"] });
 
@@ -266,19 +278,19 @@ function AccessPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground">
               <tr>
-                <th className="p-2 text-left">Email</th>
-                <th className="p-2 text-left">ASC</th>
-                <th className="p-2 text-left">Branch</th>
-                <th className="p-2 text-left">Role</th>
-                <th className="p-2 text-left">Pages</th>
-                <th className="p-2 text-center">Admin</th>
-                <th className="p-2 text-center">Parts</th>
-                <th className="p-2 text-center">Call Center</th>
+                <SortableTh sortKey="email" currentKey={userSort.sortKey} currentDir={userSort.sortDir} onSort={userSort.toggle} className="p-2 text-left">Email</SortableTh>
+                <SortableTh sortKey="asc" currentKey={userSort.sortKey} currentDir={userSort.sortDir} onSort={userSort.toggle} className="p-2 text-left">ASC</SortableTh>
+                <SortableTh sortKey="branch" currentKey={userSort.sortKey} currentDir={userSort.sortDir} onSort={userSort.toggle} className="p-2 text-left">Branch</SortableTh>
+                <SortableTh sortKey="role" currentKey={userSort.sortKey} currentDir={userSort.sortDir} onSort={userSort.toggle} className="p-2 text-left">Role</SortableTh>
+                <SortableTh sortKey="pages" currentKey={userSort.sortKey} currentDir={userSort.sortDir} onSort={userSort.toggle} className="p-2 text-left">Pages</SortableTh>
+                <SortableTh sortKey="adminAccess" align="center" currentKey={userSort.sortKey} currentDir={userSort.sortDir} onSort={userSort.toggle} className="p-2 text-center">Admin</SortableTh>
+                <SortableTh sortKey="parts" align="center" currentKey={userSort.sortKey} currentDir={userSort.sortDir} onSort={userSort.toggle} className="p-2 text-center">Parts</SortableTh>
+                <SortableTh sortKey="callCenter" align="center" currentKey={userSort.sortKey} currentDir={userSort.sortDir} onSort={userSort.toggle} className="p-2 text-center">Call Center</SortableTh>
                 <th className="p-2 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map((u) => (
+              {userSort.sorted.map((u) => (
                 <tr key={u.email} className="border-t border-border hover:bg-muted/20">
                   <td className="p-2 font-mono text-xs">{u.email}</td>
                   <td className="p-2">{u.asc}</td>

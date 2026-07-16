@@ -8,6 +8,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { assignmentQueryOptions } from "@/lib/aux/queries";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/call-center-assignment")({
   loader: ({ context }) => context.queryClient.ensureQueryData(assignmentQueryOptions),
@@ -26,6 +27,16 @@ const num = new Intl.NumberFormat("en-US");
 
 function AssignmentPage() {
   const { data } = useSuspenseQuery(assignmentQueryOptions);
+  const recentSort = useSort(data.recent, {
+    timestamp: (r) => r.timestamp,
+    agent: (r) => r.agent,
+    ticket: (r) => r.ticket,
+    customer: (r) => r.customer,
+    center: (r) => r.center,
+    status: (r) => r.status ?? "",
+    worker: (r) => r.worker ?? "",
+    score: (r) => r.score,
+  });
 
   const tooltipStyle = {
     background: "var(--color-popover)",
@@ -117,18 +128,18 @@ function AssignmentPage() {
             <table className="min-w-full text-sm">
               <thead className="sticky top-0 bg-background">
                 <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="py-2 pr-4 text-start">Timestamp</th>
-                  <th className="py-2 pr-4 text-start">Agent</th>
-                  <th className="py-2 pr-4 text-start">Ticket</th>
-                  <th className="py-2 pr-4 text-start">Customer</th>
-                  <th className="py-2 pr-4 text-start">Center</th>
-                  <th className="py-2 pr-4 text-start">Status</th>
-                  <th className="py-2 pr-4 text-start">Worker</th>
-                  <th className="py-2 pr-4 text-end">Score</th>
+                  <SortableTh sortKey="timestamp" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Timestamp</SortableTh>
+                  <SortableTh sortKey="agent" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Agent</SortableTh>
+                  <SortableTh sortKey="ticket" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Ticket</SortableTh>
+                  <SortableTh sortKey="customer" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Customer</SortableTh>
+                  <SortableTh sortKey="center" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Center</SortableTh>
+                  <SortableTh sortKey="status" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Status</SortableTh>
+                  <SortableTh sortKey="worker" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Worker</SortableTh>
+                  <SortableTh sortKey="score" align="end" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-end">Score</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {data.recent.map((r, i) => (
+                {recentSort.sorted.map((r, i) => (
                   <tr key={`${r.timestamp}-${i}`} className="border-b border-border/60 last:border-0">
                     <td className="py-2 pr-4 text-muted-foreground text-xs whitespace-nowrap">{r.timestamp.slice(0, 19).replace("T", " ")}</td>
                     <td className="py-2 pr-4 text-xs">{r.agent}</td>

@@ -40,6 +40,7 @@ import { readTable } from "@/lib/sheets-client";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
 import { useGlobalFilters, applyGlobalFilters, shortBranch } from "@/hooks/use-global-filters";
 import { cn } from "@/lib/utils";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/deep-insights")({
   loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
@@ -267,11 +268,10 @@ function DeepInsightsPage() {
       .sort((a, b) => String(b[M.createdAt] || "").localeCompare(String(a[M.createdAt] || "")))
       .slice(0, 50);
 
-    // Technician notes sample
+    // Technician notes — ALL closed >48h tickets that have notes
     const notesSample = over48
       .filter((r) => (r[M.notes] || "").trim().length > 5)
-      .sort((a, b) => String(b[M.completedAt] || "").localeCompare(String(a[M.completedAt] || "")))
-      .slice(0, 15);
+      .sort((a, b) => String(b[M.completedAt] || "").localeCompare(String(a[M.completedAt] || "")));
 
     return {
       totalClosed,
@@ -307,6 +307,40 @@ function DeepInsightsPage() {
   const a = analysis;
   const targetRate = 85; // 48h target %
   const overallCompliance = a.totalClosed ? ((a.totalClosed - a.over48Count) / a.totalClosed) * 100 : 0;
+
+  // Sort wiring for each table
+  const perfBranchesTop = useMemo(() => a.perfBranches.slice(0, 15), [a.perfBranches]);
+  const perfSort = useSort(
+    perfBranchesTop,
+    {
+      branch: (b) => b.branch,
+      over48: (b) => b.over48,
+      pctClosed: (b) => b.pctClosed,
+      avgHrs: (b) => b.avgHrs,
+      parts: (b) => b.parts,
+      customer: (b) => b.customer,
+      priority: (b) => b.pctClosed,
+    },
+  );
+  const over60kmSort = useSort(a.over60km, {
+    ticket: (r) => r[M.ticket],
+    branch: (r) => branchFromServiceProvider(r),
+    worker: (r) => r[M.worker],
+    status: (r) => r[M.status],
+    aging: (r) => hrs(r),
+    mileage: (r) => mileage(r),
+    date: (r) => r[M.createdAt] || "",
+    remark: (r) => r[M.remark],
+  });
+  const notesSort = useSort(a.notesSample, {
+    ticket: (r) => r[M.ticket],
+    branch: (r) => branchFromServiceProvider(r),
+    worker: (r) => r[M.worker],
+    serviceInfo: (r) => r[M.serviceInfo] || r[M.completionResult] || "",
+    completionType: (r) => completionType(r),
+    hours: (r) => hrs(r),
+    notes: (r) => r[M.notes],
+  });
 
   const tooltipStyle = {
     background: "hsl(var(--popover))",
@@ -521,17 +555,17 @@ function DeepInsightsPage() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
-                  <th className="py-3 px-4 text-start font-semibold">Branch</th>
-                  <th className="py-3 px-4 text-end font-semibold">Total &gt;48h</th>
-                  <th className="py-3 px-4 text-center font-semibold">% of Closed</th>
-                  <th className="py-3 px-4 text-end font-semibold">Avg Hours</th>
-                  <th className="py-3 px-4 text-end font-semibold">Parts Delay</th>
-                  <th className="py-3 px-4 text-end font-semibold">Customer Delay</th>
-                  <th className="py-3 px-4 text-center font-semibold">Action Priority</th>
+                  <SortableTh sortKey="branch" currentKey={perfSort.sortKey} currentDir={perfSort.sortDir} onSort={perfSort.toggle} className="py-3 px-4 text-start font-semibold">Branch</SortableTh>
+                  <SortableTh sortKey="over48" align="end" currentKey={perfSort.sortKey} currentDir={perfSort.sortDir} onSort={perfSort.toggle} className="py-3 px-4 text-end font-semibold">Total &gt;48h</SortableTh>
+                  <SortableTh sortKey="pctClosed" align="center" currentKey={perfSort.sortKey} currentDir={perfSort.sortDir} onSort={perfSort.toggle} className="py-3 px-4 text-center font-semibold">% of Closed</SortableTh>
+                  <SortableTh sortKey="avgHrs" align="end" currentKey={perfSort.sortKey} currentDir={perfSort.sortDir} onSort={perfSort.toggle} className="py-3 px-4 text-end font-semibold">Avg Hours</SortableTh>
+                  <SortableTh sortKey="parts" align="end" currentKey={perfSort.sortKey} currentDir={perfSort.sortDir} onSort={perfSort.toggle} className="py-3 px-4 text-end font-semibold">Parts Delay</SortableTh>
+                  <SortableTh sortKey="customer" align="end" currentKey={perfSort.sortKey} currentDir={perfSort.sortDir} onSort={perfSort.toggle} className="py-3 px-4 text-end font-semibold">Customer Delay</SortableTh>
+                  <SortableTh sortKey="priority" align="center" currentKey={perfSort.sortKey} currentDir={perfSort.sortDir} onSort={perfSort.toggle} className="py-3 px-4 text-center font-semibold">Action Priority</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {a.perfBranches.slice(0, 15).map((b) => {
+                {perfSort.sorted.map((b) => {
                   const priority = b.pctClosed >= 45 ? "Critical" : b.pctClosed >= 30 ? "High" : "Medium";
                   const barColor =
                     b.pctClosed >= 45 ? "bg-destructive" : b.pctClosed >= 30 ? "bg-warning" : "bg-primary";
@@ -581,18 +615,18 @@ function DeepInsightsPage() {
             <table className="min-w-full text-xs">
               <thead className="sticky top-0 bg-muted/40 z-10">
                 <tr className="border-b border-border text-muted-foreground uppercase tracking-wider">
-                  <th className="py-2.5 px-3 text-start font-semibold">Ticket #</th>
-                  <th className="py-2.5 px-3 text-start font-semibold">Branch</th>
-                  <th className="py-2.5 px-3 text-start font-semibold">Worker</th>
-                  <th className="py-2.5 px-3 text-center font-semibold">Ticket Status</th>
-                  <th className="py-2.5 px-3 text-center font-semibold">Aging</th>
-                  <th className="py-2.5 px-3 text-end font-semibold">Mileage</th>
-                  <th className="py-2.5 px-3 text-start font-semibold">Date</th>
-                  <th className="py-2.5 px-3 text-start font-semibold">Remark</th>
+                  <SortableTh sortKey="ticket" currentKey={over60kmSort.sortKey} currentDir={over60kmSort.sortDir} onSort={over60kmSort.toggle} className="py-2.5 px-3 text-start font-semibold">Ticket #</SortableTh>
+                  <SortableTh sortKey="branch" currentKey={over60kmSort.sortKey} currentDir={over60kmSort.sortDir} onSort={over60kmSort.toggle} className="py-2.5 px-3 text-start font-semibold">Branch</SortableTh>
+                  <SortableTh sortKey="worker" currentKey={over60kmSort.sortKey} currentDir={over60kmSort.sortDir} onSort={over60kmSort.toggle} className="py-2.5 px-3 text-start font-semibold">Worker</SortableTh>
+                  <SortableTh sortKey="status" align="center" currentKey={over60kmSort.sortKey} currentDir={over60kmSort.sortDir} onSort={over60kmSort.toggle} className="py-2.5 px-3 text-center font-semibold">Ticket Status</SortableTh>
+                  <SortableTh sortKey="aging" align="center" currentKey={over60kmSort.sortKey} currentDir={over60kmSort.sortDir} onSort={over60kmSort.toggle} className="py-2.5 px-3 text-center font-semibold">Aging</SortableTh>
+                  <SortableTh sortKey="mileage" align="end" currentKey={over60kmSort.sortKey} currentDir={over60kmSort.sortDir} onSort={over60kmSort.toggle} className="py-2.5 px-3 text-end font-semibold">Mileage</SortableTh>
+                  <SortableTh sortKey="date" currentKey={over60kmSort.sortKey} currentDir={over60kmSort.sortDir} onSort={over60kmSort.toggle} className="py-2.5 px-3 text-start font-semibold">Date</SortableTh>
+                  <SortableTh sortKey="remark" currentKey={over60kmSort.sortKey} currentDir={over60kmSort.sortDir} onSort={over60kmSort.toggle} className="py-2.5 px-3 text-start font-semibold">Remark</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {a.over60km.map((r, i) => {
+                {over60kmSort.sorted.map((r, i) => {
                   const h = hrs(r);
                   const aging = h <= 12 ? "≤ 12 Hours" : h <= 24 ? "≤ 24 Hours" : h <= 48 ? "≤ 48 Hours" : h <= 72 ? "≤ 72 Hours" : "> 72 Hours";
                   const agingClass = h <= 24 ? "bg-success/15 text-success" : h <= 48 ? "bg-primary/15 text-primary" : h <= 72 ? "bg-warning/15 text-warning" : "bg-destructive/15 text-destructive";
@@ -629,24 +663,24 @@ function DeepInsightsPage() {
         <SectionHeader
           title="Technician Notes — Maintenance Instructions Sample"
           icon={ClipboardList}
-          right={<span className="text-xs text-primary font-medium">Latest {a.notesSample.length} tickets</span>}
+          right={<span className="text-xs text-primary font-medium">{a.notesSample.length} tickets · all closed &gt;48h</span>}
         />
         <div className="surface-card overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[600px]">
             <table className="min-w-full text-xs">
-              <thead className="bg-muted/40">
+              <thead className="bg-muted/40 sticky top-0 z-10">
                 <tr className="border-b border-border text-muted-foreground uppercase tracking-wider">
-                  <th className="py-3 px-3 text-start font-semibold">Ticket #</th>
-                  <th className="py-3 px-3 text-start font-semibold">Branch</th>
-                  <th className="py-3 px-3 text-start font-semibold">Worker</th>
-                  <th className="py-3 px-3 text-start font-semibold">Service Info (Problem)</th>
-                  <th className="py-3 px-3 text-center font-semibold">Completion Type</th>
-                  <th className="py-3 px-3 text-end font-semibold">Hours</th>
-                  <th className="py-3 px-3 text-start font-semibold">Technician Notes</th>
+                  <SortableTh sortKey="ticket" currentKey={notesSort.sortKey} currentDir={notesSort.sortDir} onSort={notesSort.toggle} className="py-3 px-3 text-start font-semibold">Ticket #</SortableTh>
+                  <SortableTh sortKey="branch" currentKey={notesSort.sortKey} currentDir={notesSort.sortDir} onSort={notesSort.toggle} className="py-3 px-3 text-start font-semibold">Branch</SortableTh>
+                  <SortableTh sortKey="worker" currentKey={notesSort.sortKey} currentDir={notesSort.sortDir} onSort={notesSort.toggle} className="py-3 px-3 text-start font-semibold">Worker</SortableTh>
+                  <SortableTh sortKey="serviceInfo" currentKey={notesSort.sortKey} currentDir={notesSort.sortDir} onSort={notesSort.toggle} className="py-3 px-3 text-start font-semibold">Service Info (Problem)</SortableTh>
+                  <SortableTh sortKey="completionType" align="center" currentKey={notesSort.sortKey} currentDir={notesSort.sortDir} onSort={notesSort.toggle} className="py-3 px-3 text-center font-semibold">Completion Type</SortableTh>
+                  <SortableTh sortKey="hours" align="end" currentKey={notesSort.sortKey} currentDir={notesSort.sortDir} onSort={notesSort.toggle} className="py-3 px-3 text-end font-semibold">Hours</SortableTh>
+                  <SortableTh sortKey="notes" currentKey={notesSort.sortKey} currentDir={notesSort.sortDir} onSort={notesSort.toggle} className="py-3 px-3 text-start font-semibold">Technician Notes</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {a.notesSample.map((r, i) => {
+                {notesSort.sorted.map((r, i) => {
                   const type = completionType(r);
                   const typeClass =
                     type === "Troubleshooting"
