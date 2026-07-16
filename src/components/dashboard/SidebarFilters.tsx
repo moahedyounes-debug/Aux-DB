@@ -38,8 +38,14 @@ export function SidebarFilters({ collapsed }: { collapsed: boolean }) {
     const b = new Set<string>();
     const m = new Set<string>();
     for (const r of rows) {
-      const spn = r[SPN];
+      let spn = r[SPN];
       if (spn) {
+        const fw = firstWord(spn);
+        const fwU = fw.toUpperCase();
+        if (fwU === "AUTHORIZED") continue;
+        if (fwU.startsWith("HMA")) {
+          spn = `HMA${spn.trim().slice(fw.length)}`;
+        }
         b.add(spn);
         const c = firstWord(spn);
         if (c) a.add(c);
