@@ -139,7 +139,7 @@ function CustomerLookupPage() {
     const partRows = partsQuery.data?.recent ?? [];
     const ticketSet = new Set(matchedTickets.map((t) => t[COL.ticket]));
     const matchedParts = partRows.filter((p) => {
-      const hay = `${p.order} ${p.notes} ${p.serial} ${p.requestedBy}`.toLowerCase();
+      const hay = `${p.order} ${p.partNumber} ${p.description} ${p.model}`.toLowerCase();
       if (ticketSet.size && [...ticketSet].some((tk) => tk && hay.includes(tk.toLowerCase()))) return true;
       if (looksPhone && hay.replace(/\D/g, "").includes(phoneQ)) return true;
       if (textQ && hay.includes(textQ)) return true;
@@ -165,8 +165,8 @@ function CustomerLookupPage() {
     for (const p of matchedParts) {
       events.push({
         kind: "part",
-        date: p.requestDate,
-        ts: parseDate(p.requestDate),
+        date: "",
+        ts: 0,
         title: `Part ${p.partNumber || p.order}`,
         subtitle: p.description || p.model,
         status: p.status,
