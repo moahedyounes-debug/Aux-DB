@@ -632,6 +632,25 @@ function KpisPage() {
     [monthlyByCompany],
   );
 
+  // Net SVC Cost (M USD) — derived from warranty payments (net SAR → M USD).
+  // SAR→USD peg: 3.75.
+  const svcCostMUSD = (colKey: string): number | null => {
+    if (!kpiQuery.data) return null;
+    const byMonth = new Map<string, number>();
+    for (const w of kpiQuery.data.warranty.byMonth) byMonth.set(w.month, w.net);
+    const collect = (ks: string[]) => {
+      let sum = 0; let any = false;
+      for (const k of ks) {
+        const v = byMonth.get(k);
+        if (v !== undefined) { sum += v; any = true; }
+      }
+      return any ? sum / 3.75 / 1_000_000 : null;
+    };
+    const m = colKey.match(/^(\d{4})TTL$/);
+    if (m) return collect(MONTHS_BY_YEAR.get(m[1]) ?? []);
+    return collect([colKey]);
+  };
+
   type RowKind = "num" | "pct" | "days" | "k" | "m";
   interface KRow {
     category?: string;
@@ -693,7 +712,8 @@ function KpisPage() {
     { label: "Repair T NPS", kind: "pct",
       value: (c) => npsVal(c, "repair") },
 
-    { category: "Business", label: "Net SVC Cost (M USD)", kind: "num", value: empty, bp: 0.2 },
+    { category: "Business", label: "Net SVC Cost (M USD)", kind: "num",
+      value: (c) => svcCostMUSD(c), bp: 0.2 },
     { label: "Net SVC Cost rate (%)", kind: "pct", value: empty, bp: 0.49 },
   ];
 
