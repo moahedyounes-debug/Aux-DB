@@ -17,7 +17,6 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ShipmentsRouteImport } from './routes/shipments'
 import { Route as SatisfactionRouteImport } from './routes/satisfaction'
 import { Route as RejectedReturnedRouteImport } from './routes/rejected-returned'
-import { Route as PendingAnalysisRouteImport } from './routes/pending-analysis'
 import { Route as ObmAnalysisRouteImport } from './routes/obm-analysis'
 import { Route as MonthlyTrendsRouteImport } from './routes/monthly-trends'
 import { Route as KpisRouteImport } from './routes/kpis'
@@ -84,11 +83,6 @@ const SatisfactionRoute = SatisfactionRouteImport.update({
 const RejectedReturnedRoute = RejectedReturnedRouteImport.update({
   id: '/rejected-returned',
   path: '/rejected-returned',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PendingAnalysisRoute = PendingAnalysisRouteImport.update({
-  id: '/pending-analysis',
-  path: '/pending-analysis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ObmAnalysisRoute = ObmAnalysisRouteImport.update({
@@ -251,7 +245,6 @@ export interface FileRoutesByFullPath {
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/obm-analysis': typeof ObmAnalysisRoute
-  '/pending-analysis': typeof PendingAnalysisRoute
   '/rejected-returned': typeof RejectedReturnedRoute
   '/satisfaction': typeof SatisfactionRoute
   '/shipments': typeof ShipmentsRoute
@@ -289,7 +282,6 @@ export interface FileRoutesByTo {
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/obm-analysis': typeof ObmAnalysisRoute
-  '/pending-analysis': typeof PendingAnalysisRoute
   '/rejected-returned': typeof RejectedReturnedRoute
   '/satisfaction': typeof SatisfactionRoute
   '/shipments': typeof ShipmentsRoute
@@ -328,7 +320,6 @@ export interface FileRoutesById {
   '/kpis': typeof KpisRoute
   '/monthly-trends': typeof MonthlyTrendsRoute
   '/obm-analysis': typeof ObmAnalysisRoute
-  '/pending-analysis': typeof PendingAnalysisRoute
   '/rejected-returned': typeof RejectedReturnedRoute
   '/satisfaction': typeof SatisfactionRoute
   '/shipments': typeof ShipmentsRoute
@@ -368,7 +359,6 @@ export interface FileRouteTypes {
     | '/kpis'
     | '/monthly-trends'
     | '/obm-analysis'
-    | '/pending-analysis'
     | '/rejected-returned'
     | '/satisfaction'
     | '/shipments'
@@ -406,7 +396,6 @@ export interface FileRouteTypes {
     | '/kpis'
     | '/monthly-trends'
     | '/obm-analysis'
-    | '/pending-analysis'
     | '/rejected-returned'
     | '/satisfaction'
     | '/shipments'
@@ -444,7 +433,6 @@ export interface FileRouteTypes {
     | '/kpis'
     | '/monthly-trends'
     | '/obm-analysis'
-    | '/pending-analysis'
     | '/rejected-returned'
     | '/satisfaction'
     | '/shipments'
@@ -483,7 +471,6 @@ export interface RootRouteChildren {
   KpisRoute: typeof KpisRoute
   MonthlyTrendsRoute: typeof MonthlyTrendsRoute
   ObmAnalysisRoute: typeof ObmAnalysisRoute
-  PendingAnalysisRoute: typeof PendingAnalysisRoute
   RejectedReturnedRoute: typeof RejectedReturnedRoute
   SatisfactionRoute: typeof SatisfactionRoute
   ShipmentsRoute: typeof ShipmentsRoute
@@ -555,13 +542,6 @@ declare module '@tanstack/react-router' {
       path: '/rejected-returned'
       fullPath: '/rejected-returned'
       preLoaderRoute: typeof RejectedReturnedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pending-analysis': {
-      id: '/pending-analysis'
-      path: '/pending-analysis'
-      fullPath: '/pending-analysis'
-      preLoaderRoute: typeof PendingAnalysisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/obm-analysis': {
@@ -779,7 +759,6 @@ const rootRouteChildren: RootRouteChildren = {
   KpisRoute: KpisRoute,
   MonthlyTrendsRoute: MonthlyTrendsRoute,
   ObmAnalysisRoute: ObmAnalysisRoute,
-  PendingAnalysisRoute: PendingAnalysisRoute,
   RejectedReturnedRoute: RejectedReturnedRoute,
   SatisfactionRoute: SatisfactionRoute,
   ShipmentsRoute: ShipmentsRoute,
