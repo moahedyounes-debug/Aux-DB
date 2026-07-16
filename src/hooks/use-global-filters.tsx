@@ -67,6 +67,26 @@ export function firstWord(v: string | undefined | null): string {
   return m ? m[0] : "";
 }
 
+/**
+ * Turn a raw "Service Provider Name" value into a compact branch label.
+ * Example:
+ *   "wiFEX Authorized Maintenance and Operations Company - Khamis Mushait Branch"
+ *   →  "Khamis Mushait - wiFEX"
+ * Falls back to the trimmed original value when the shape is unexpected.
+ */
+export function shortBranch(raw: string | undefined | null): string {
+  const s = String(raw ?? "").trim();
+  if (!s) return "";
+  const parts = s.split(/\s*[-–—]\s*/);
+  if (parts.length >= 2) {
+    const company = (parts[0].trim().split(/\s+/)[0] || parts[0]).trim();
+    let city = parts.slice(1).join(" - ").trim();
+    city = city.replace(/\s+Branch\s*$/i, "").trim();
+    if (city && company) return `${city} - ${company}`;
+  }
+  return s;
+}
+
 /** Apply the global filters to an array of sheet rows. */
 export function applyGlobalFilters<T extends Record<string, string>>(
   rows: T[],
@@ -81,8 +101,8 @@ export function applyGlobalFilters<T extends Record<string, string>>(
     if (cols.spn) {
       const spn = r[cols.spn] || "";
       if (filters.asc !== "all" && firstWord(spn) !== filters.asc) return false;
-      if (filters.branch !== "all" && spn !== filters.branch) return false;
-    } else if (cols.branch && filters.branch !== "all" && r[cols.branch] !== filters.branch) {
+      if (filters.branch !== "all" && shortBranch(spn) !== filters.branch) return false;
+    } else if (cols.branch && filters.branch !== "all" && shortBranch(r[cols.branch]) !== filters.branch) {
       return false;
     }
     if (cols.worker && worker && !(r[cols.worker] || "").toLowerCase().includes(worker)) return false;
