@@ -558,7 +558,7 @@ function KpisPage() {
     { label: "Reclaim Total (%)", kind: "pct", value: empty, bp: 3.5 },
 
     { label: "RTAT (Day)", bold: true, kind: "days",
-      value: (c) => monthVal(c, "rtat"), bp: 3.6 },
+      value: (c) => monthVal(c, "rtat"), bp: 2 },
     { label: "RTAT (3D Main City)", indent: 1, kind: "days",
       value: (c) => {
         const vals = [cityRtat("Riyadh", c), cityRtat("Jeddah", c), cityRtat("Khobar", c)]
