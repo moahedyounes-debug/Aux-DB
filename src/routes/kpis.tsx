@@ -716,7 +716,7 @@ function KpisPage() {
             <table className="min-w-full text-xs border border-border">
               <thead>
                 <tr className="bg-muted/40 text-muted-foreground">
-                  <th rowSpan={2} className="py-2 px-3 text-start font-semibold border border-border" colSpan={2}>Category</th>
+                  <th rowSpan={2} className="py-2 px-3 text-start font-semibold border border-border bg-muted sticky left-0 z-20" colSpan={2}>Category</th>
                   <th rowSpan={2} className="py-2 px-2 text-center font-semibold border border-border">vs PY</th>
                   {Array.from(MONTHS_BY_YEAR.keys()).sort().map((y) => {
                     const span = (MONTHS_BY_YEAR.get(y)?.length ?? 0) + 1;
@@ -757,7 +757,7 @@ function KpisPage() {
                     return (
                       <tr key={idx} className="border border-border hover:bg-muted/20">
                         {showCat && (
-                          <td rowSpan={catCounts.get(lastCat)} className="py-2 px-3 font-semibold text-foreground bg-muted/20 border border-border align-middle text-center">
+                          <td rowSpan={catCounts.get(lastCat)} className="py-2 px-3 font-semibold text-foreground bg-background border border-border align-middle text-center sticky left-0 z-10">
                             {lastCat}
                           </td>
                         )}
