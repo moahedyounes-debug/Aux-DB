@@ -1457,6 +1457,8 @@ export interface SurveyMonthRow {
   month: string;
   surveys: number;
   avgScore: number;
+  cicNps: number;    // NPS from Q5 only (overall AUX satisfaction)
+  repairNps: number; // NPS from average of Q1..Q4
 }
 export interface SatisfactionSummary {
   fetchedAt: string;
