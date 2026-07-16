@@ -33,7 +33,11 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
         )}
       >
         <div className="flex items-center justify-between px-3 py-4 border-b border-sidebar-border">
-          {!collapsed && <AuxLogo variant="light" className="h-8 w-auto" />}
+          {collapsed ? (
+            <AuxLogo variant="light" showWordmark={false} className="h-8 w-8 mx-auto" />
+          ) : (
+            <AuxLogo variant="light" className="h-10 w-auto" />
+          )}
           <button
             type="button"
             onClick={() => setCollapsed((v) => !v)}
