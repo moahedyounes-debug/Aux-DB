@@ -305,8 +305,17 @@ function DataEditorPage() {
           <table className="min-w-full text-sm">
             <thead className="bg-muted/40">
               <tr className="text-xs uppercase tracking-wider text-muted-foreground">
-                {headers.map((h) => (
-                  <th key={h} className="py-2 px-3 text-start">{h}</th>
+                {headers.map((h, ci) => (
+                  <SortableTh
+                    key={h}
+                    sortKey={`c${ci}`}
+                    currentKey={dataSort.sortKey}
+                    currentDir={dataSort.sortDir}
+                    onSort={dataSort.toggle}
+                    className="py-2 px-3 text-start"
+                  >
+                    {h}
+                  </SortableTh>
                 ))}
                 <th className="py-2 px-3 text-end">Actions</th>
               </tr>
@@ -321,8 +330,7 @@ function DataEditorPage() {
               {!query.isLoading && rows.length === 0 && (
                 <tr><td colSpan={headers.length + 1} className="py-8 text-center text-muted-foreground">No rows yet — click <b>New row</b> to add one.</td></tr>
               )}
-              {rows.map((r, i) => {
-                const rowNumber = i + 2;
+              {dataSort.sorted.map(({ r, rowNumber }) => {
                 const hidden = hiddenIdx >= 0 && (r[hiddenIdx] ?? "").trim().toLowerCase() === "yes";
                 return (
                   <tr key={rowNumber} className={cn("border-t border-border/60", hidden && "opacity-50")}>
