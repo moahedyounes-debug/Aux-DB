@@ -294,6 +294,57 @@ function KpisPage() {
     return map;
   }, [filteredRows]);
 
+  // Reclaim: same customer (Tel) with same Service Type returning within 90 days.
+  // Bucket = the month of the *later* (reclaimed) ticket.
+  const reclaimByMonth = useMemo(() => {
+    const RECLAIM_WINDOW_MS = 90 * 86_400_000;
+    const monthKey = (ms: number): string => {
+      const d = new Date(ms);
+      return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    };
+    const normTel = (s: string) =>
+      String(s ?? "").replace(/\D/g, "").replace(/^966/, "0").replace(/^0+/, "0");
+    const normSt = (s: string) => String(s ?? "").trim().toLowerCase();
+
+    type Entry = { ms: number };
+    const groups = new Map<string, Entry[]>();
+    const closedByMonth = new Map<string, number>();
+
+    for (const r of filteredRows) {
+      if (!isCompleted(r)) continue;
+      const raw = r[COL.createdAt];
+      if (!raw) continue;
+      const ms = new Date(String(raw).replace(" ", "T")).getTime();
+      if (!Number.isFinite(ms)) continue;
+      const mk = monthKey(ms);
+      closedByMonth.set(mk, (closedByMonth.get(mk) ?? 0) + 1);
+      const tel = normTel(r[COL.tel] || "");
+      const st = normSt(r[COL.serviceType] || "");
+      if (!tel || !st) continue;
+      const gk = `${tel}::${st}`;
+      if (!groups.has(gk)) groups.set(gk, []);
+      groups.get(gk)!.push({ ms });
+    }
+
+    const reclaimByMonthMap = new Map<string, number>();
+    for (const entries of groups.values()) {
+      if (entries.length < 2) continue;
+      entries.sort((a, b) => a.ms - b.ms);
+      for (let i = 1; i < entries.length; i++) {
+        if (entries[i].ms - entries[i - 1].ms <= RECLAIM_WINDOW_MS) {
+          const mk = monthKey(entries[i].ms);
+          reclaimByMonthMap.set(mk, (reclaimByMonthMap.get(mk) ?? 0) + 1);
+        }
+      }
+    }
+
+    const merged = new Map<string, { reclaims: number; closed: number }>();
+    for (const [mk, closed] of closedByMonth) {
+      merged.set(mk, { reclaims: reclaimByMonthMap.get(mk) ?? 0, closed });
+    }
+    return merged;
+  }, [filteredRows]);
+
   // Per-company monthly breakdown of currently-pending tickets older than 6 days.
   const monthlyByCompany = useMemo(() => {
     const map = new Map<string, Map<string, number>>();
