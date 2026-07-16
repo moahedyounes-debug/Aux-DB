@@ -62,6 +62,7 @@ const COL = {
   completionResult: "Completion Result",
   worker: "Worker Name",
   location: "Location",
+  tel: "Tel",
 } as const;
 
 const fmt = new Intl.NumberFormat("en-US");
