@@ -317,7 +317,7 @@ function KpisPage() {
       hrsSum: number; pending3d: number; pending7d: number;
     };
     const map = new Map<string, Row2>();
-    for (const r of rows) {
+    for (const r of filteredRows) {
       const key = r[COL.branch] || "—";
       const e = map.get(key) ?? {
         total: 0, completed: 0, pending: 0,
@@ -381,7 +381,7 @@ function KpisPage() {
         wtyAmount: findKey(warrByBranch, branch) ?? 0,
       }))
       .sort((a, b) => b.total - a.total);
-  }, [rows, kpiQuery.data]);
+  }, [filteredRows, kpiQuery.data]);
 
   const scope = access
     ? access.isAllAccess
