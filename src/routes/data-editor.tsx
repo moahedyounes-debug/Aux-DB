@@ -145,6 +145,24 @@ function DataEditorPage() {
 
   const hiddenIdx = headers.findIndex((h) => h.toLowerCase() === "hidden");
 
+  // Build rows with original index for sorting while preserving row number for edit/delete
+  const indexedRows = useMemo(
+    () => rows.map((r, i) => ({ r, rowNumber: i + 2 })),
+    [rows],
+  );
+  const getters = useMemo(() => {
+    const g: Record<string, (row: { r: string[] }) => unknown> = {};
+    headers.forEach((h, ci) => {
+      g[`c${ci}`] = (row) => {
+        const v = row.r[ci] ?? "";
+        const n = Number(v);
+        return !Number.isNaN(n) && v.trim() !== "" ? n : v;
+      };
+    });
+    return g;
+  }, [headers]);
+  const dataSort = useSort(indexedRows, getters);
+
   return (
     <DashboardLayout title="Data Editor" subtitle="Manage companies, OBM models and KPI formulas — writes directly to Google Sheets">
       <div className="flex flex-wrap gap-2">
