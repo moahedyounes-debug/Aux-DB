@@ -129,7 +129,7 @@ function KpisPage() {
     enabled: ready,
   });
 
-  const kpiQuery = useQuery({ ...kpiQueryOptions, enabled: ready });
+  const kpiQuery = useQuery({ ...kpiQueryOptions(), enabled: ready });
 
   const formulasQuery = useQuery<KpiFormulaDef[]>({
     queryKey: ["kpi-formulas"],
