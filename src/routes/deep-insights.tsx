@@ -56,7 +56,7 @@ const fmt = new Intl.NumberFormat("en-US");
 const M = {
   ticket: "Ticket Number",
   asc: "Service Provider Name",
-  branch: "Affiliated Service Center",
+  branch: "Service Provider Name",
   status: "Ticket Status",
   phase: "Processing Phase",
   hours: "Service hours(H)",

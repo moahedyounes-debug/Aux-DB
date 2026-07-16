@@ -41,7 +41,7 @@ const COL = {
   tel: "Tel",
   address: "Address",
   city: "Location",
-  branch: "Affiliated Service Center",
+  branch: "Service Provider Name",
   asc: "Service Provider Name",
   worker: "Worker Name",
   status: "Ticket Status",
