@@ -1002,18 +1002,21 @@ function aggregate(rows: string[][]): KpiData {
   // Snapshot rates from completed tickets overall
   let totalUnder48 = 0;
   let totalUnder72 = 0;
+  let totalCompletedMonthly = 0;
   for (const m of monthly) {
     totalUnder48 += m.count48h;
     totalUnder72 += m.count72h;
+    totalCompletedMonthly += m.completed;
   }
+  const rateDen = totalCompletedMonthly > 0 ? totalCompletedMonthly : completed;
   const snapshot: Snapshot = {
     total,
     pending,
     completed,
     unassigned,
     pendingNoReason,
-    rate48h: completed > 0 ? Math.round((totalUnder48 / completed) * 1000) / 10 : 0,
-    rate72h: completed > 0 ? Math.round((totalUnder72 / completed) * 1000) / 10 : 0,
+    rate48h: rateDen > 0 ? Math.round((totalUnder48 / rateDen) * 1000) / 10 : 0,
+    rate72h: rateDen > 0 ? Math.round((totalUnder72 / rateDen) * 1000) / 10 : 0,
     rescheduled: rescheduledAll,
   };
 
