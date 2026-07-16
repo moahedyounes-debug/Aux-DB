@@ -1,30 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { Microscope, TrendingUp, TrendingDown, Zap, AlertTriangle, Clock, Timer, Search } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import {
+  AlertTriangle,
+  Wrench,
+  Sparkles,
+  UserX,
+  Timer,
+  MapPin,
+  Package,
+  Route as RouteIcon,
+  HelpCircle,
+  CalendarClock,
+  Users,
+  Lightbulb,
+  TrendingUp,
+  Target,
+} from "lucide-react";
 import {
   ResponsiveContainer,
-  ComposedChart,
-  Line,
+  BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
+  PieChart,
+  Pie,
+  Cell,
   Legend,
-  ScatterChart,
-  Scatter,
-  ZAxis,
 } from "recharts";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
-import { KpiCard } from "@/components/dashboard/KpiCard";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TARGETS } from "@/lib/aux/mock-data";
 import { kpiQueryOptions } from "@/lib/aux/queries";
-import { useKpiData } from "@/hooks/use-kpi-data";
 import { readTable } from "@/lib/sheets-client";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
 import { useGlobalFilters, applyGlobalFilters, shortBranch } from "@/hooks/use-global-filters";
@@ -38,12 +46,12 @@ export const Route = createFileRoute("/deep-insights")({
       {
         name: "description",
         content:
-          "Advanced diagnostics: weekday load pattern, month-over-month movement, branch efficiency vs backlog, and top pending reasons.",
+          "Closed tickets >48h — root cause analysis, delay drivers, branch performance, and strategic recommendations.",
       },
       { property: "og:title", content: "Deep Insights — AUX ASC Dashboard" },
       {
         property: "og:description",
-        content: "Patterns behind the numbers — weekday load, trends and branch efficiency.",
+        content: "Why closures exceeded 48h — patterns, causes, and priorities.",
       },
     ],
   }),
