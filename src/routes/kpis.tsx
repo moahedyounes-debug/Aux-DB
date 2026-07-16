@@ -725,7 +725,7 @@ function KpisPage() {
                       <th key={y} colSpan={span} className="py-2 px-2 text-center font-semibold border border-border">{y}</th>
                     );
                   })}
-                  <th colSpan={3} className="py-2 px-2 text-center font-semibold border border-border bg-muted/70">Target</th>
+                  <th colSpan={2} className="py-2 px-2 text-center font-semibold border border-border bg-muted/70">Comparisons</th>
                 </tr>
                 <tr className="bg-muted/30 text-muted-foreground">
                   {MONTH_COLS.map((c) => (
@@ -733,8 +733,7 @@ function KpisPage() {
                       {c.label}
                     </th>
                   ))}
-                  <th className="py-1.5 px-2 text-center font-medium border border-border">vs BP</th>
-                  <th className="py-1.5 px-2 text-center font-medium border border-border">BP</th>
+                  <th className="py-1.5 px-2 text-center font-medium border border-border">vs LM</th>
                   <th className="py-1.5 px-2 text-center font-medium border border-border">vs BP</th>
                 </tr>
               </thead>
