@@ -1,55 +1,35 @@
-# خطة إكمال الصفحات المتبقية ببيانات حقيقية
+# خطة فحص الأمان الشامل للداشبورد
 
-## الوضع الحالي بعد الفحص
+## الهدف
+تشغيل فحص أمني كامل على المشروع (Backend + RLS + Dependencies) قبل استكمال التطوير، مع تصنيف النتائج وإصلاح الحرجة منها.
 
-الصفحات المُفعّلة من شيت الطلبات الحالي فعلاً موجودة ومكتوبة (Daily Ops, Pending, Deep Insights, Call Center, Installation, ASC Performance) — فقط **City Breakdown** ناقصة.
-الباقي (18 صفحة) لا يزال "Coming Soon".
+## الخطوات
 
-## الشيتات الإضافية المتوفرة (تم فحصها)
+1. **تشغيل فحص شامل**
+   - `security--run_security_scan` — فحص Supabase (RLS, policies, exposed data)
+   - `supabase--linter` — تدقيق قاعدة البيانات
+   - `code--dependency_scan` — فحص ثغرات الحزم (npm)
 
-1. **شيت Calls** — يحتوي: `Calls` (5.1K سطر مكالمات)، `WhatsApp Uniqe` (2.1K)، `WhatsApp Agents` (تجميعي شهري)، `Creation`، `Calls Summary`.
-2. **شيت CIC Evaluation** — يحتوي: `Evaluation Form` (تقييم موظفين بعدة معايير 1-5)، `Final Score` (النتيجة الموزونة)، `Comments`.
+2. **تصنيف النتائج حسب الأولوية**
+   - 🔴 **حرجة**: بيانات مكشوفة، RLS مفقود، صلاحيات مفتوحة، ثغرات critical في الحزم
+   - 🟡 **متوسطة**: policies واسعة، grants زائدة
+   - 🟢 **معلوماتية**: تحسينات مقترحة
 
-## الصفحات اللي بنبنيها فعلياً (8 صفحات)
+3. **عرض تقرير موحّد**
+   جدول بكل مشكلة + الجدول/الملف المتأثر + شدّتها + الإصلاح المقترح.
 
-### أ. من شيت الطلبات الحالي (5)
-```text
-1. City Breakdown          — الناقصة الوحيدة من المفعّلات
-2. OBM Analysis            — تحليل أداء OBM (فروع/مناطق × SLA)
-3. Ticket Repair History   — سجل كامل قابل للبحث + فلاتر
-4. Rejected / Returned     — التذاكر الملغاة/المرفوضة + الأسباب
-```
+4. **الإصلاح**
+   - إصلاح كل الحرجة والمتوسطة في migration واحدة
+   - تحديث الحزم الضعيفة عبر `bun update`
+   - وضع علامة `mark_as_fixed` على كل finding بعد إصلاحه
+   - تجاهل (`ignore`) فقط ما لا ينطبق على سياق التطبيق، مع شرح
 
-### ب. من شيت Calls الجديد (3)
-```text
-5. Call Events             — 5K مكالمة: SLA%، Answered/Abandoned، Peak Hours، Agent perf
-6. WhatsApp                — WhatsApp Uniqe + Agents: حجم، ART/AFT، أداء موظف
-7. Call Center Assignment  — تحميل الموظفين من Creation + Calls
-```
+5. **إعادة فحص للتحقق**
+   تشغيل الفحص مرة ثانية للتأكد أن كل شيء نظيف قبل استكمال التطوير.
 
-### ج. من شيت CIC Evaluation (1)
-```text
-8. Satisfaction            — Final Score و Evaluation Form: نقاط الموظفين، الأقسام، تعليقات
-```
+## ملاحظة
+لن يتم لمس أي منطق عمل أو UI — فقط policies, grants, migrations, ودعم الحزم.
 
-## البنية التقنية
+---
 
-- إضافة `AUX_CALLS_SPREADSHEET_ID` و `AUX_CIC_SPREADSHEET_ID` في `sheets.functions.ts`.
-- إضافة server functions جديدة:
-  - `getCallsSnapshot()` — يقرأ Calls + WhatsApp Uniqe + WhatsApp Agents، يرجّع summary + rows.
-  - `getCICSnapshot()` — يقرأ Evaluation Form + Final Score + Comments، يرجّع Agent scores.
-- كل واحد بـ `queryOptions` مستقل + `staleTime` معقول (10 دقايق) عشان ما نستهلك quota جوجل.
-- كل صفحة: `KpiCards` + 2 ChartCards + جدول + Export CSV (نفس نمط Warranty Payments).
-
-## ما هو خارج النطاق الآن
-
-الصفحات الإدارية الخالصة (Control Panel, Access, Activity Log, Export Center, Custom Dashboard) والصفحات المحتاجة مصادر ما زلت بدون بيانات (Spare Parts, Shipments, Costs, Districts Map, Commerce Complaints) — تبقى Coming Soon لحد ما تحدد لها مصدر أو منطق أعمال.
-
-## التسلسل
-
-1. City Breakdown (سريعة — نفس الشيت الحالي).
-2. OBM / Ticket History / Rejected (مشتقة من نفس الشيت).
-3. طبقة Calls sheet → Call Events + WhatsApp + Assignment.
-4. طبقة CIC sheet → Satisfaction.
-
-بعد الموافقة أبدأ بالتنفيذ. لو حابب أشيل/أضيف صفحة من الـ 8 قبل ما نبدأ، قل لي الحين.
+**سؤال قبل التنفيذ**: هل تريدني أصلح الحرجة والمتوسطة تلقائياً في نفس الجولة، أم أعرض التقرير فقط وأنتظر موافقتك على كل بند؟
