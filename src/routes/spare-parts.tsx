@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryOptions } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Package,
@@ -549,7 +549,7 @@ function RequestDialog({
   const [saving, setSaving] = useState(false);
 
   // Reset when opening for a different row
-  useMemo(() => {
+  useEffect(() => {
     if (open) {
       setCompany(initialCompany);
       setBranch(editing?.branch ?? "");
