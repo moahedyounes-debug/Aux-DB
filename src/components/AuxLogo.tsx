@@ -19,7 +19,7 @@ export function AuxLogo({ className, variant = "dark", showWordmark = true }: Au
       <img
         src={logoAsset.url}
         alt="AUX"
-        className={`h-full w-auto object-contain ${isLight ? "brightness-0 invert" : ""}`}
+        className="h-full w-auto object-contain"
         draggable={false}
       />
       {showWordmark && (
