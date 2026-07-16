@@ -184,7 +184,18 @@ function splitCompanyBranch(fullBranch: string): { company: string; branch: stri
 function isMainWarehouse(w: string): boolean {
   const s = (w ?? "").trim();
   if (!s) return false;
+  if (!isValidLabel(s)) return false;
   return !/-\s*(New|Old)$/i.test(s);
+}
+
+/** Reject VLOOKUP errors and other sheet noise from location labels. */
+function isValidLabel(s: string): boolean {
+  const v = String(s ?? "").trim();
+  if (!v) return false;
+  if (v === "-" || v === "—" || v.toLowerCase() === "unknown") return false;
+  if (/^#(N\/A|REF|VALUE|NAME|NULL|DIV\/0)/i.test(v)) return false;
+  if (/VLOOKUP|#N\/A/i.test(v)) return false;
+  return true;
 }
 
 function serialToDate(raw: string): Date | null {
@@ -277,7 +288,7 @@ export const getPartsData = createServerFn({ method: "GET" }).handler(
             partCount.set(p.partNumber, pc);
           }
           // Stock per branch × part (based on Service Provider Name)
-          if (p.branch && p.partNumber) {
+          if (p.branch && p.partNumber && isValidLabel(p.branch)) {
             const key = `${p.branch}||${p.partNumber}`;
             const s = branchStockMap.get(key) ?? { location: p.branch, part: p.partNumber, description: p.description, model: p.model, inQty: 0, outQty: 0, stock: 0 };
             if (p.status === "In (Received)") s.inQty += p.qty;
@@ -286,7 +297,7 @@ export const getPartsData = createServerFn({ method: "GET" }).handler(
             branchStockMap.set(key, s);
           }
           // Stock per warehouse × part
-          if (p.warehouse && p.partNumber) {
+          if (p.warehouse && p.partNumber && isValidLabel(p.warehouse)) {
             const key = `${p.warehouse}||${p.partNumber}`;
             const s = warehouseStockMap.get(key) ?? { location: p.warehouse, part: p.partNumber, description: p.description, model: p.model, inQty: 0, outQty: 0, stock: 0 };
             if (p.status === "In (Received)") s.inQty += p.qty;
@@ -303,7 +314,7 @@ export const getPartsData = createServerFn({ method: "GET" }).handler(
             monthlyMap.set(p.partNumber, m);
           }
           // Company → branches map
-          if (p.branch && p.branch !== "Unknown") {
+          if (p.branch && isValidLabel(p.branch)) {
             allBranchesSet.add(p.branch);
             const set = companiesMap.get(p.company) ?? new Set<string>();
             set.add(p.branch);
