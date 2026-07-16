@@ -18,6 +18,7 @@ import { TARGETS } from "@/lib/aux/mock-data";
 import { kpiQueryOptions } from "@/lib/aux/queries";
 import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/city")({
   loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
@@ -66,6 +67,24 @@ function CityPage() {
 
   const topByVolume = cities.slice(0, 15);
   const topByPending = [...cities].sort((a, b) => b.pending - a.pending).slice(0, 15);
+
+  const regionSort = useSort(regions, {
+    region: (r) => r.region,
+    total: (r) => r.total,
+    completed: (r) => r.completed,
+    pending: (r) => r.pending,
+    pct: (r) => (r.total > 0 ? r.completed / r.total : 0),
+  });
+  const citySort = useSort(cities, {
+    region: (c) => c.region,
+    city: (c) => c.city,
+    total: (c) => c.total,
+    completed: (c) => c.completed,
+    pending: (c) => c.pending,
+    rate48h: (c) => c.rate48h,
+    rate72h: (c) => c.rate72h,
+    topProduct: (c) => c.topProduct,
+  });
 
   const tooltipStyle = {
     background: "var(--color-popover)",
@@ -192,15 +211,15 @@ function CityPage() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="py-2 pr-4 text-start">Region</th>
-                  <th className="py-2 pr-4 text-end">Total</th>
-                  <th className="py-2 pr-4 text-end">Completed</th>
-                  <th className="py-2 pr-4 text-end">Pending</th>
-                  <th className="py-2 pr-4 text-end">Completion %</th>
+                  <SortableTh sortKey="region" currentKey={regionSort.sortKey} currentDir={regionSort.sortDir} onSort={regionSort.toggle} className="py-2 pr-4 text-start">Region</SortableTh>
+                  <SortableTh sortKey="total" align="end" currentKey={regionSort.sortKey} currentDir={regionSort.sortDir} onSort={regionSort.toggle} className="py-2 pr-4 text-end">Total</SortableTh>
+                  <SortableTh sortKey="completed" align="end" currentKey={regionSort.sortKey} currentDir={regionSort.sortDir} onSort={regionSort.toggle} className="py-2 pr-4 text-end">Completed</SortableTh>
+                  <SortableTh sortKey="pending" align="end" currentKey={regionSort.sortKey} currentDir={regionSort.sortDir} onSort={regionSort.toggle} className="py-2 pr-4 text-end">Pending</SortableTh>
+                  <SortableTh sortKey="pct" align="end" currentKey={regionSort.sortKey} currentDir={regionSort.sortDir} onSort={regionSort.toggle} className="py-2 pr-4 text-end">Completion %</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {regions.map((r) => {
+                {regionSort.sorted.map((r) => {
                   const pct = r.total > 0 ? (r.completed / r.total) * 100 : 0;
                   return (
                     <tr key={r.region} className="border-b border-border/60 last:border-0">
@@ -244,18 +263,18 @@ function CityPage() {
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                    <th className="py-2 pr-4 text-start">Region</th>
-                    <th className="py-2 pr-4 text-start">City</th>
-                    <th className="py-2 pr-4 text-end">Total</th>
-                    <th className="py-2 pr-4 text-end">Completed</th>
-                    <th className="py-2 pr-4 text-end">Pending</th>
-                    <th className="py-2 pr-4 text-end">48h</th>
-                    <th className="py-2 pr-4 text-end">72h</th>
-                    <th className="py-2 pr-4 text-start">Top Product</th>
+                    <SortableTh sortKey="region" currentKey={citySort.sortKey} currentDir={citySort.sortDir} onSort={citySort.toggle} className="py-2 pr-4 text-start">Region</SortableTh>
+                    <SortableTh sortKey="city" currentKey={citySort.sortKey} currentDir={citySort.sortDir} onSort={citySort.toggle} className="py-2 pr-4 text-start">City</SortableTh>
+                    <SortableTh sortKey="total" align="end" currentKey={citySort.sortKey} currentDir={citySort.sortDir} onSort={citySort.toggle} className="py-2 pr-4 text-end">Total</SortableTh>
+                    <SortableTh sortKey="completed" align="end" currentKey={citySort.sortKey} currentDir={citySort.sortDir} onSort={citySort.toggle} className="py-2 pr-4 text-end">Completed</SortableTh>
+                    <SortableTh sortKey="pending" align="end" currentKey={citySort.sortKey} currentDir={citySort.sortDir} onSort={citySort.toggle} className="py-2 pr-4 text-end">Pending</SortableTh>
+                    <SortableTh sortKey="rate48h" align="end" currentKey={citySort.sortKey} currentDir={citySort.sortDir} onSort={citySort.toggle} className="py-2 pr-4 text-end">48h</SortableTh>
+                    <SortableTh sortKey="rate72h" align="end" currentKey={citySort.sortKey} currentDir={citySort.sortDir} onSort={citySort.toggle} className="py-2 pr-4 text-end">72h</SortableTh>
+                    <SortableTh sortKey="topProduct" currentKey={citySort.sortKey} currentDir={citySort.sortDir} onSort={citySort.toggle} className="py-2 pr-4 text-start">Top Product</SortableTh>
                   </tr>
                 </thead>
                 <tbody>
-                  {cities.map((c) => {
+                  {citySort.sorted.map((c) => {
                     const ok48 = c.rate48h >= TARGETS.rate48h;
                     const ok72 = c.rate72h >= TARGETS.rate72h;
                     return (

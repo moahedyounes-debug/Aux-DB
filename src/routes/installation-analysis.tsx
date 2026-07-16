@@ -16,6 +16,7 @@ import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
 import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/installation-analysis")({
   loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
@@ -42,6 +43,17 @@ const fmt = new Intl.NumberFormat("en-US");
 function InstallationPage() {
   const { data } = useKpiData();
   const inst = data.installation;
+  const instView = inst.tickets.slice(0, 150);
+  const instSort = useSort(instView, {
+    ticket: (t) => t.ticket,
+    city: (t) => t.city,
+    product: (t) => t.productLine,
+    worker: (t) => t.worker,
+    created: (t) => t.createdAt,
+    installDate: (t) => t.installationDate,
+    age: (t) => t.ageDays,
+    status: (t) => (t.completed ? 1 : 0),
+  });
 
   const tooltipStyle = {
     background: "var(--color-popover)",
@@ -167,18 +179,18 @@ function InstallationPage() {
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                    <th className="py-2 pr-4 text-start">Ticket #</th>
-                    <th className="py-2 pr-4 text-start">City · Branch</th>
-                    <th className="py-2 pr-4 text-start">Product</th>
-                    <th className="py-2 pr-4 text-start">Worker</th>
-                    <th className="py-2 pr-4 text-start">Created</th>
-                    <th className="py-2 pr-4 text-start">Install Date</th>
-                    <th className="py-2 pr-4 text-end">Age (d)</th>
-                    <th className="py-2 pr-4 text-center">Status</th>
+                    <SortableTh sortKey="ticket" currentKey={instSort.sortKey} currentDir={instSort.sortDir} onSort={instSort.toggle} className="py-2 pr-4 text-start">Ticket #</SortableTh>
+                    <SortableTh sortKey="city" currentKey={instSort.sortKey} currentDir={instSort.sortDir} onSort={instSort.toggle} className="py-2 pr-4 text-start">City · Branch</SortableTh>
+                    <SortableTh sortKey="product" currentKey={instSort.sortKey} currentDir={instSort.sortDir} onSort={instSort.toggle} className="py-2 pr-4 text-start">Product</SortableTh>
+                    <SortableTh sortKey="worker" currentKey={instSort.sortKey} currentDir={instSort.sortDir} onSort={instSort.toggle} className="py-2 pr-4 text-start">Worker</SortableTh>
+                    <SortableTh sortKey="created" currentKey={instSort.sortKey} currentDir={instSort.sortDir} onSort={instSort.toggle} className="py-2 pr-4 text-start">Created</SortableTh>
+                    <SortableTh sortKey="installDate" currentKey={instSort.sortKey} currentDir={instSort.sortDir} onSort={instSort.toggle} className="py-2 pr-4 text-start">Install Date</SortableTh>
+                    <SortableTh sortKey="age" align="end" currentKey={instSort.sortKey} currentDir={instSort.sortDir} onSort={instSort.toggle} className="py-2 pr-4 text-end">Age (d)</SortableTh>
+                    <SortableTh sortKey="status" align="center" currentKey={instSort.sortKey} currentDir={instSort.sortDir} onSort={instSort.toggle} className="py-2 pr-4 text-center">Status</SortableTh>
                   </tr>
                 </thead>
                 <tbody>
-                  {inst.tickets.slice(0, 150).map((t) => (
+                  {instSort.sorted.map((t) => (
                     <tr key={t.ticket} className="border-b border-border/60 last:border-0">
                       <td className="py-2 pr-4 font-mono text-xs text-muted-foreground">{t.ticket}</td>
                       <td className="py-2 pr-4">

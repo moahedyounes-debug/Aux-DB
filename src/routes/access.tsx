@@ -8,6 +8,7 @@ import { accessQueryOptions } from "@/lib/aux/queries";
 import { useAccess } from "@/hooks/use-access";
 import { NAV_PAGES } from "@/lib/aux/nav";
 import { toast } from "sonner";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/access")({
   loader: ({ context }) => context.queryClient.ensureQueryData(accessQueryOptions),
@@ -81,6 +82,17 @@ function AccessPage() {
         (u.role || "").toLowerCase().includes(q),
     );
   }, [data.users, search]);
+
+  const userSort = useSort(filteredUsers, {
+    email: (u) => u.email,
+    asc: (u) => u.asc,
+    branch: (u) => u.branch,
+    role: (u) => u.role,
+    pages: (u) => u.pages.length,
+    adminAccess: (u) => u.adminAccess,
+    parts: (u) => u.parts,
+    callCenter: (u) => u.callCenter,
+  });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["aux", "access"] });
 

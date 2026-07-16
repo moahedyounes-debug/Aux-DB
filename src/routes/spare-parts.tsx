@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
@@ -203,21 +204,38 @@ function BranchStockTab({ data }: { data: import("@/lib/aux/tabs.functions").Par
           <span>Out of stock: <b className="text-destructive">{num.format(outOfStock)}</b></span>
         </div>
       </div>
-      <div className="overflow-x-auto max-h-[520px]">
+      <PerBranchTable rows={rows} />
+    </ChartCard>
+  );
+}
+
+function PerBranchTable({ rows }: { rows: Array<{ location: string; part: string; description: string; model: string; inQty: number; outQty: number; stock: number }> }) {
+  const view = rows.slice(0, 500);
+  const sort = useSort(view, {
+    branch: (r) => r.location,
+    part: (r) => r.part,
+    description: (r) => r.description,
+    model: (r) => r.model,
+    inQty: (r) => r.inQty,
+    outQty: (r) => r.outQty,
+    stock: (r) => r.stock,
+  });
+  return (
+    <div className="overflow-x-auto max-h-[520px]">
         <table className="w-full text-sm">
           <thead className="bg-muted/40 text-muted-foreground sticky top-0">
             <tr>
-              <th className="p-2 text-left">Branch</th>
-              <th className="p-2 text-left">Part #</th>
-              <th className="p-2 text-left">Description</th>
-              <th className="p-2 text-left">Model</th>
-              <th className="p-2 text-right">In</th>
-              <th className="p-2 text-right">Out</th>
-              <th className="p-2 text-right">Stock</th>
+              <SortableTh sortKey="branch" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="p-2 text-left">Branch</SortableTh>
+              <SortableTh sortKey="part" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="p-2 text-left">Part #</SortableTh>
+              <SortableTh sortKey="description" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="p-2 text-left">Description</SortableTh>
+              <SortableTh sortKey="model" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="p-2 text-left">Model</SortableTh>
+              <SortableTh sortKey="inQty" align="end" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="p-2 text-right">In</SortableTh>
+              <SortableTh sortKey="outQty" align="end" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="p-2 text-right">Out</SortableTh>
+              <SortableTh sortKey="stock" align="end" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="p-2 text-right">Stock</SortableTh>
             </tr>
           </thead>
           <tbody>
-            {rows.slice(0, 500).map((r) => (
+            {sort.sorted.map((r) => (
               <tr key={r.location + r.part + r.model} className="border-t border-border">
                 <td className="p-2 text-xs text-muted-foreground">{r.location}</td>
                 <td className="p-2 font-mono text-xs">{r.part}</td>
@@ -234,7 +252,6 @@ function BranchStockTab({ data }: { data: import("@/lib/aux/tabs.functions").Par
           </tbody>
         </table>
       </div>
-    </ChartCard>
   );
 }
 
@@ -259,6 +276,17 @@ function MainWarehouseTab({ data }: { data: import("@/lib/aux/tabs.functions").P
       : filtered;
     return searched.sort((a, b) => b.stock - a.stock);
   }, [data.warehouseStock, warehouses, wh, q]);
+
+  const whView = rows.slice(0, 500);
+  const whSort = useSort(whView, {
+    warehouse: (r) => r.location,
+    part: (r) => r.part,
+    description: (r) => r.description,
+    model: (r) => r.model,
+    inQty: (r) => r.inQty,
+    outQty: (r) => r.outQty,
+    stock: (r) => r.stock,
+  });
 
   return (
     <ChartCard
@@ -290,17 +318,17 @@ function MainWarehouseTab({ data }: { data: import("@/lib/aux/tabs.functions").P
         <table className="w-full text-sm">
           <thead className="bg-muted/40 text-muted-foreground sticky top-0">
             <tr>
-              <th className="p-2 text-left">Warehouse</th>
-              <th className="p-2 text-left">Part #</th>
-              <th className="p-2 text-left">Description</th>
-              <th className="p-2 text-left">Model</th>
-              <th className="p-2 text-right">In</th>
-              <th className="p-2 text-right">Out</th>
-              <th className="p-2 text-right">Stock</th>
+              <SortableTh sortKey="warehouse" currentKey={whSort.sortKey} currentDir={whSort.sortDir} onSort={whSort.toggle} className="p-2 text-left">Warehouse</SortableTh>
+              <SortableTh sortKey="part" currentKey={whSort.sortKey} currentDir={whSort.sortDir} onSort={whSort.toggle} className="p-2 text-left">Part #</SortableTh>
+              <SortableTh sortKey="description" currentKey={whSort.sortKey} currentDir={whSort.sortDir} onSort={whSort.toggle} className="p-2 text-left">Description</SortableTh>
+              <SortableTh sortKey="model" currentKey={whSort.sortKey} currentDir={whSort.sortDir} onSort={whSort.toggle} className="p-2 text-left">Model</SortableTh>
+              <SortableTh sortKey="inQty" align="end" currentKey={whSort.sortKey} currentDir={whSort.sortDir} onSort={whSort.toggle} className="p-2 text-right">In</SortableTh>
+              <SortableTh sortKey="outQty" align="end" currentKey={whSort.sortKey} currentDir={whSort.sortDir} onSort={whSort.toggle} className="p-2 text-right">Out</SortableTh>
+              <SortableTh sortKey="stock" align="end" currentKey={whSort.sortKey} currentDir={whSort.sortDir} onSort={whSort.toggle} className="p-2 text-right">Stock</SortableTh>
             </tr>
           </thead>
           <tbody>
-            {rows.slice(0, 500).map((r) => (
+            {whSort.sorted.map((r) => (
               <tr key={r.location + r.part + r.model} className="border-t border-border">
                 <td className="p-2 text-xs text-muted-foreground">{r.location}</td>
                 <td className="p-2 font-mono text-xs">{r.part}</td>
@@ -368,31 +396,43 @@ function MonthlyConsumptionTab({ data }: { data: import("@/lib/aux/tabs.function
       </ChartCard>
 
       <ChartCard title="Top 10 Consumed Parts" exportRows={data.monthlyConsumption as unknown as Array<Record<string, unknown>>}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/40 text-muted-foreground">
-              <tr>
-                <th className="p-2 text-left">#</th>
-                <th className="p-2 text-left">Part #</th>
-                <th className="p-2 text-left">Description</th>
-                <th className="p-2 text-right">Total Out (Units)</th>
-                <th className="p-2 text-right">Avg / Month</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.monthlyConsumption.map((p, i) => (
-                <tr key={p.part} className="border-t border-border">
-                  <td className="p-2 text-muted-foreground">{i + 1}</td>
-                  <td className="p-2 font-mono text-xs">{p.part}</td>
-                  <td className="p-2">{p.description}</td>
-                  <td className="p-2 text-right font-semibold">{num.format(p.total)}</td>
-                  <td className="p-2 text-right">{num.format(Math.round(p.total / Math.max(1, p.months.length)))}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ConsumptionTable rows={data.monthlyConsumption} />
       </ChartCard>
+    </div>
+  );
+}
+
+function ConsumptionTable({ rows }: { rows: Array<{ part: string; description: string; total: number; months: unknown[] }> }) {
+  const sort = useSort(rows, {
+    part: (p) => p.part,
+    description: (p) => p.description,
+    total: (p) => p.total,
+    avg: (p) => p.total / Math.max(1, p.months.length),
+  });
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/40 text-muted-foreground">
+          <tr>
+            <th className="p-2 text-left">#</th>
+            <SortableTh sortKey="part" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="p-2 text-left">Part #</SortableTh>
+            <SortableTh sortKey="description" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="p-2 text-left">Description</SortableTh>
+            <SortableTh sortKey="total" align="end" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="p-2 text-right">Total Out (Units)</SortableTh>
+            <SortableTh sortKey="avg" align="end" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="p-2 text-right">Avg / Month</SortableTh>
+          </tr>
+        </thead>
+        <tbody>
+          {sort.sorted.map((p, i) => (
+            <tr key={p.part} className="border-t border-border">
+              <td className="p-2 text-muted-foreground">{i + 1}</td>
+              <td className="p-2 font-mono text-xs">{p.part}</td>
+              <td className="p-2">{p.description}</td>
+              <td className="p-2 text-right font-semibold">{num.format(p.total)}</td>
+              <td className="p-2 text-right">{num.format(Math.round(p.total / Math.max(1, p.months.length)))}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -438,6 +478,20 @@ function RequestsTab({ data }: { data: import("@/lib/aux/tabs.functions").PartsS
     return list.filter((r) => r.status === filter);
   }, [rows, filter, buckets]);
 
+  const reqSort = useSort(filtered, {
+    requestId: (r) => r.requestId,
+    date: (r) => r.date,
+    ticket: (r) => r.ticket,
+    branch: (r) => r.branch,
+    partCode: (r) => r.partCode,
+    model: (r) => r.model,
+    quantity: (r) => r.quantity,
+    dispatchDate: (r) => r.dispatchDate,
+    receiveDate: (r) => r.receiveDate,
+    awb: (r) => r.awb,
+    status: (r) => r.status,
+  });
+
   const invalidate = () => qc.invalidateQueries({ queryKey: ["spare-part-requests"] });
 
   return (
@@ -478,17 +532,17 @@ function RequestsTab({ data }: { data: import("@/lib/aux/tabs.functions").PartsS
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground sticky top-0">
               <tr>
-                <th className="p-2 text-left">Request</th>
-                <th className="p-2 text-left">Date</th>
-                <th className="p-2 text-left">Ticket</th>
-                <th className="p-2 text-left">Branch</th>
-                <th className="p-2 text-left">Part #</th>
-                <th className="p-2 text-left">Model</th>
-                <th className="p-2 text-right">Qty</th>
-                <th className="p-2 text-left">Ship Date</th>
-                <th className="p-2 text-left">Receive Date</th>
-                <th className="p-2 text-left">AWB</th>
-                <th className="p-2 text-left">Status</th>
+                <SortableTh sortKey="requestId" currentKey={reqSort.sortKey} currentDir={reqSort.sortDir} onSort={reqSort.toggle} className="p-2 text-left">Request</SortableTh>
+                <SortableTh sortKey="date" currentKey={reqSort.sortKey} currentDir={reqSort.sortDir} onSort={reqSort.toggle} className="p-2 text-left">Date</SortableTh>
+                <SortableTh sortKey="ticket" currentKey={reqSort.sortKey} currentDir={reqSort.sortDir} onSort={reqSort.toggle} className="p-2 text-left">Ticket</SortableTh>
+                <SortableTh sortKey="branch" currentKey={reqSort.sortKey} currentDir={reqSort.sortDir} onSort={reqSort.toggle} className="p-2 text-left">Branch</SortableTh>
+                <SortableTh sortKey="partCode" currentKey={reqSort.sortKey} currentDir={reqSort.sortDir} onSort={reqSort.toggle} className="p-2 text-left">Part #</SortableTh>
+                <SortableTh sortKey="model" currentKey={reqSort.sortKey} currentDir={reqSort.sortDir} onSort={reqSort.toggle} className="p-2 text-left">Model</SortableTh>
+                <SortableTh sortKey="quantity" align="end" currentKey={reqSort.sortKey} currentDir={reqSort.sortDir} onSort={reqSort.toggle} className="p-2 text-right">Qty</SortableTh>
+                <SortableTh sortKey="dispatchDate" currentKey={reqSort.sortKey} currentDir={reqSort.sortDir} onSort={reqSort.toggle} className="p-2 text-left">Ship Date</SortableTh>
+                <SortableTh sortKey="receiveDate" currentKey={reqSort.sortKey} currentDir={reqSort.sortDir} onSort={reqSort.toggle} className="p-2 text-left">Receive Date</SortableTh>
+                <SortableTh sortKey="awb" currentKey={reqSort.sortKey} currentDir={reqSort.sortDir} onSort={reqSort.toggle} className="p-2 text-left">AWB</SortableTh>
+                <SortableTh sortKey="status" currentKey={reqSort.sortKey} currentDir={reqSort.sortDir} onSort={reqSort.toggle} className="p-2 text-left">Status</SortableTh>
                 <th className="p-2"></th>
               </tr>
             </thead>
@@ -497,7 +551,7 @@ function RequestsTab({ data }: { data: import("@/lib/aux/tabs.functions").PartsS
                 <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Loading…</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">No requests match this filter.</td></tr>
-              ) : filtered.map((r) => (
+              ) : reqSort.sorted.map((r) => (
                 <tr key={r.requestId} className="border-t border-border">
                   <td className="p-2 font-mono text-[11px]">{r.requestId}</td>
                   <td className="p-2 text-xs">{r.date}</td>

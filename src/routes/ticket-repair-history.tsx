@@ -8,6 +8,7 @@ import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
 import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/ticket-repair-history")({
   loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
@@ -81,6 +82,18 @@ function HistoryPage() {
     });
   }, [all, q, status]);
 
+  const view = filtered.slice(0, 500);
+  const sort = useSort(view, {
+    ticket: (r) => r.ticket,
+    type: (r) => r.type,
+    branch: (r) => r.branch,
+    worker: (r) => r.worker,
+    product: (r) => r.product,
+    status: (r) => r.status,
+    createdAt: (r) => r.createdAt,
+    completedAt: (r) => r.completedAt,
+  });
+
   return (
     <DashboardLayout title="Ticket Repair History" subtitle={`${num.format(all.length)} unique tickets · searchable + exportable`}>
       <section className="grid gap-4 grid-cols-2 lg:grid-cols-4">
@@ -130,18 +143,18 @@ function HistoryPage() {
             <table className="min-w-full text-sm">
               <thead className="sticky top-0 bg-background">
                 <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="py-2 pr-4 text-start">Ticket</th>
-                  <th className="py-2 pr-4 text-start">Type</th>
-                  <th className="py-2 pr-4 text-start">Branch</th>
-                  <th className="py-2 pr-4 text-start">Worker</th>
-                  <th className="py-2 pr-4 text-start">Product</th>
-                  <th className="py-2 pr-4 text-start">Status</th>
-                  <th className="py-2 pr-4 text-start">Created</th>
-                  <th className="py-2 pr-4 text-start">Completed</th>
+                  <SortableTh sortKey="ticket" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Ticket</SortableTh>
+                  <SortableTh sortKey="type" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Type</SortableTh>
+                  <SortableTh sortKey="branch" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Branch</SortableTh>
+                  <SortableTh sortKey="worker" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Worker</SortableTh>
+                  <SortableTh sortKey="product" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Product</SortableTh>
+                  <SortableTh sortKey="status" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Status</SortableTh>
+                  <SortableTh sortKey="createdAt" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Created</SortableTh>
+                  <SortableTh sortKey="completedAt" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Completed</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {filtered.slice(0, 500).map((r) => (
+                {sort.sorted.map((r) => (
                   <tr key={r.ticket} className="border-b border-border/60 last:border-0">
                     <td className="py-2 pr-4 font-mono text-[11px] text-muted-foreground">{r.ticket}</td>
                     <td className="py-2 pr-4 text-xs">{r.type}</td>

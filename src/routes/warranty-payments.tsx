@@ -22,6 +22,7 @@ import {
   WARRANTY_SLA_DEDUCTION_PCT,
 } from "@/lib/aux/sheets.functions";
 import { cn } from "@/lib/utils";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/warranty-payments")({
   loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
@@ -53,6 +54,25 @@ const num = new Intl.NumberFormat("en-US");
 function WarrantyPaymentsPage() {
   const { data } = useKpiData();
   const w = data.warranty;
+
+  const branchSort = useSort(w.byBranch, {
+    branch: (b) => b.branch,
+    claims: (b) => b.claims,
+    paid: (b) => b.paid,
+    approved: (b) => b.approved,
+    submitted: (b) => b.submitted,
+    gross: (b) => b.gross,
+    deduction: (b) => b.deduction,
+    net: (b) => b.net,
+  });
+  const claimRows = w.recentClaims.slice(0, 60);
+  const claimsSort = useSort(claimRows, {
+    ticket: (c) => c.ticket,
+    branch: (c) => c.branch,
+    tier: (c) => c.tierLabel,
+    status: (c) => c.status,
+    net: (c) => c.net,
+  });
 
   const tooltipStyle = {
     background: "var(--color-popover)",
@@ -194,18 +214,18 @@ function WarrantyPaymentsPage() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="py-2 pr-4 text-start">Branch</th>
-                  <th className="py-2 pr-4 text-end">Claims</th>
-                  <th className="py-2 pr-4 text-end">Paid</th>
-                  <th className="py-2 pr-4 text-end">Approved</th>
-                  <th className="py-2 pr-4 text-end">Pending</th>
-                  <th className="py-2 pr-4 text-end">Gross</th>
-                  <th className="py-2 pr-4 text-end">Deduction</th>
-                  <th className="py-2 pr-4 text-end">Net</th>
+                  <SortableTh sortKey="branch" currentKey={branchSort.sortKey} currentDir={branchSort.sortDir} onSort={branchSort.toggle} className="py-2 pr-4 text-start">Branch</SortableTh>
+                  <SortableTh sortKey="claims" align="end" currentKey={branchSort.sortKey} currentDir={branchSort.sortDir} onSort={branchSort.toggle} className="py-2 pr-4 text-end">Claims</SortableTh>
+                  <SortableTh sortKey="paid" align="end" currentKey={branchSort.sortKey} currentDir={branchSort.sortDir} onSort={branchSort.toggle} className="py-2 pr-4 text-end">Paid</SortableTh>
+                  <SortableTh sortKey="approved" align="end" currentKey={branchSort.sortKey} currentDir={branchSort.sortDir} onSort={branchSort.toggle} className="py-2 pr-4 text-end">Approved</SortableTh>
+                  <SortableTh sortKey="submitted" align="end" currentKey={branchSort.sortKey} currentDir={branchSort.sortDir} onSort={branchSort.toggle} className="py-2 pr-4 text-end">Pending</SortableTh>
+                  <SortableTh sortKey="gross" align="end" currentKey={branchSort.sortKey} currentDir={branchSort.sortDir} onSort={branchSort.toggle} className="py-2 pr-4 text-end">Gross</SortableTh>
+                  <SortableTh sortKey="deduction" align="end" currentKey={branchSort.sortKey} currentDir={branchSort.sortDir} onSort={branchSort.toggle} className="py-2 pr-4 text-end">Deduction</SortableTh>
+                  <SortableTh sortKey="net" align="end" currentKey={branchSort.sortKey} currentDir={branchSort.sortDir} onSort={branchSort.toggle} className="py-2 pr-4 text-end">Net</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {w.byBranch.map((b) => (
+                {branchSort.sorted.map((b) => (
                   <tr key={b.branch} className="border-b border-border/60 last:border-0">
                     <td className="py-2.5 pr-4 font-medium">{b.branch}</td>
                     <td className="py-2.5 pr-4 text-end tabular-nums">{num.format(b.claims)}</td>
@@ -302,15 +322,15 @@ function WarrantyPaymentsPage() {
               <table className="min-w-full text-sm">
                 <thead className="sticky top-0 bg-background">
                   <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                    <th className="py-2 pr-4 text-start">Ticket</th>
-                    <th className="py-2 pr-4 text-start">Branch</th>
-                    <th className="py-2 pr-4 text-start">Tier</th>
-                    <th className="py-2 pr-4 text-center">Status</th>
-                    <th className="py-2 pr-4 text-end">Net</th>
+                    <SortableTh sortKey="ticket" currentKey={claimsSort.sortKey} currentDir={claimsSort.sortDir} onSort={claimsSort.toggle} className="py-2 pr-4 text-start">Ticket</SortableTh>
+                    <SortableTh sortKey="branch" currentKey={claimsSort.sortKey} currentDir={claimsSort.sortDir} onSort={claimsSort.toggle} className="py-2 pr-4 text-start">Branch</SortableTh>
+                    <SortableTh sortKey="tier" currentKey={claimsSort.sortKey} currentDir={claimsSort.sortDir} onSort={claimsSort.toggle} className="py-2 pr-4 text-start">Tier</SortableTh>
+                    <SortableTh sortKey="status" align="center" currentKey={claimsSort.sortKey} currentDir={claimsSort.sortDir} onSort={claimsSort.toggle} className="py-2 pr-4 text-center">Status</SortableTh>
+                    <SortableTh sortKey="net" align="end" currentKey={claimsSort.sortKey} currentDir={claimsSort.sortDir} onSort={claimsSort.toggle} className="py-2 pr-4 text-end">Net</SortableTh>
                   </tr>
                 </thead>
                 <tbody>
-                  {w.recentClaims.slice(0, 60).map((c) => (
+                  {claimsSort.sorted.map((c) => (
                     <tr key={c.ticket} className="border-b border-border/60 last:border-0">
                       <td className="py-2 pr-4 font-mono text-[11px] text-muted-foreground">
                         {c.ticket}

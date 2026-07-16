@@ -26,6 +26,7 @@ import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
 import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/daily-operations")({
   loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
@@ -94,6 +95,21 @@ function DailyOpsPage() {
   const { data } = useKpiData();
   const p = data.pending;
   const maxAging = Math.max(1, ...p.aging.map((a) => a.count));
+  const pivotSort = useSort(p.branchPivot, {
+    branch: (r) => r.branch,
+    b12: (r) => r.b12,
+    b24: (r) => r.b24,
+    b48: (r) => r.b48,
+    b72: (r) => r.b72,
+    over72: (r) => r.over72,
+    total: (r) => r.total,
+  });
+  const alertsSort = useSort(p.branchAlerts, {
+    branch: (r) => r.branch,
+    pending: (r) => r.pending,
+    noReason: (r) => r.noReason,
+    visitToday: (r) => (r.visitToday ? 1 : 0),
+  });
   const [reqTarget, setReqTarget] = useState<import("@/lib/aux/sheets.functions").PendingTicket | null>(null);
   const [partCode, setPartCode] = useState("");
   const [model, setModel] = useState("");
@@ -330,17 +346,17 @@ function DailyOpsPage() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="py-2 pr-4 text-start">Branch</th>
-                  <th className="py-2 pr-4 text-end">≤ 12H</th>
-                  <th className="py-2 pr-4 text-end">≤ 24H</th>
-                  <th className="py-2 pr-4 text-end">≤ 48H</th>
-                  <th className="py-2 pr-4 text-end">≤ 72H</th>
-                  <th className="py-2 pr-4 text-end">&gt; 72H</th>
-                  <th className="py-2 pr-4 text-end">Total</th>
+                  <SortableTh sortKey="branch" currentKey={pivotSort.sortKey} currentDir={pivotSort.sortDir} onSort={pivotSort.toggle} className="py-2 pr-4 text-start">Branch</SortableTh>
+                  <SortableTh sortKey="b12" align="end" currentKey={pivotSort.sortKey} currentDir={pivotSort.sortDir} onSort={pivotSort.toggle} className="py-2 pr-4 text-end">≤ 12H</SortableTh>
+                  <SortableTh sortKey="b24" align="end" currentKey={pivotSort.sortKey} currentDir={pivotSort.sortDir} onSort={pivotSort.toggle} className="py-2 pr-4 text-end">≤ 24H</SortableTh>
+                  <SortableTh sortKey="b48" align="end" currentKey={pivotSort.sortKey} currentDir={pivotSort.sortDir} onSort={pivotSort.toggle} className="py-2 pr-4 text-end">≤ 48H</SortableTh>
+                  <SortableTh sortKey="b72" align="end" currentKey={pivotSort.sortKey} currentDir={pivotSort.sortDir} onSort={pivotSort.toggle} className="py-2 pr-4 text-end">≤ 72H</SortableTh>
+                  <SortableTh sortKey="over72" align="end" currentKey={pivotSort.sortKey} currentDir={pivotSort.sortDir} onSort={pivotSort.toggle} className="py-2 pr-4 text-end">&gt; 72H</SortableTh>
+                  <SortableTh sortKey="total" align="end" currentKey={pivotSort.sortKey} currentDir={pivotSort.sortDir} onSort={pivotSort.toggle} className="py-2 pr-4 text-end">Total</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {p.branchPivot.map((r) => (
+                {pivotSort.sorted.map((r) => (
                   <tr key={r.branch} className="border-b border-border/60 last:border-0">
                     <td className="py-2 pr-4 font-medium text-foreground">{r.branch}</td>
                     <td className="py-2 pr-4 text-end tabular-nums text-muted-foreground">{r.b12 || ""}</td>
@@ -372,15 +388,15 @@ function DailyOpsPage() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="py-2 pr-4 text-start">Branch</th>
-                  <th className="py-2 pr-4 text-end">Pending</th>
-                  <th className="py-2 pr-4 text-end">No Reason</th>
-                  <th className="py-2 pr-4 text-center">Visit Today</th>
+                  <SortableTh sortKey="branch" currentKey={alertsSort.sortKey} currentDir={alertsSort.sortDir} onSort={alertsSort.toggle} className="py-2 pr-4 text-start">Branch</SortableTh>
+                  <SortableTh sortKey="pending" align="end" currentKey={alertsSort.sortKey} currentDir={alertsSort.sortDir} onSort={alertsSort.toggle} className="py-2 pr-4 text-end">Pending</SortableTh>
+                  <SortableTh sortKey="noReason" align="end" currentKey={alertsSort.sortKey} currentDir={alertsSort.sortDir} onSort={alertsSort.toggle} className="py-2 pr-4 text-end">No Reason</SortableTh>
+                  <SortableTh sortKey="visitToday" align="center" currentKey={alertsSort.sortKey} currentDir={alertsSort.sortDir} onSort={alertsSort.toggle} className="py-2 pr-4 text-center">Visit Today</SortableTh>
                   <th className="py-2 pr-4 text-end">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {p.branchAlerts.map((r) => (
+                {alertsSort.sorted.map((r) => (
                   <tr key={r.branch} className="border-b border-border/60 last:border-0">
                     <td className="py-2.5 pr-4 font-medium text-foreground">{r.branch}</td>
                     <td className="py-2.5 pr-4 text-end tabular-nums">{r.pending}</td>
@@ -517,6 +533,16 @@ function PendingTable({
   onRequestParts?: (t: import("@/lib/aux/sheets.functions").PendingTicket) => void;
 }) {
   const view = limit ? rows.slice(0, limit) : rows;
+  const sort = useSort(view, {
+    ticket: (t) => t.ticket,
+    branch: (t) => t.branch,
+    worker: (t) => t.worker,
+    aging: (t) => t.ageBucket,
+    reason: (t) => t.reason,
+    date: (t) => t.appointedDate,
+    remark: (t) => t.remark,
+    parts: (t) => t.parts,
+  });
   if (view.length === 0) {
     return <p className="text-sm text-muted-foreground py-6 text-center">{emptyLabel}</p>;
   }
@@ -525,19 +551,19 @@ function PendingTable({
       <table className="min-w-full text-sm">
         <thead>
           <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-            <th className="py-2 pr-4 text-start">Ticket #</th>
-            <th className="py-2 pr-4 text-start">Branch</th>
-            <th className="py-2 pr-4 text-start">Worker</th>
-            <th className="py-2 pr-4 text-start">Aging</th>
-            <th className="py-2 pr-4 text-start">Reason</th>
-            <th className="py-2 pr-4 text-start">Date</th>
-            <th className="py-2 pr-4 text-start">Remark</th>
-            <th className="py-2 pr-4 text-start">Parts</th>
+            <SortableTh sortKey="ticket" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Ticket #</SortableTh>
+            <SortableTh sortKey="branch" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Branch</SortableTh>
+            <SortableTh sortKey="worker" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Worker</SortableTh>
+            <SortableTh sortKey="aging" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Aging</SortableTh>
+            <SortableTh sortKey="reason" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Reason</SortableTh>
+            <SortableTh sortKey="date" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Date</SortableTh>
+            <SortableTh sortKey="remark" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Remark</SortableTh>
+            <SortableTh sortKey="parts" currentKey={sort.sortKey} currentDir={sort.sortDir} onSort={sort.toggle} className="py-2 pr-4 text-start">Parts</SortableTh>
             {onRequestParts && <th className="py-2 pr-4 text-end">Action</th>}
           </tr>
         </thead>
         <tbody>
-          {view.map((t) => (
+          {sort.sorted.map((t) => (
             <tr key={t.ticket} className="border-b border-border/60 last:border-0 align-middle">
               <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">{t.ticket}</td>
               <td className="py-2.5 pr-4">{t.branch}</td>

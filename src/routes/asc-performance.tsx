@@ -19,6 +19,7 @@ import { TARGETS } from "@/lib/aux/mock-data";
 import { kpiQueryOptions } from "@/lib/aux/queries";
 import { useKpiData } from "@/hooks/use-kpi-data";
 import { cn } from "@/lib/utils";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/asc-performance")({
   loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
@@ -72,6 +73,15 @@ function AscPerformancePage() {
   const branches = data.branches;
 
   const ranked = [...branches].sort((a, b) => b.rate48h - a.rate48h);
+  const rankedSort = useSort(ranked, {
+    branch: (b) => b.branch,
+    total: (b) => b.total,
+    completed: (b) => b.completed,
+    pending: (b) => b.pending,
+    rate48h: (b) => b.rate48h,
+    rate72h: (b) => b.rate72h,
+    csat: (b) => b.csat,
+  });
   const top = ranked[0];
   const worst = [...branches]
     .filter((b) => b.total >= 3)
@@ -250,18 +260,18 @@ function AscPerformancePage() {
                 <thead>
                   <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
                     <th className="py-2 pr-4 text-start w-10">#</th>
-                    <th className="py-2 pr-4 text-start">Branch</th>
-                    <th className="py-2 pr-4 text-end">Total</th>
-                    <th className="py-2 pr-4 text-end">Completed</th>
-                    <th className="py-2 pr-4 text-end">Pending</th>
-                    <th className="py-2 pr-4 text-end">48h</th>
-                    <th className="py-2 pr-4 text-end">72h</th>
-                    <th className="py-2 pr-4 text-end">CSAT</th>
+                    <SortableTh sortKey="branch" currentKey={rankedSort.sortKey} currentDir={rankedSort.sortDir} onSort={rankedSort.toggle} className="py-2 pr-4 text-start">Branch</SortableTh>
+                    <SortableTh sortKey="total" align="end" currentKey={rankedSort.sortKey} currentDir={rankedSort.sortDir} onSort={rankedSort.toggle} className="py-2 pr-4 text-end">Total</SortableTh>
+                    <SortableTh sortKey="completed" align="end" currentKey={rankedSort.sortKey} currentDir={rankedSort.sortDir} onSort={rankedSort.toggle} className="py-2 pr-4 text-end">Completed</SortableTh>
+                    <SortableTh sortKey="pending" align="end" currentKey={rankedSort.sortKey} currentDir={rankedSort.sortDir} onSort={rankedSort.toggle} className="py-2 pr-4 text-end">Pending</SortableTh>
+                    <SortableTh sortKey="rate48h" align="end" currentKey={rankedSort.sortKey} currentDir={rankedSort.sortDir} onSort={rankedSort.toggle} className="py-2 pr-4 text-end">48h</SortableTh>
+                    <SortableTh sortKey="rate72h" align="end" currentKey={rankedSort.sortKey} currentDir={rankedSort.sortDir} onSort={rankedSort.toggle} className="py-2 pr-4 text-end">72h</SortableTh>
+                    <SortableTh sortKey="csat" align="end" currentKey={rankedSort.sortKey} currentDir={rankedSort.sortDir} onSort={rankedSort.toggle} className="py-2 pr-4 text-end">CSAT</SortableTh>
                     <th className="py-2 pr-4 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {ranked.map((b, i) => {
+                  {rankedSort.sorted.map((b, i) => {
                     const pRate = b.total > 0 ? (b.pending / b.total) * 100 : 0;
                     const okAll =
                       b.rate48h >= TARGETS.rate48h &&

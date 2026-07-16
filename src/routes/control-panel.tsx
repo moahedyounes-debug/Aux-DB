@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { uploadsQueryOptions } from "@/lib/aux/queries";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/control-panel")({
   loader: ({ context }) => context.queryClient.ensureQueryData(uploadsQueryOptions),
@@ -31,6 +32,20 @@ function statusPill(s: string) {
 
 function ControlPanelPage() {
   const { data } = useSuspenseQuery(uploadsQueryOptions);
+  const actionSort = useSort(data.byAction, {
+    action: (a) => a.action,
+    runs: (a) => a.runs,
+    lastRows: (a) => a.lastRows,
+    lastRun: (a) => a.lastRun,
+  });
+  const recentSort = useSort(data.recent, {
+    timestamp: (r) => r.timestamp,
+    action: (r) => r.action,
+    rows: (r) => r.rows,
+    columns: (r) => r.columns,
+    status: (r) => r.status,
+    notes: (r) => r.notes,
+  });
   return (
     <DashboardLayout title="Control Panel" subtitle="Data pipeline health (live from UploadLogs tab)">
       {data.error ? (
@@ -48,14 +63,14 @@ function ControlPanelPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground">
               <tr>
-                <th className="p-2 text-left">Action</th>
-                <th className="p-2 text-right">Runs</th>
-                <th className="p-2 text-right">Last Rows</th>
-                <th className="p-2 text-left">Last Run</th>
+                <SortableTh sortKey="action" currentKey={actionSort.sortKey} currentDir={actionSort.sortDir} onSort={actionSort.toggle} className="p-2 text-left">Action</SortableTh>
+                <SortableTh sortKey="runs" align="end" currentKey={actionSort.sortKey} currentDir={actionSort.sortDir} onSort={actionSort.toggle} className="p-2 text-right">Runs</SortableTh>
+                <SortableTh sortKey="lastRows" align="end" currentKey={actionSort.sortKey} currentDir={actionSort.sortDir} onSort={actionSort.toggle} className="p-2 text-right">Last Rows</SortableTh>
+                <SortableTh sortKey="lastRun" currentKey={actionSort.sortKey} currentDir={actionSort.sortDir} onSort={actionSort.toggle} className="p-2 text-left">Last Run</SortableTh>
               </tr>
             </thead>
             <tbody>
-              {data.byAction.map((a) => (
+              {actionSort.sorted.map((a) => (
                 <tr key={a.action} className="border-t border-border">
                   <td className="p-2 font-mono text-xs">{a.action}</td>
                   <td className="p-2 text-right">{num.format(a.runs)}</td>
@@ -73,16 +88,16 @@ function ControlPanelPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground sticky top-0">
               <tr>
-                <th className="p-2 text-left">Time</th>
-                <th className="p-2 text-left">Action</th>
-                <th className="p-2 text-right">Rows</th>
-                <th className="p-2 text-right">Cols</th>
-                <th className="p-2 text-left">Status</th>
-                <th className="p-2 text-left">Notes</th>
+                <SortableTh sortKey="timestamp" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="p-2 text-left">Time</SortableTh>
+                <SortableTh sortKey="action" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="p-2 text-left">Action</SortableTh>
+                <SortableTh sortKey="rows" align="end" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="p-2 text-right">Rows</SortableTh>
+                <SortableTh sortKey="columns" align="end" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="p-2 text-right">Cols</SortableTh>
+                <SortableTh sortKey="status" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="p-2 text-left">Status</SortableTh>
+                <SortableTh sortKey="notes" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="p-2 text-left">Notes</SortableTh>
               </tr>
             </thead>
             <tbody>
-              {data.recent.map((r, i) => (
+              {recentSort.sorted.map((r, i) => (
                 <tr key={`${r.timestamp}-${i}`} className="border-t border-border">
                   <td className="p-2 text-xs text-muted-foreground">{r.timestamp}</td>
                   <td className="p-2 font-mono text-xs">{r.action}</td>

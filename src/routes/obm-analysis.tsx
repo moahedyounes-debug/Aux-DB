@@ -27,6 +27,7 @@ import { readTable } from "@/lib/sheets-client";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
 import { useGlobalFilters, applyGlobalFilters, shortBranch } from "@/hooks/use-global-filters";
 import { cn } from "@/lib/utils";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/obm-analysis")({
   head: () => ({
@@ -199,6 +200,23 @@ function OBMPage() {
   const obmShareOfCancelled = a.cancelledCount ? (a.obmCount / a.cancelledCount) * 100 : 0;
   const obmShareOfTotal = a.total ? (a.obmCount / a.total) * 100 : 0;
 
+  const byModelSort = useSort(a.byModel, {
+    model: (m) => m.model,
+    brand: (m) => m.brand,
+    count: (m) => m.count,
+  });
+  const ticketRows = useMemo(() => filtered.slice(0, 500), [filtered]);
+  const ticketSort = useSort(ticketRows, {
+    ticket: (r) => r[M.ticket],
+    branch: (r) => r.__branch,
+    worker: (r) => r[M.worker],
+    model: (r) => r.__model,
+    brand: (r) => brandFromModel(r.__model),
+    serviceInfo: (r) => r[M.serviceInfo] || r[M.notes] || "",
+    status: (r) => r[M.status],
+    date: (r) => r[M.createdAt] || "",
+  });
+
   const tooltipStyle = {
     background: "hsl(var(--popover))",
     border: "1px solid hsl(var(--border))",
@@ -281,13 +299,13 @@ function OBMPage() {
             <table className="min-w-full text-sm">
               <thead className="bg-muted/40 sticky top-0">
                 <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="py-2 px-3 text-start font-semibold">Model</th>
-                  <th className="py-2 px-3 text-start font-semibold">Brand</th>
-                  <th className="py-2 px-3 text-end font-semibold">OBM Count</th>
+                  <SortableTh sortKey="model" currentKey={byModelSort.sortKey} currentDir={byModelSort.sortDir} onSort={byModelSort.toggle} className="py-2 px-3 text-start font-semibold">Model</SortableTh>
+                  <SortableTh sortKey="brand" currentKey={byModelSort.sortKey} currentDir={byModelSort.sortDir} onSort={byModelSort.toggle} className="py-2 px-3 text-start font-semibold">Brand</SortableTh>
+                  <SortableTh sortKey="count" align="end" currentKey={byModelSort.sortKey} currentDir={byModelSort.sortDir} onSort={byModelSort.toggle} className="py-2 px-3 text-end font-semibold">OBM Count</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {a.byModel.map((m) => (
+                {byModelSort.sorted.map((m) => (
                   <tr key={m.model} className="border-b border-border/60 hover:bg-muted/20">
                     <td className="py-2 px-3 font-mono text-xs">{m.model}</td>
                     <td className="py-2 px-3">
@@ -345,14 +363,14 @@ function OBMPage() {
             <table className="min-w-full text-xs">
               <thead className="bg-muted/40 sticky top-0">
                 <tr className="text-muted-foreground border-b border-border uppercase tracking-wider">
-                  <th className="py-2.5 px-3 text-start font-semibold">Ticket #</th>
-                  <th className="py-2.5 px-3 text-start font-semibold">Branch</th>
-                  <th className="py-2.5 px-3 text-start font-semibold">Worker</th>
-                  <th className="py-2.5 px-3 text-start font-semibold">Model</th>
-                  <th className="py-2.5 px-3 text-start font-semibold">Brand</th>
-                  <th className="py-2.5 px-3 text-start font-semibold">Service Info</th>
-                  <th className="py-2.5 px-3 text-center font-semibold">Status</th>
-                  <th className="py-2.5 px-3 text-start font-semibold">Date</th>
+                  <SortableTh sortKey="ticket" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2.5 px-3 text-start font-semibold">Ticket #</SortableTh>
+                  <SortableTh sortKey="branch" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2.5 px-3 text-start font-semibold">Branch</SortableTh>
+                  <SortableTh sortKey="worker" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2.5 px-3 text-start font-semibold">Worker</SortableTh>
+                  <SortableTh sortKey="model" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2.5 px-3 text-start font-semibold">Model</SortableTh>
+                  <SortableTh sortKey="brand" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2.5 px-3 text-start font-semibold">Brand</SortableTh>
+                  <SortableTh sortKey="serviceInfo" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2.5 px-3 text-start font-semibold">Service Info</SortableTh>
+                  <SortableTh sortKey="status" align="center" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2.5 px-3 text-center font-semibold">Status</SortableTh>
+                  <SortableTh sortKey="date" currentKey={ticketSort.sortKey} currentDir={ticketSort.sortDir} onSort={ticketSort.toggle} className="py-2.5 px-3 text-start font-semibold">Date</SortableTh>
                 </tr>
               </thead>
               <tbody>
@@ -361,7 +379,7 @@ function OBMPage() {
                 ) : filtered.length === 0 ? (
                   <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">No OBM tickets match your search.</td></tr>
                 ) : (
-                  filtered.slice(0, 500).map((r, i) => (
+                  ticketSort.sorted.map((r, i) => (
                     <tr key={`${r[M.ticket]}-${i}`} className="border-b border-border/60 hover:bg-muted/20">
                       <td className="py-2 px-3 font-mono">{r[M.ticket]}</td>
                       <td className="py-2 px-3">{r.__branch}</td>

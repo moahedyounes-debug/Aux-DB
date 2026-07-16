@@ -9,6 +9,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { satisfactionQueryOptions } from "@/lib/aux/queries";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/satisfaction")({
   loader: ({ context }) => context.queryClient.ensureQueryData(satisfactionQueryOptions),
@@ -27,6 +28,24 @@ const num = new Intl.NumberFormat("en-US");
 
 function SatisfactionPage() {
   const { data } = useSuspenseQuery(satisfactionQueryOptions);
+
+  const agentSort = useSort(data.byAgent, {
+    agent: (a) => a.agent,
+    surveys: (a) => a.surveys,
+    avgScore: (a) => a.avgScore,
+    promoters: (a) => a.promoters,
+    detractors: (a) => a.detractors,
+  });
+  const recentSort = useSort(data.recent, {
+    ticket: (r) => r.ticket,
+    customer: (r) => r.customer,
+    avg: (r) => r.avg,
+    branch: (r) => r.branch ?? "",
+    status: (r) => r.status ?? "",
+    worker: (r) => r.worker ?? "",
+    agent: (r) => r.agent ?? "",
+    savedAt: (r) => r.savedAt,
+  });
 
   const tooltipStyle = {
     background: "var(--color-popover)",
@@ -125,15 +144,15 @@ function SatisfactionPage() {
             <table className="min-w-full text-sm">
               <thead className="sticky top-0 bg-background">
                 <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="py-2 pr-4 text-start">Agent</th>
-                  <th className="py-2 pr-4 text-end">Surveys</th>
-                  <th className="py-2 pr-4 text-end">Avg</th>
-                  <th className="py-2 pr-4 text-end">Promoters</th>
-                  <th className="py-2 pr-4 text-end">Detractors</th>
+                  <SortableTh sortKey="agent" currentKey={agentSort.sortKey} currentDir={agentSort.sortDir} onSort={agentSort.toggle} className="py-2 pr-4 text-start">Agent</SortableTh>
+                  <SortableTh sortKey="surveys" align="end" currentKey={agentSort.sortKey} currentDir={agentSort.sortDir} onSort={agentSort.toggle} className="py-2 pr-4 text-end">Surveys</SortableTh>
+                  <SortableTh sortKey="avgScore" align="end" currentKey={agentSort.sortKey} currentDir={agentSort.sortDir} onSort={agentSort.toggle} className="py-2 pr-4 text-end">Avg</SortableTh>
+                  <SortableTh sortKey="promoters" align="end" currentKey={agentSort.sortKey} currentDir={agentSort.sortDir} onSort={agentSort.toggle} className="py-2 pr-4 text-end">Promoters</SortableTh>
+                  <SortableTh sortKey="detractors" align="end" currentKey={agentSort.sortKey} currentDir={agentSort.sortDir} onSort={agentSort.toggle} className="py-2 pr-4 text-end">Detractors</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {data.byAgent.map((a) => (
+                {agentSort.sorted.map((a) => (
                   <tr key={a.agent} className="border-b border-border/60 last:border-0">
                     <td className="py-2 pr-4 font-medium">{a.agent}</td>
                     <td className="py-2 pr-4 text-end tabular-nums">{num.format(a.surveys)}</td>
@@ -166,18 +185,18 @@ function SatisfactionPage() {
             <table className="min-w-full text-sm">
               <thead className="sticky top-0 bg-background">
                 <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <th className="py-2 pr-4 text-start">Ticket</th>
-                  <th className="py-2 pr-4 text-start">Customer</th>
-                  <th className="py-2 pr-4 text-end">Avg</th>
-                  <th className="py-2 pr-4 text-start">Branch</th>
-                  <th className="py-2 pr-4 text-start">Status</th>
-                  <th className="py-2 pr-4 text-start">Worker</th>
-                  <th className="py-2 pr-4 text-start">Agent</th>
-                  <th className="py-2 pr-4 text-start">Saved</th>
+                  <SortableTh sortKey="ticket" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Ticket</SortableTh>
+                  <SortableTh sortKey="customer" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Customer</SortableTh>
+                  <SortableTh sortKey="avg" align="end" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-end">Avg</SortableTh>
+                  <SortableTh sortKey="branch" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Branch</SortableTh>
+                  <SortableTh sortKey="status" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Status</SortableTh>
+                  <SortableTh sortKey="worker" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Worker</SortableTh>
+                  <SortableTh sortKey="agent" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Agent</SortableTh>
+                  <SortableTh sortKey="savedAt" currentKey={recentSort.sortKey} currentDir={recentSort.sortDir} onSort={recentSort.toggle} className="py-2 pr-4 text-start">Saved</SortableTh>
                 </tr>
               </thead>
               <tbody>
-                {data.recent.map((r, i) => (
+                {recentSort.sorted.map((r, i) => (
                   <tr key={`${r.ticket}-${i}`} className="border-b border-border/60 last:border-0">
                     <td className="py-2 pr-4 font-mono text-xs">{r.ticket}</td>
                     <td className="py-2 pr-4">{r.customer}</td>
