@@ -3,7 +3,6 @@ import {
   ClipboardList,
   TrendingUp,
   CalendarClock,
-  AlarmClock,
   Microscope,
   Boxes,
   Package,
