@@ -72,24 +72,6 @@ function AgingBar({ label, count, max }: { label: string; count: number; max: nu
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const s = status.toLowerCase();
-  const tone = s.includes("completed")
-    ? "bg-success/15 text-success"
-    : s.includes("not assigned")
-      ? "bg-destructive/15 text-destructive"
-      : s.includes("change of appointment")
-        ? "bg-primary/15 text-primary"
-        : s.includes("accepted")
-          ? "bg-warning/15 text-warning"
-          : "bg-muted text-muted-foreground";
-  return (
-    <span className={cn("inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium", tone)}>
-      {status}
-    </span>
-  );
-}
-
 function AgingBadge({ bucket }: { bucket: string }) {
   const s = bucket;
   const tone = s === "≤ 12 Hours"
