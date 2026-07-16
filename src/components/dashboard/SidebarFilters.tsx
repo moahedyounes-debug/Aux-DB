@@ -108,7 +108,6 @@ export function SidebarFilters({ collapsed }: { collapsed: boolean }) {
       </button>
       {open && (
         <div className={cn("px-3 pb-3 space-y-2.5", q.isLoading && "opacity-70")}>
-          {(() => null)()}
           <FieldLabel>Month</FieldLabel>
           <Select value={filters.month} onValueChange={(v) => set("month", v)}>
             <SelectTrigger className={INPUT_CLS}><SelectValue /></SelectTrigger>
