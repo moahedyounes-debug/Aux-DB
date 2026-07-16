@@ -26,6 +26,7 @@ import { TARGETS } from "@/lib/aux/mock-data";
 import { kpiQueryOptions } from "@/lib/aux/queries";
 import { readTable } from "@/lib/sheets-client";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
+import { useGlobalFilters, applyGlobalFilters } from "@/hooks/use-global-filters";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/deep-insights")({
@@ -84,6 +85,7 @@ function hrs(r: Row): number {
 function DeepInsightsPage() {
   const { data } = useSuspenseQuery(kpiQueryOptions);
   const { access, ready } = useAccess();
+  const { filters: gFilters } = useGlobalFilters();
   const maint = useQuery({
     queryKey: ["maintenance", "Sheet1"],
     queryFn: () => readTable("maintenance", "Sheet1!A1:AE"),
@@ -93,8 +95,11 @@ function DeepInsightsPage() {
 
   const rows: Row[] = useMemo(() => {
     if (!maint.data) return [];
-    return applyAccessFilter(maint.data.rows, access, { asc: M.asc, branch: M.branch });
-  }, [maint.data, access]);
+    const scoped = applyAccessFilter(maint.data.rows, access, { asc: M.asc, branch: M.branch });
+    return applyGlobalFilters(scoped, {
+      asc: M.asc, branch: M.branch, worker: M.worker, createdAt: M.createdAt,
+    }, gFilters);
+  }, [maint.data, access, gFilters]);
 
   // Filters
   const [q, setQ] = useState("");
