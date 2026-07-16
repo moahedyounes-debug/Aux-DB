@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Activity,
   CheckCircle2,
@@ -14,6 +14,10 @@ import {
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
 import { readTable } from "@/lib/sheets-client";
 import { cn } from "@/lib/utils";
@@ -59,6 +63,7 @@ const COL = {
   createdAt: "Order Creation Time",
   completedAt: "Completion time",
   completionResult: "Completion Result",
+  worker: "Worker Name",
 } as const;
 
 const fmt = new Intl.NumberFormat("en-US");
@@ -159,11 +164,66 @@ function KpisPage() {
     });
   }, [query.data, access]);
 
+  // ---- Filters ----
+  const [fMonth, setFMonth] = useState<string>("all"); // "all" | YYYY-MM
+  const [fFrom, setFFrom] = useState<string>("");
+  const [fTo, setFTo] = useState<string>("");
+  const [fAsc, setFAsc] = useState<string>("all");
+  const [fBranch, setFBranch] = useState<string>("all");
+  const [fWorker, setFWorker] = useState<string>("");
+
+  const opts = useMemo(() => {
+    const ascs = new Set<string>();
+    const branches = new Set<string>();
+    const months = new Set<string>();
+    for (const r of rows) {
+      if (r[COL.asc]) ascs.add(r[COL.asc]);
+      if (r[COL.branch]) branches.add(r[COL.branch]);
+      const raw = r[COL.createdAt];
+      if (raw) {
+        const d = new Date(String(raw).replace(" ", "T"));
+        if (Number.isFinite(d.getTime())) {
+          months.add(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`);
+        }
+      }
+    }
+    return {
+      ascs: Array.from(ascs).sort(),
+      branches: Array.from(branches).sort(),
+      months: Array.from(months).sort().reverse(),
+    };
+  }, [rows]);
+
+  const filteredRows = useMemo(() => {
+    const from = fFrom ? new Date(fFrom).getTime() : null;
+    const to = fTo ? new Date(fTo).getTime() + 86_400_000 : null;
+    const worker = fWorker.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (fAsc !== "all" && r[COL.asc] !== fAsc) return false;
+      if (fBranch !== "all" && r[COL.branch] !== fBranch) return false;
+      if (worker && !(r[COL.worker] || "").toLowerCase().includes(worker)) return false;
+      const raw = r[COL.createdAt];
+      if (fMonth !== "all" || from !== null || to !== null) {
+        if (!raw) return false;
+        const d = new Date(String(raw).replace(" ", "T"));
+        const t = d.getTime();
+        if (!Number.isFinite(t)) return false;
+        if (fMonth !== "all") {
+          const mk = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+          if (mk !== fMonth) return false;
+        }
+        if (from !== null && t < from) return false;
+        if (to !== null && t >= to) return false;
+      }
+      return true;
+    });
+  }, [rows, fMonth, fFrom, fTo, fAsc, fBranch, fWorker]);
+
   const stats = useMemo(() => {
-    const total = rows.length;
-    const completed = rows.filter(isCompleted).length;
-    const pending = rows.filter(isPending).length;
-    const completedRows = rows.filter(isCompleted);
+    const total = filteredRows.length;
+    const completed = filteredRows.filter(isCompleted).length;
+    const pending = filteredRows.filter(isPending).length;
+    const completedRows = filteredRows.filter(isCompleted);
     const withHrs = completedRows.filter((r) => Number.isFinite(hours(r)));
     const under24 = withHrs.filter((r) => hours(r) <= SLA_24).length;
     const under48 = withHrs.filter((r) => hours(r) <= SLA_48).length;
@@ -175,7 +235,7 @@ function KpisPage() {
       withHrs.length > 0
         ? withHrs.reduce((s, r) => s + hours(r), 0) / withHrs.length
         : 0;
-    const branches = new Set(rows.map((r) => r[COL.branch]).filter(Boolean)).size;
+    const branches = new Set(filteredRows.map((r) => r[COL.branch]).filter(Boolean)).size;
     return {
       total, completed, pending, rate24, rate48, rate72, avgHours, branches,
       pendingRate: pct(pending, total),
@@ -185,7 +245,7 @@ function KpisPage() {
       u72: under72,
       withHrs: withHrs.length,
     };
-  }, [rows]);
+  }, [filteredRows]);
 
   // Monthly buckets — key = YYYY-MM
   const monthly = useMemo(() => {
@@ -202,7 +262,7 @@ function KpisPage() {
       if (!Number.isFinite(d.getTime())) return null;
       return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
     };
-    for (const r of rows) {
+    for (const r of filteredRows) {
       const k = key(r);
       if (!k) continue;
       const e = map.get(k) ?? { total: 0, completed: 0, pending: 0, withHrs: 0, hrsSum: 0, pending7d: 0 };
@@ -222,7 +282,7 @@ function KpisPage() {
       map.set(k, e);
     }
     return map;
-  }, [rows]);
+  }, [filteredRows]);
 
   const formulaVars = useMemo<Record<string, number>>(() => ({
     total: stats.total,
@@ -257,7 +317,7 @@ function KpisPage() {
       hrsSum: number; pending3d: number; pending7d: number;
     };
     const map = new Map<string, Row2>();
-    for (const r of rows) {
+    for (const r of filteredRows) {
       const key = r[COL.branch] || "—";
       const e = map.get(key) ?? {
         total: 0, completed: 0, pending: 0,
@@ -321,7 +381,7 @@ function KpisPage() {
         wtyAmount: findKey(warrByBranch, branch) ?? 0,
       }))
       .sort((a, b) => b.total - a.total);
-  }, [rows, kpiQuery.data]);
+  }, [filteredRows, kpiQuery.data]);
 
   const scope = access
     ? access.isAllAccess
@@ -448,6 +508,54 @@ function KpisPage() {
           Failed to load maintenance data: {(query.error as Error)?.message}
         </div>
       )}
+
+      <div className="surface-card p-4 grid gap-3 md:grid-cols-6 grid-cols-2">
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">Month</Label>
+          <Select value={fMonth} onValueChange={setFMonth}>
+            <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All months</SelectItem>
+              {opts.months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">From</Label>
+          <Input type="date" value={fFrom} onChange={(e) => setFFrom(e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">To</Label>
+          <Input type="date" value={fTo} onChange={(e) => setFTo(e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">Company (ASC)</Label>
+          <Select value={fAsc} onValueChange={setFAsc}>
+            <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All companies</SelectItem>
+              {opts.ascs.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">Branch</Label>
+          <Select value={fBranch} onValueChange={setFBranch}>
+            <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All branches</SelectItem>
+              {opts.branches.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label className="text-xs">Technician</Label>
+          <div className="flex gap-2">
+            <Input placeholder="Name…" value={fWorker} onChange={(e) => setFWorker(e.target.value)} />
+            <Button variant="outline" size="sm" onClick={() => { setFMonth("all"); setFFrom(""); setFTo(""); setFAsc("all"); setFBranch("all"); setFWorker(""); }}>Reset</Button>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard
