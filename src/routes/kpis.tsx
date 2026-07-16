@@ -292,9 +292,15 @@ function KpisPage() {
     const map = new Map<string, Map<string, number>>();
     const now = Date.now();
     for (const r of filteredRows) {
-      if (!isPending(r)) continue;
-      const age = pendingAgeDays(r, now);
-      if (!(Number.isFinite(age) && age > 6)) continue;
+      let qualifies = false;
+      if (isPending(r)) {
+        const age = pendingAgeDays(r, now);
+        if (Number.isFinite(age) && age > 6) qualifies = true;
+      } else if (isCompleted(r)) {
+        const h = serviceHours(r);
+        if (Number.isFinite(h) && h / 24 > 6) qualifies = true;
+      }
+      if (!qualifies) continue;
       const fw = firstWord(r[COL.asc] || "");
       const fwU = fw.toUpperCase();
       if (!fw || fwU === "AUTHORIZED") continue;
