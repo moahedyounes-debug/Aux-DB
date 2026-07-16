@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Package, PackageCheck, Timer, Layers } from "lucide-react";
+import { Package, ArrowDownToLine, ArrowUpFromLine, Layers } from "lucide-react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -9,8 +9,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  LineChart,
-  Line,
 } from "recharts";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
@@ -40,14 +38,14 @@ function SparePartsPage() {
         </div>
       ) : null}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="Total Requests" value={num.format(data.total)} icon={Package} tone="primary" />
-        <KpiCard label="Received" value={num.format(data.received)} icon={PackageCheck} tone="success" hint={`${data.dispatched} dispatched`} />
-        <KpiCard label="Pending" value={num.format(data.pending)} icon={Timer} tone="warning" />
+        <KpiCard label="Total Transactions" value={num.format(data.total)} icon={Package} tone="primary" />
+        <KpiCard label="In (Received)" value={num.format(data.inCount)} icon={ArrowDownToLine} tone="success" />
+        <KpiCard label="Out (Delivered)" value={num.format(data.outCount)} icon={ArrowUpFromLine} tone="warning" />
         <KpiCard label="Unique Parts" value={num.format(data.uniqueParts)} icon={Layers} tone="accent" hint={`${num.format(data.totalQty)} units`} />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Requests by Status" exportRows={data.byStatus as unknown as Array<Record<string, unknown>>}>
+        <ChartCard title="Trading Direction" exportRows={data.byStatus as unknown as Array<Record<string, unknown>>}>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={data.byStatus}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -58,15 +56,15 @@ function SparePartsPage() {
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
-        <ChartCard title="Monthly Requests" exportRows={data.byMonth as unknown as Array<Record<string, unknown>>}>
+        <ChartCard title="Requests by Type" exportRows={data.byType as unknown as Array<Record<string, unknown>>}>
           <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={data.byMonth}>
+            <BarChart data={data.byType} layout="vertical" margin={{ left: 24, right: 12 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
+              <XAxis type="number" tick={{ fontSize: 12 }} />
+              <YAxis type="category" dataKey="type" tick={{ fontSize: 11 }} width={160} />
               <Tooltip />
-              <Line type="monotone" dataKey="requests" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-            </LineChart>
+              <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0,4,4,0]} />
+            </BarChart>
           </ResponsiveContainer>
         </ChartCard>
       </section>
@@ -78,19 +76,19 @@ function SparePartsPage() {
               <thead className="bg-muted/40 text-muted-foreground">
                 <tr>
                   <th className="p-2 text-left">Branch</th>
-                  <th className="p-2 text-right">Requests</th>
-                  <th className="p-2 text-right">Received</th>
-                  <th className="p-2 text-right">Pending</th>
-                  <th className="p-2 text-right">Qty</th>
+                  <th className="p-2 text-right">Transactions</th>
+                  <th className="p-2 text-right">In Qty</th>
+                  <th className="p-2 text-right">Out Qty</th>
+                  <th className="p-2 text-right">Total Qty</th>
                 </tr>
               </thead>
               <tbody>
                 {data.byBranch.slice(0, 15).map((b) => (
                   <tr key={b.branch} className="border-t border-border">
                     <td className="p-2">{b.branch}</td>
-                    <td className="p-2 text-right">{num.format(b.requests)}</td>
-                    <td className="p-2 text-right text-success">{num.format(b.received)}</td>
-                    <td className="p-2 text-right text-warning">{num.format(b.pending)}</td>
+                    <td className="p-2 text-right">{num.format(b.transactions)}</td>
+                    <td className="p-2 text-right text-success">{num.format(b.inQty)}</td>
+                    <td className="p-2 text-right text-warning">{num.format(b.outQty)}</td>
                     <td className="p-2 text-right">{num.format(b.qty)}</td>
                   </tr>
                 ))}
@@ -130,9 +128,10 @@ function SparePartsPage() {
                 <th className="p-2 text-left">Order</th>
                 <th className="p-2 text-left">Part #</th>
                 <th className="p-2 text-left">Description</th>
+                <th className="p-2 text-left">Model</th>
                 <th className="p-2 text-left">Branch</th>
-                <th className="p-2 text-left">Requested</th>
-                <th className="p-2 text-left">Received</th>
+                <th className="p-2 text-right">Qty</th>
+                <th className="p-2 text-left">Direction</th>
                 <th className="p-2 text-left">Status</th>
               </tr>
             </thead>
@@ -142,9 +141,10 @@ function SparePartsPage() {
                   <td className="p-2 font-mono text-xs">{r.order}</td>
                   <td className="p-2 font-mono text-xs">{r.partNumber}</td>
                   <td className="p-2">{r.description}</td>
+                  <td className="p-2 text-xs">{r.model}</td>
                   <td className="p-2">{r.branch}</td>
-                  <td className="p-2">{r.requestDate}</td>
-                  <td className="p-2">{r.receivingDate}</td>
+                  <td className="p-2 text-right">{num.format(r.qty)}</td>
+                  <td className="p-2 text-xs">{r.direction}</td>
                   <td className="p-2">{r.status}</td>
                 </tr>
               ))}
