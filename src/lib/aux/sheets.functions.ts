@@ -1140,12 +1140,26 @@ function aggregate(rows: string[][]): KpiData {
   };
 }
 
-export const getSheetsKpi = createServerFn({ method: "GET" }).handler(async (): Promise<KpiData> => {
-  if (cache && Date.now() - cache.at < CACHE_MS) return cache.data;
+export const getSheetsKpi = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown): KpiFilters => {
+    const d = (data ?? {}) as Record<string, unknown>;
+    return {
+      month: typeof d.month === "string" ? d.month : undefined,
+      from: typeof d.from === "string" ? d.from : undefined,
+      to: typeof d.to === "string" ? d.to : undefined,
+      asc: typeof d.asc === "string" ? d.asc : undefined,
+      branch: typeof d.branch === "string" ? d.branch : undefined,
+      worker: typeof d.worker === "string" ? d.worker : undefined,
+    };
+  })
+  .handler(async ({ data: filters }): Promise<KpiData> => {
+  const active = isFilterActive(filters);
+  if (!active && cache && Date.now() - cache.at < CACHE_MS) return cache.data;
   try {
     const rows = await fetchSheetRows();
-    const data = aggregate(rows);
-    cache = { at: Date.now(), data };
+    const filtered = active ? filterRows(rows, filters) : rows;
+    const data = aggregate(filtered);
+    if (!active) cache = { at: Date.now(), data };
     return data;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
