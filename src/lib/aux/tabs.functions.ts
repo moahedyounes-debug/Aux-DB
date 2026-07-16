@@ -219,10 +219,16 @@ export const getPartsData = createServerFn({ method: "GET" }).handler(
 export interface AccessRow {
   email: string;
   asc: string;
-  pendingBranch: string;
+  branch: string;
+  role: string;
+  pages: string[];
   adminAccess: string;
   parts: string;
   callCenter: string;
+}
+export interface RoleRow {
+  name: string;
+  pages: string[];
 }
 export interface AccessSummary {
   fetchedAt: string;
@@ -232,6 +238,7 @@ export interface AccessSummary {
   partsAccess: number;
   byASC: { asc: string; users: number }[];
   users: AccessRow[];
+  roles: RoleRow[];
   error?: string;
 }
 
@@ -239,17 +246,44 @@ export const getAccessData = createServerFn({ method: "GET" }).handler(
   async (): Promise<AccessSummary> => {
     return cached("access", async () => {
       try {
-        const rows = await fetchRange("Access!A2:F");
+        const rows = await fetchRange("Access!A2:H");
         const users: AccessRow[] = rows
           .filter((r) => r[0])
-          .map((r) => ({
-            email: String(r[0] ?? "").trim(),
-            asc: String(r[1] ?? "").trim() || "—",
-            pendingBranch: String(r[2] ?? "").trim(),
-            adminAccess: String(r[3] ?? "").trim(),
-            parts: String(r[4] ?? "").trim(),
-            callCenter: String(r[5] ?? "").trim(),
-          }));
+          .map((r) => {
+            const col3 = String(r[3] ?? "").trim().toLowerCase();
+            const isLegacy = col3 === "yes" || col3 === "no" || (col3 === "" && r.length <= 6);
+            const pagesRaw = isLegacy ? "" : String(r[4] ?? "").trim();
+            const pages = pagesRaw
+              ? pagesRaw.split(/[,\n;]+/).map((s) => s.trim()).filter(Boolean)
+              : [];
+            return {
+              email: String(r[0] ?? "").trim(),
+              asc: String(r[1] ?? "").trim() || "—",
+              branch: String(r[2] ?? "").trim(),
+              role: isLegacy ? "" : String(r[3] ?? "").trim(),
+              pages,
+              adminAccess: String(isLegacy ? r[3] : r[5] ?? "").trim(),
+              parts: String(isLegacy ? r[4] : r[6] ?? "").trim(),
+              callCenter: String(isLegacy ? r[5] : r[7] ?? "").trim(),
+            };
+          });
+
+        let roles: RoleRow[] = [];
+        try {
+          const rr = await fetchRange("Roles!A2:B");
+          roles = rr
+            .filter((r) => r[0])
+            .map((r) => ({
+              name: String(r[0] ?? "").trim(),
+              pages: String(r[1] ?? "")
+                .split(/[,\n;]+/)
+                .map((s) => s.trim())
+                .filter(Boolean),
+            }));
+        } catch {
+          // Roles tab may not exist yet — fine.
+          roles = [];
+        }
 
         const byASC = new Map<string, number>();
         let admins = 0, callCenter = 0, partsAccess = 0;
@@ -266,10 +300,11 @@ export const getAccessData = createServerFn({ method: "GET" }).handler(
           admins, callCenter, partsAccess,
           byASC: Array.from(byASC.entries()).map(([asc, u]) => ({ asc, users: u })).sort((a, b) => b.users - a.users),
           users,
+          roles,
         };
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        return { fetchedAt: new Date().toISOString(), total: 0, admins: 0, callCenter: 0, partsAccess: 0, byASC: [], users: [], error: msg };
+        return { fetchedAt: new Date().toISOString(), total: 0, admins: 0, callCenter: 0, partsAccess: 0, byASC: [], users: [], roles: [], error: msg };
       }
     });
   },
