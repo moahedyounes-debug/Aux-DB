@@ -1,5 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Package } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import {
   ResponsiveContainer,
   BarChart,
@@ -103,6 +111,47 @@ function DailyOpsPage() {
   const { data } = useKpiData();
   const p = data.pending;
   const maxAging = Math.max(1, ...p.aging.map((a) => a.count));
+  const [reqTarget, setReqTarget] = useState<import("@/lib/aux/sheets.functions").PendingTicket | null>(null);
+  const [partName, setPartName] = useState("");
+  const [qty, setQty] = useState("1");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const openRequest = (t: import("@/lib/aux/sheets.functions").PendingTicket) => {
+    setReqTarget(t);
+    setPartName("");
+    setQty("1");
+    setNotes("");
+  };
+
+  const submitRequest = async () => {
+    if (!reqTarget) return;
+    if (!partName.trim()) { toast.error("Part Name / Code required"); return; }
+    if (!qty.trim() || Number(qty) <= 0) { toast.error("Quantity must be > 0"); return; }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/public/spare-part-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticket: reqTarget.ticket,
+          branch: reqTarget.branch,
+          worker: reqTarget.worker,
+          partName: partName.trim(),
+          quantity: qty.trim(),
+          notes: notes.trim(),
+        }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || !d.ok) throw new Error(d.detail || d.error || `HTTP ${res.status}`);
+      toast.success(`Spare part request submitted (${d.requestId})`);
+      setReqTarget(null);
+    } catch (e) {
+      toast.error(`Failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const tooltipStyle = {
     background: "var(--color-popover)",
@@ -198,7 +247,7 @@ function DailyOpsPage() {
             Remark: t.remark,
           }))}
         >
-          <PendingTable rows={p.todayTickets} emptyLabel="No visits scheduled for today." />
+          <PendingTable rows={p.todayTickets} emptyLabel="No visits scheduled for today." onRequestParts={openRequest} />
         </ChartCard>
       </section>
 
@@ -217,7 +266,7 @@ function DailyOpsPage() {
             Remark: t.remark,
           }))}
         >
-          <PendingTable rows={p.tickets} emptyLabel="No pending tickets." limit={50} />
+          <PendingTable rows={p.tickets} emptyLabel="No pending tickets." limit={50} onRequestParts={openRequest} />
         </ChartCard>
       </section>
 
@@ -325,6 +374,39 @@ function DailyOpsPage() {
           </div>
         </ChartCard>
       </section>
+
+      <Dialog open={!!reqTarget} onOpenChange={(o) => { if (!o) setReqTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Request Spare Part</DialogTitle>
+          </DialogHeader>
+          {reqTarget && (
+            <div className="grid gap-3 text-sm">
+              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                <div><span className="block text-[10px] uppercase">Ticket</span><span className="font-mono text-foreground">{reqTarget.ticket}</span></div>
+                <div><span className="block text-[10px] uppercase">Branch</span><span className="text-foreground">{reqTarget.branch}</span></div>
+                <div><span className="block text-[10px] uppercase">Worker</span><span className="text-foreground">{reqTarget.worker}</span></div>
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="part-name">Part Name / Code</Label>
+                <Input id="part-name" value={partName} onChange={(e) => setPartName(e.target.value)} placeholder="e.g. Model: ASWH-24 · 12220030043971" />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="part-qty">Quantity</Label>
+                <Input id="part-qty" type="number" min={1} value={qty} onChange={(e) => setQty(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="part-notes">Notes</Label>
+                <Textarea id="part-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Optional" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReqTarget(null)} disabled={submitting}>Cancel</Button>
+            <Button onClick={submitRequest} disabled={submitting}>{submitting ? "Submitting…" : "Submit Request"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
@@ -333,10 +415,12 @@ function PendingTable({
   rows,
   emptyLabel,
   limit,
+  onRequestParts,
 }: {
   rows: import("@/lib/aux/sheets.functions").PendingTicket[];
   emptyLabel: string;
   limit?: number;
+  onRequestParts?: (t: import("@/lib/aux/sheets.functions").PendingTicket) => void;
 }) {
   const view = limit ? rows.slice(0, limit) : rows;
   if (view.length === 0) {
@@ -356,6 +440,7 @@ function PendingTable({
             <th className="py-2 pr-4 text-start">Date</th>
             <th className="py-2 pr-4 text-start">Remark</th>
             <th className="py-2 pr-4 text-start">Parts</th>
+            {onRequestParts && <th className="py-2 pr-4 text-end">Action</th>}
           </tr>
         </thead>
         <tbody>
@@ -388,6 +473,17 @@ function PendingTable({
               </td>
               <td className="py-2.5 pr-4 text-muted-foreground max-w-[220px] truncate">{t.remark}</td>
               <td className="py-2.5 pr-4 text-muted-foreground">{t.parts}</td>
+              {onRequestParts && (
+                <td className="py-2.5 pr-4 text-end">
+                  <button
+                    type="button"
+                    onClick={() => onRequestParts(t)}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+                  >
+                    <Package className="h-3.5 w-3.5" /> Request Parts
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
