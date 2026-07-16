@@ -61,6 +61,7 @@ const COL = {
   completedAt: "Completion time",
   completionResult: "Completion Result",
   worker: "Worker Name",
+  location: "Location",
 } as const;
 
 const fmt = new Intl.NumberFormat("en-US");
@@ -110,6 +111,26 @@ function serviceHours(r: Row): number {
   const e = new Date(String(end).replace(" ", "T")).getTime();
   if (!Number.isFinite(s) || !Number.isFinite(e) || e < s) return NaN;
   return (e - s) / 3_600_000;
+}
+
+// Extract the city component from the free-text Location column.
+// Sheet format is typically "Region / City / District" (also supports commas,
+// vertical bars, or '>' as separators). Returns "" when the row has no city.
+function cityOf(r: Row): string {
+  const raw = String(r[COL.location] ?? "").trim();
+  if (!raw) return "";
+  const parts = raw.split(/[\/,>·|]/).map((p) => p.trim()).filter(Boolean);
+  return (parts[1] ?? parts[0] ?? "").trim();
+}
+
+// Fuzzy match for the 3 main cities across Arabic + English spellings.
+function mainCityKey(city: string): "Riyadh" | "Jeddah" | "Khobar" | "" {
+  const c = city.toLowerCase();
+  if (!c) return "";
+  if (c.includes("riyadh") || c.includes("الرياض") || c === "رياض") return "Riyadh";
+  if (c.includes("jeddah") || c.includes("jedda") || c.includes("جدة") || c.includes("جده")) return "Jeddah";
+  if (c.includes("khobar") || c.includes("khubar") || c.includes("الخبر") || c === "خبر") return "Khobar";
+  return "";
 }
 
 function Badge({ ok, children }: { ok: boolean; children: React.ReactNode }) {
@@ -252,6 +273,51 @@ function KpisPage() {
     }
     return map;
   }, [filteredRows]);
+
+  // Monthly RTAT per main city (Riyadh / Jeddah / Khobar) — average service
+  // hours (converted to days) of closed tickets whose Location resolves to
+  // that city.
+  const monthlyCity = useMemo(() => {
+    type M = { withHrs: number; hrsSum: number };
+    const map = new Map<string, M>(); // key = `${city}::${YYYY-MM}`
+    const monthKey = (r: Row): string | null => {
+      const raw = r[COL.createdAt];
+      if (!raw) return null;
+      const d = new Date(String(raw).replace(" ", "T"));
+      if (!Number.isFinite(d.getTime())) return null;
+      return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    };
+    for (const r of filteredRows) {
+      if (!isCompleted(r)) continue;
+      const city = mainCityKey(cityOf(r));
+      if (!city) continue;
+      const mk = monthKey(r);
+      if (!mk) continue;
+      const h = serviceHours(r);
+      if (!Number.isFinite(h)) continue;
+      const k = `${city}::${mk}`;
+      const e = map.get(k) ?? { withHrs: 0, hrsSum: 0 };
+      e.withHrs++;
+      e.hrsSum += h;
+      map.set(k, e);
+    }
+    return map;
+  }, [filteredRows]);
+
+  const cityRtat = (city: "Riyadh" | "Jeddah" | "Khobar", colKey: string): number | null => {
+    const collect = (ks: string[]) => {
+      let withHrs = 0, hrsSum = 0;
+      for (const k of ks) {
+        const e = monthlyCity.get(`${city}::${k}`);
+        if (!e) continue;
+        withHrs += e.withHrs; hrsSum += e.hrsSum;
+      }
+      return withHrs > 0 ? hrsSum / withHrs / 24 : null;
+    };
+    if (colKey === "24TTL") return collect(["2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12"]);
+    if (colKey === "25TTL") return collect(["2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"]);
+    return collect([colKey]);
+  };
 
   const formulaVars = useMemo<Record<string, number>>(() => ({
     total: stats.total,
@@ -418,10 +484,15 @@ function KpisPage() {
 
     { label: "RTAT (Day)", bold: true, kind: "days",
       value: (c) => monthVal(c, "rtat"), bp: 3.6 },
-    { label: "RTAT (3D Main City)", indent: 1, kind: "days", value: empty },
-    { label: "Riyadh", indent: 2, kind: "days", value: empty },
-    { label: "Jeddah", indent: 2, kind: "days", value: empty },
-    { label: "Khobar", indent: 2, kind: "days", value: empty },
+    { label: "RTAT (3D Main City)", indent: 1, kind: "days",
+      value: (c) => {
+        const vals = [cityRtat("Riyadh", c), cityRtat("Jeddah", c), cityRtat("Khobar", c)]
+          .filter((v): v is number => v !== null && Number.isFinite(v));
+        return vals.length > 0 ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+      } },
+    { label: "Riyadh", indent: 2, kind: "days", value: (c) => cityRtat("Riyadh", c) },
+    { label: "Jeddah", indent: 2, kind: "days", value: (c) => cityRtat("Jeddah", c) },
+    { label: "Khobar", indent: 2, kind: "days", value: (c) => cityRtat("Khobar", c) },
 
     { label: "TTL Pending Q'ty", bold: true, kind: "num",
       value: (c) => monthVal(c, "pending"), bp: 1742 },
