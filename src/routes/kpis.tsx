@@ -62,6 +62,7 @@ const COL = {
 } as const;
 
 const fmt = new Intl.NumberFormat("en-US");
+const sar = new Intl.NumberFormat("en-US", { style: "currency", currency: "SAR", maximumFractionDigits: 0 });
 const pct = (n: number, d: number) => (d > 0 ? (n / d) * 100 : 0);
 
 type Row = Record<string, string>;
