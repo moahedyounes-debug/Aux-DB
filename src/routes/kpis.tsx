@@ -670,12 +670,6 @@ function KpisPage() {
     { category: "NPS", label: "CIC T NPS", kind: "pct", value: empty },
     { label: "Repair T NPS", kind: "pct", value: empty },
 
-    { category: "VOC", label: "TTL", bold: true, kind: "num", value: empty },
-    { label: "Marketing", indent: 1, kind: "num", value: empty },
-    { label: "OBS", indent: 1, kind: "num", value: empty },
-    { label: "Factory", indent: 1, kind: "num", value: empty },
-    { label: "Service", indent: 1, kind: "num", value: empty },
-
     { category: "Business", label: "Net SVC Cost (M USD)", kind: "num", value: empty, bp: 0.2 },
     { label: "Net SVC Cost rate (%)", kind: "pct", value: empty, bp: 0.49 },
   ];
