@@ -537,8 +537,15 @@ function KpisPage() {
   const empty = (): number | null => null;
 
   const kpiRows: KRow[] = [
-    { category: "Sales", label: "Amount(M)", kind: "m", value: empty },
-    { label: "Q'ty(K)", kind: "k", value: empty },
+    { category: "SLA", label: "24hr (%)", kind: "pct",
+      value: (c) => {
+        const comp = monthVal(c, "completed");
+        if (!comp) return null;
+        // recompute u24 for the column via monthly hrs — approximate using stats when col is snapshot.
+        return null;
+      }, bp: 60 },
+    { label: "48hr (%)", kind: "pct", value: () => null, bp: 90 },
+    { label: "72hr (%)", kind: "pct", value: () => null, bp: 95 },
 
     { category: "Strengthen Basic competence", label: "Repair Q'ty (K)", kind: "num",
       value: (c) => { const v = monthVal(c, "completed"); return v === null ? null : v; } },
