@@ -373,11 +373,11 @@ function localISODate(d: Date): string {
 
 function normalizeBranch(raw: string): string {
   if (!raw) return "Unknown";
-  // Format: "<Company ...> - <City>"  →  "<City> - <CompanyFirstWord>"
+  // Format: "<Company ...> - <City> Branch"  →  "<City> - <CompanyFirstWord>"
   const parts = raw.split(/\s*[-–]\s*/);
   if (parts.length >= 2) {
     const company = parts[0].trim().split(/\s+/)[0] || parts[0].trim();
-    const city = parts.slice(1).join(" - ").trim();
+    const city = parts.slice(1).join(" - ").trim().replace(/\s+Branch\s*$/i, "").trim();
     return `${city} - ${company}`;
   }
   return raw.trim();
@@ -436,7 +436,7 @@ function filterRows(rows: string[][], f: KpiFilters): string[][] {
   return rows.filter((row) => {
     const spn = row[COL.serviceProvider] || "";
     if (wantAsc && firstWord(spn) !== wantAsc) return false;
-    if (wantBranch && spn !== wantBranch) return false;
+    if (wantBranch && normalizeBranch(spn) !== wantBranch) return false;
     if (worker) {
       const w = String(row[COL.workerName] || "").toLowerCase();
       if (!w.includes(worker)) return false;
