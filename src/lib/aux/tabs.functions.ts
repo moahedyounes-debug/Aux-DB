@@ -92,117 +92,101 @@ export interface PartRow {
   partNumber: string;
   description: string;
   model: string;
-  serial: string;
-  awb: string;
-  requestDate: string;
-  dispatchDate: string;
-  receivingDate: string;
-  status: string;
   branch: string;
   qty: number;
-  notes: string;
-  requestedBy: string;
-  asc: string;
+  amount: number;
+  type: string;              // Column B — e.g. "Part Request By Tech"
+  transactionType: string;   // Column T — e.g. "Repair conversion"
+  direction: string;         // Column U — "Delivery From Storage" / "Be Put In Storage"
+  status: string;            // normalized from direction: "Out" / "In"
+  warehouse: string;
 }
 export interface PartsBranchRow {
   branch: string;
-  requests: number;
-  received: number;
-  pending: number;
+  transactions: number;
+  inQty: number;
+  outQty: number;
   qty: number;
 }
 export interface PartsStatusRow {
   status: string;
   count: number;
 }
-export interface PartsMonthRow {
-  month: string;
-  requests: number;
+export interface PartsTypeRow {
+  type: string;
+  count: number;
 }
 export interface PartsSummary {
   fetchedAt: string;
   total: number;
-  received: number;
-  pending: number;
-  dispatched: number;
+  inCount: number;    // "Be Put In Storage"
+  outCount: number;   // "Delivery From Storage"
   totalQty: number;
   uniqueParts: number;
   byBranch: PartsBranchRow[];
   byStatus: PartsStatusRow[];
-  byMonth: PartsMonthRow[];
-  topParts: { part: string; description: string; count: number }[];
+  byType: PartsTypeRow[];
+  topParts: { part: string; description: string; count: number; qty: number }[];
   recent: PartRow[];
   error?: string;
 }
 
-function normStatus(s: string): string {
+function normDirection(s: string): string {
   const t = s.trim().toLowerCase();
   if (!t) return "Unknown";
-  if (t.includes("receiv")) return "Received";
-  if (t.includes("dispatch") || t.includes("sent") || t.includes("shipped")) return "Dispatched";
-  if (t.includes("pending") || t.includes("waiting") || t.includes("request")) return "Pending";
-  if (t.includes("cancel")) return "Cancelled";
+  if (t.includes("delivery from storage") || t.includes("out")) return "Out (Delivered)";
+  if (t.includes("be put in storage") || t.includes("in")) return "In (Received)";
   return s.trim();
-}
-
-function monthKey(iso: string): string {
-  if (!iso) return "";
-  // handles "2026-05-11" or "17/05/2026"
-  if (/^\d{4}-\d{2}/.test(iso)) return iso.slice(0, 7);
-  const m = iso.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-  if (m) return `${m[3]}-${m[2]}`;
-  return "";
 }
 
 export const getPartsData = createServerFn({ method: "GET" }).handler(
   async (): Promise<PartsSummary> => {
     return cached("parts", async () => {
       try {
-        const rows = await fetchRange("Parts!A2:O");
+        // Transaction tab: A..AA (27 cols). Column indices:
+        // 0 Location · 1 Type · 5 Branch · 7 Part Name · 9 Model · 10 Accessory Code
+        // 12 Accessory Name · 13 Quantity · 14 Amount · 17 Service Provider Name
+        // 18 Warehouse · 19 Transaction Type · 20 Trading Direction · 21 Order Number
+        const rows = await fetchPartsRange("Transaction!A2:AA");
         const parsed: PartRow[] = rows
-          .filter((r) => r[0])
+          .filter((r) => r[0] || r[21])
           .map((r) => ({
-            order: String(r[0] ?? "").trim(),
-            partNumber: String(r[1] ?? "").trim(),
-            description: String(r[2] ?? "").trim(),
-            model: String(r[3] ?? "").trim(),
-            serial: String(r[4] ?? "").trim(),
-            awb: String(r[5] ?? "").trim(),
-            requestDate: String(r[6] ?? "").trim(),
-            dispatchDate: String(r[7] ?? "").trim(),
-            receivingDate: String(r[8] ?? "").trim(),
-            status: normStatus(String(r[9] ?? "")),
-            branch: String(r[10] ?? "").trim() || "Unknown",
-            qty: Number(String(r[11] ?? "0").replace(/[^\d.-]/g, "")) || 0,
-            notes: String(r[12] ?? "").trim(),
-            requestedBy: String(r[13] ?? "").trim(),
-            asc: String(r[14] ?? "").trim(),
+            order: String(r[21] ?? "").trim(),
+            partNumber: String(r[10] ?? "").trim(),
+            description: String(r[12] ?? "").trim() || String(r[7] ?? "").trim(),
+            model: String(r[9] ?? "").trim(),
+            branch: String(r[17] ?? "").trim() || String(r[5] ?? "").trim() || "Unknown",
+            qty: Number(String(r[13] ?? "0").replace(/[^\d.-]/g, "")) || 0,
+            amount: Number(String(r[14] ?? "0").replace(/[^\d.-]/g, "")) || 0,
+            type: String(r[1] ?? "").trim() || "—",
+            transactionType: String(r[19] ?? "").trim() || "—",
+            direction: String(r[20] ?? "").trim(),
+            status: normDirection(String(r[20] ?? "")),
+            warehouse: String(r[18] ?? "").trim(),
           }));
 
         const byBranch = new Map<string, PartsBranchRow>();
         const byStatus = new Map<string, number>();
-        const byMonth = new Map<string, number>();
-        const partCount = new Map<string, { desc: string; count: number }>();
-        let received = 0;
-        let dispatched = 0;
-        let pending = 0;
+        const byType = new Map<string, number>();
+        const partCount = new Map<string, { desc: string; count: number; qty: number }>();
+        let inCount = 0;
+        let outCount = 0;
         let totalQty = 0;
 
         for (const p of parsed) {
           totalQty += p.qty;
-          const b = byBranch.get(p.branch) ?? { branch: p.branch, requests: 0, received: 0, pending: 0, qty: 0 };
-          b.requests++;
+          const b = byBranch.get(p.branch) ?? { branch: p.branch, transactions: 0, inQty: 0, outQty: 0, qty: 0 };
+          b.transactions++;
           b.qty += p.qty;
-          if (p.status === "Received") { received++; b.received++; }
-          else if (p.status === "Dispatched") { dispatched++; }
-          else { pending++; b.pending++; }
+          if (p.status === "In (Received)") { inCount++; b.inQty += p.qty; }
+          else if (p.status === "Out (Delivered)") { outCount++; b.outQty += p.qty; }
           byBranch.set(p.branch, b);
           byStatus.set(p.status, (byStatus.get(p.status) ?? 0) + 1);
-          const mk = monthKey(p.requestDate);
-          if (mk) byMonth.set(mk, (byMonth.get(mk) ?? 0) + 1);
-          if (p.partNumber && p.partNumber !== "—") {
-            const pc = partCount.get(p.partNumber) ?? { desc: p.description, count: 0 };
+          if (p.type) byType.set(p.type, (byType.get(p.type) ?? 0) + 1);
+          if (p.partNumber) {
+            const pc = partCount.get(p.partNumber) ?? { desc: p.description, count: 0, qty: 0 };
             pc.count++;
+            pc.qty += p.qty;
             partCount.set(p.partNumber, pc);
           }
         }
@@ -210,23 +194,22 @@ export const getPartsData = createServerFn({ method: "GET" }).handler(
         return {
           fetchedAt: new Date().toISOString(),
           total: parsed.length,
-          received,
-          pending,
-          dispatched,
+          inCount,
+          outCount,
           totalQty,
           uniqueParts: partCount.size,
-          byBranch: Array.from(byBranch.values()).sort((a, b) => b.requests - a.requests),
+          byBranch: Array.from(byBranch.values()).sort((a, b) => b.transactions - a.transactions),
           byStatus: Array.from(byStatus.entries()).map(([status, count]) => ({ status, count })).sort((a, b) => b.count - a.count),
-          byMonth: Array.from(byMonth.entries()).map(([month, requests]) => ({ month, requests })).sort((a, b) => a.month.localeCompare(b.month)).slice(-12),
-          topParts: Array.from(partCount.entries()).map(([part, v]) => ({ part, description: v.desc, count: v.count })).sort((a, b) => b.count - a.count).slice(0, 15),
+          byType: Array.from(byType.entries()).map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count),
+          topParts: Array.from(partCount.entries()).map(([part, v]) => ({ part, description: v.desc, count: v.count, qty: v.qty })).sort((a, b) => b.count - a.count).slice(0, 15),
           recent: parsed.slice(-100).reverse(),
         };
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         return {
           fetchedAt: new Date().toISOString(),
-          total: 0, received: 0, pending: 0, dispatched: 0, totalQty: 0, uniqueParts: 0,
-          byBranch: [], byStatus: [], byMonth: [], topParts: [], recent: [], error: msg,
+          total: 0, inCount: 0, outCount: 0, totalQty: 0, uniqueParts: 0,
+          byBranch: [], byStatus: [], byType: [], topParts: [], recent: [], error: msg,
         };
       }
     });
