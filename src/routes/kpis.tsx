@@ -158,6 +158,29 @@ function KpisPage() {
   });
 
   const kpiQuery = useQuery({ ...kpiQueryOptions(), enabled: ready });
+  const satisfactionQuery = useQuery({ ...satisfactionQueryOptions, enabled: ready });
+
+  const npsByMonth = useMemo(() => {
+    const map = new Map<string, { cic: number; repair: number }>();
+    for (const m of satisfactionQuery.data?.byMonth ?? []) {
+      map.set(m.month, { cic: m.cicNps, repair: m.repairNps });
+    }
+    return map;
+  }, [satisfactionQuery.data]);
+
+  const npsVal = (key: string, kind: "cic" | "repair"): number | null => {
+    const collect = (ks: string[]) => {
+      const vals: number[] = [];
+      for (const k of ks) {
+        const e = npsByMonth.get(k);
+        if (e) vals.push(kind === "cic" ? e.cic : e.repair);
+      }
+      return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+    };
+    const m = key.match(/^(\d{4})TTL$/);
+    if (m) return collect(MONTHS_BY_YEAR.get(m[1]) ?? []);
+    return collect([key]);
+  };
 
   const formulasQuery = useQuery<KpiFormulaDef[]>({
     queryKey: ["kpi-formulas"],
