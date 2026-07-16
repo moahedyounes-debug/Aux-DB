@@ -396,12 +396,6 @@ function KpisPage() {
     { category: "Strengthen Basic competence", label: "Repair Q'ty (K)", kind: "num",
       value: (c) => { const v = monthVal(c, "completed"); return v === null ? null : v; } },
     { label: "Reclaim Total (%)", kind: "pct", value: empty, bp: 3.5 },
-    { label: "H&A TTL", indent: 1, bold: true, kind: "pct", value: empty },
-    { label: "WM", indent: 2, kind: "pct", value: empty },
-    { label: "REF", indent: 2, kind: "pct", value: empty },
-    { label: "RAC", indent: 2, kind: "pct", value: empty },
-    { label: "HE TTL", indent: 1, bold: true, kind: "pct", value: empty },
-    { label: "OLED", indent: 2, kind: "pct", value: empty },
 
     { label: "RTAT (Day)", bold: true, kind: "days",
       value: (c) => monthVal(c, "rtat"), bp: 3.6 },
