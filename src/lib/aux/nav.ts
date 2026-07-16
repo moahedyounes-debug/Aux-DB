@@ -27,6 +27,7 @@ import {
   Settings2,
   ShieldCheck,
   Database,
+  UserSearch,
   type LucideIcon,
 } from "lucide-react";
 
@@ -62,6 +63,7 @@ export const NAV_PAGES: NavPage[] = [
   { path: "/satisfaction", label: "Satisfaction (CSAT)", icon: Smile, active: true },
   { path: "/whatsapp", label: "WhatsApp Inbox", icon: MessageCircle, active: true },
   { path: "/shipments", label: "Shipments", icon: Truck, active: true },
+  { path: "/customer-lookup", label: "Customer Lookup", icon: UserSearch, active: true },
   { path: "/export-center", label: "Export Center", icon: Download, active: true },
   { path: "/activity-log", label: "Activity Log", icon: History, active: true },
   { path: "/custom-dashboard", label: "Custom Dashboard", icon: LayoutGrid, active: true },
