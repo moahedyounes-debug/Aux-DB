@@ -716,7 +716,8 @@ function KpisPage() {
             <table className="min-w-full text-xs border border-border">
               <thead>
                 <tr className="bg-muted/40 text-muted-foreground">
-                  <th rowSpan={2} className="py-2 px-3 text-start font-semibold border border-border bg-muted sticky left-0 z-20" colSpan={2}>Category</th>
+                  <th rowSpan={2} className="py-2 px-3 text-start font-semibold border border-border bg-muted sticky left-0 z-30 w-28 min-w-28">Category</th>
+                  <th rowSpan={2} className="py-2 px-3 text-start font-semibold border border-border bg-muted sticky left-28 z-30 min-w-[14rem]">Metric</th>
                   <th rowSpan={2} className="py-2 px-2 text-center font-semibold border border-border">vs PY</th>
                   {Array.from(MONTHS_BY_YEAR.keys()).sort().map((y) => {
                     const span = (MONTHS_BY_YEAR.get(y)?.length ?? 0) + 1;
@@ -757,11 +758,11 @@ function KpisPage() {
                     return (
                       <tr key={idx} className="border border-border hover:bg-muted/20">
                         {showCat && (
-                          <td rowSpan={catCounts.get(lastCat)} className="py-2 px-3 font-semibold text-foreground bg-background border border-border align-middle text-center sticky left-0 z-10">
+                          <td rowSpan={catCounts.get(lastCat)} className="py-2 px-3 font-semibold text-foreground bg-background border border-border align-middle text-center sticky left-0 z-20 w-28 min-w-28">
                             {lastCat}
                           </td>
                         )}
-                        <td className={cn("py-1.5 px-3 border border-border whitespace-nowrap", r.bold && "font-semibold", r.indent === 1 && "pl-6", r.indent === 2 && "pl-10 text-muted-foreground")}>
+                        <td className={cn("py-1.5 px-3 border border-border whitespace-nowrap bg-background sticky left-28 z-10 min-w-[14rem]", r.bold && "font-semibold", r.indent === 1 && "pl-6", r.indent === 2 && "pl-10 text-muted-foreground")}>
                           {r.label}
                         </td>
                         <td className="py-1.5 px-2 text-center tabular-nums border border-border text-muted-foreground">—</td>
