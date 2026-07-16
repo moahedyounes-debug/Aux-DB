@@ -27,6 +27,7 @@ import { Route as DistrictsMapRouteImport } from './routes/districts-map'
 import { Route as DeepInsightsRouteImport } from './routes/deep-insights'
 import { Route as DataEditorRouteImport } from './routes/data-editor'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
+import { Route as CustomerLookupRouteImport } from './routes/customer-lookup'
 import { Route as CustomDashboardRouteImport } from './routes/custom-dashboard'
 import { Route as CostsRouteImport } from './routes/costs'
 import { Route as ControlPanelRouteImport } from './routes/control-panel'
@@ -134,6 +135,11 @@ const DailyOperationsRoute = DailyOperationsRouteImport.update({
   path: '/daily-operations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomerLookupRoute = CustomerLookupRouteImport.update({
+  id: '/customer-lookup',
+  path: '/customer-lookup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CustomDashboardRoute = CustomDashboardRouteImport.update({
   id: '/custom-dashboard',
   path: '/custom-dashboard',
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/control-panel': typeof ControlPanelRoute
   '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
+  '/customer-lookup': typeof CustomerLookupRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/data-editor': typeof DataEditorRoute
   '/deep-insights': typeof DeepInsightsRoute
@@ -264,6 +271,7 @@ export interface FileRoutesByTo {
   '/control-panel': typeof ControlPanelRoute
   '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
+  '/customer-lookup': typeof CustomerLookupRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/data-editor': typeof DataEditorRoute
   '/deep-insights': typeof DeepInsightsRoute
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/control-panel': typeof ControlPanelRoute
   '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
+  '/customer-lookup': typeof CustomerLookupRoute
   '/daily-operations': typeof DailyOperationsRoute
   '/data-editor': typeof DataEditorRoute
   '/deep-insights': typeof DeepInsightsRoute
@@ -339,6 +348,7 @@ export interface FileRouteTypes {
     | '/control-panel'
     | '/costs'
     | '/custom-dashboard'
+    | '/customer-lookup'
     | '/daily-operations'
     | '/data-editor'
     | '/deep-insights'
@@ -375,6 +385,7 @@ export interface FileRouteTypes {
     | '/control-panel'
     | '/costs'
     | '/custom-dashboard'
+    | '/customer-lookup'
     | '/daily-operations'
     | '/data-editor'
     | '/deep-insights'
@@ -411,6 +422,7 @@ export interface FileRouteTypes {
     | '/control-panel'
     | '/costs'
     | '/custom-dashboard'
+    | '/customer-lookup'
     | '/daily-operations'
     | '/data-editor'
     | '/deep-insights'
@@ -448,6 +460,7 @@ export interface RootRouteChildren {
   ControlPanelRoute: typeof ControlPanelRoute
   CostsRoute: typeof CostsRoute
   CustomDashboardRoute: typeof CustomDashboardRoute
+  CustomerLookupRoute: typeof CustomerLookupRoute
   DailyOperationsRoute: typeof DailyOperationsRoute
   DataEditorRoute: typeof DataEditorRoute
   DeepInsightsRoute: typeof DeepInsightsRoute
@@ -600,6 +613,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DailyOperationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/customer-lookup': {
+      id: '/customer-lookup'
+      path: '/customer-lookup'
+      fullPath: '/customer-lookup'
+      preLoaderRoute: typeof CustomerLookupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/custom-dashboard': {
       id: '/custom-dashboard'
       path: '/custom-dashboard'
@@ -728,6 +748,7 @@ const rootRouteChildren: RootRouteChildren = {
   ControlPanelRoute: ControlPanelRoute,
   CostsRoute: CostsRoute,
   CustomDashboardRoute: CustomDashboardRoute,
+  CustomerLookupRoute: CustomerLookupRoute,
   DailyOperationsRoute: DailyOperationsRoute,
   DataEditorRoute: DataEditorRoute,
   DeepInsightsRoute: DeepInsightsRoute,
