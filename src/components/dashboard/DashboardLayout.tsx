@@ -12,6 +12,8 @@ import { AuxLogo } from "@/components/AuxLogo";
 import { NAV_PAGES } from "@/lib/aux/nav";
 import { cn } from "@/lib/utils";
 import { useAccess, hasPageAccess } from "@/hooks/use-access";
+import { SidebarFilters } from "@/components/dashboard/SidebarFilters";
+import { useGlobalFilters } from "@/hooks/use-global-filters";
 
 interface DashboardLayoutProps {
   title: string;
@@ -24,6 +26,7 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
   const [collapsed, setCollapsed] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { access } = useAccess();
+  const { active } = useGlobalFilters();
 
   const visiblePages = NAV_PAGES.filter((p) => {
     // Admin-only pages hidden from non-admins.
@@ -55,7 +58,8 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
             {collapsed ? <Menu className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
           </button>
         </div>
-        <nav className="py-3 px-2 space-y-0.5 overflow-y-auto h-[calc(100vh-4rem)]">
+        <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
+        <nav className="py-3 px-2 space-y-0.5 overflow-y-auto flex-1">
           {visiblePages.map((page) => {
             const Icon = page.icon;
             const active = pathname === page.path;
@@ -99,6 +103,8 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
             );
           })}
         </nav>
+        <SidebarFilters collapsed={collapsed} />
+        </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -114,7 +120,11 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
             </div>
             <div className="flex items-center gap-1.5">
               {actions}
-              <ToolbarButton icon={Filter} label="Filters" />
+              {active > 0 && (
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+                  {active} filter{active > 1 ? "s" : ""} active
+                </span>
+              )}
               <ToolbarButton icon={Pencil} label="Edit layout" />
               <ToolbarButton icon={Languages} label="Language" />
               <ToolbarButton icon={UserCircle2} label="Account" />
