@@ -314,8 +314,8 @@ function KpisPage() {
       }
       return withHrs > 0 ? hrsSum / withHrs / 24 : null;
     };
-    if (colKey === "24TTL") return collect(["2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12"]);
-    if (colKey === "25TTL") return collect(["2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"]);
+    const m = colKey.match(/^(\d{4})TTL$/);
+    if (m) return collect(MONTHS_BY_YEAR.get(m[1]) ?? []);
     return collect([colKey]);
   };
 
