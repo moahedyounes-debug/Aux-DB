@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { gwFetch } from "@/lib/aux/gw-fetch";
 
 const SPREADSHEET_ID = "1x796CMZf8b3RUNkqsanO56F_Wmo75L2uLzIlgE65doY";
 // Extended schema: A Email | B ASC | C Branch | D Role | E Pages | F Admin | G Parts | H Call Center
@@ -40,12 +41,13 @@ async function fetchAccessRows(): Promise<string[][]> {
     throw new Error("Missing gateway credentials");
   }
   const url = `${GATEWAY}/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}`;
-  const res = await fetch(url, {
+  const res = await gwFetch(url, {
     headers: {
       Authorization: `Bearer ${lovableKey}`,
       "X-Connection-Api-Key": connKey,
       Accept: "application/json",
     },
+    ttlMs: 2 * 60_000,
   });
   if (!res.ok) {
     const body = await res.text();
