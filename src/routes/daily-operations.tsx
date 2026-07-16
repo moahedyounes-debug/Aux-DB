@@ -530,7 +530,6 @@ function PendingTable({
             <th className="py-2 pr-4 text-start">Ticket #</th>
             <th className="py-2 pr-4 text-start">Branch</th>
             <th className="py-2 pr-4 text-start">Worker</th>
-            <th className="py-2 pr-4 text-start">Ticket Status</th>
             <th className="py-2 pr-4 text-start">Aging</th>
             <th className="py-2 pr-4 text-start">Reason</th>
             <th className="py-2 pr-4 text-start">Date</th>
