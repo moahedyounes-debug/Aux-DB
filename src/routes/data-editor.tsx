@@ -7,6 +7,7 @@ import { useAccess } from "@/hooks/use-access";
 import { toast } from "sonner";
 import { evaluateFormula, formatValue, KPI_FORMULA_HEADERS, type FormulaFormat } from "@/lib/aux/formula";
 import { cn } from "@/lib/utils";
+import { SortableTh, useSort } from "@/components/ui/sortable-th";
 
 export const Route = createFileRoute("/data-editor")({
   head: () => ({
