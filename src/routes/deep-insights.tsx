@@ -83,6 +83,10 @@ function hrs(r: Row): number {
   return Number.isFinite(v) ? v : NaN;
 }
 
+function branchFromServiceProvider(r: Row): string {
+  return (r[M.asc] || "").trim() || "—";
+}
+
 function DeepInsightsPage() {
   const { data } = useKpiData();
   const { access, ready } = useAccess();
@@ -96,7 +100,7 @@ function DeepInsightsPage() {
 
   const rows: Row[] = useMemo(() => {
     if (!maint.data) return [];
-    const scoped = applyAccessFilter(maint.data.rows, access, { asc: M.asc, branch: M.branch });
+    const scoped = applyAccessFilter(maint.data.rows, access, { asc: M.asc, branch: M.asc });
     return applyGlobalFilters(scoped, {
       spn: M.asc, worker: M.worker, createdAt: M.createdAt,
     }, gFilters);
@@ -111,7 +115,10 @@ function DeepInsightsPage() {
 
   const branchOptions = useMemo(() => {
     const s = new Set<string>();
-    for (const r of rows) if (r[M.branch]) s.add(r[M.branch]);
+    for (const r of rows) {
+      const branch = branchFromServiceProvider(r);
+      if (branch !== "—") s.add(branch);
+    }
     return Array.from(s).sort();
   }, [rows]);
 
@@ -130,10 +137,11 @@ function DeepInsightsPage() {
     const qq = q.trim().toLowerCase();
     const w = fWorker.trim().toLowerCase();
     const out = base.filter((r) => {
-      if (fBranch !== "all" && r[M.branch] !== fBranch) return false;
+      const branch = branchFromServiceProvider(r);
+      if (fBranch !== "all" && branch !== fBranch) return false;
       if (w && !(r[M.worker] || "").toLowerCase().includes(w)) return false;
       if (qq) {
-        const hay = `${r[M.ticket]} ${r[M.user]} ${r[M.product]} ${r[M.productType]} ${r[M.branch]} ${r[M.worker]}`.toLowerCase();
+        const hay = `${r[M.ticket]} ${r[M.user]} ${r[M.product]} ${r[M.productType]} ${branch} ${r[M.worker]}`.toLowerCase();
         if (!hay.includes(qq)) return false;
       }
       return true;
@@ -152,7 +160,7 @@ function DeepInsightsPage() {
   const byBranch48 = useMemo(() => {
     const map = new Map<string, { branch: string; count: number; totalHrs: number; completed: number }>();
     for (const r of completed) {
-      const key = r[M.branch] || "—";
+      const key = branchFromServiceProvider(r);
       const e = map.get(key) ?? { branch: key, count: 0, totalHrs: 0, completed: 0 };
       e.completed++;
       if (hrs(r) > 48) { e.count++; e.totalHrs += hrs(r); }
@@ -279,7 +287,7 @@ function DeepInsightsPage() {
         title="Filed Orders — Over 48h Deep-Dive"
         subtitle={`${fmt.format(focusRows.length)} tickets in view`}
         exportRows={focusRows.map((r) => ({
-          Ticket: r[M.ticket], Branch: r[M.branch], Worker: r[M.worker],
+          Ticket: r[M.ticket], Branch: branchFromServiceProvider(r), Worker: r[M.worker],
           Product: r[M.product], "Product Type": r[M.productType],
           Customer: r[M.user], City: r[M.city],
           "Service Type": r[M.serviceType],
@@ -360,7 +368,7 @@ function DeepInsightsPage() {
                   return (
                     <tr key={`${r[M.ticket]}-${i}`} className="border-b border-border/60 hover:bg-muted/20">
                       <td className="py-1.5 px-2 font-medium tabular-nums">{r[M.ticket]}</td>
-                      <td className="py-1.5 px-2">{r[M.branch]}</td>
+                      <td className="py-1.5 px-2">{branchFromServiceProvider(r)}</td>
                       <td className="py-1.5 px-2">{r[M.worker] || "—"}</td>
                       <td className="py-1.5 px-2 truncate max-w-[160px]">{r[M.user] || "—"}</td>
                       <td className="py-1.5 px-2 truncate max-w-[160px]">{r[M.product]} <span className="text-muted-foreground">{r[M.productType]}</span></td>
