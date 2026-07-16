@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getSheetsKpi, getAssignmentLog, getSatisfactionSurveys, type KpiFilters } from "./sheets.functions";
+export type { KpiFilters } from "./sheets.functions";
 import {
   getPartsData,
   getAccessData,
