@@ -681,8 +681,6 @@ function KpisPage() {
       kind: "num" as RowKind,
       value: (c: string) => companyPending7d(co, c),
     })),
-    { label: "Pending T/O (days)", bold: true, kind: "days", value: empty, bp: 4.2 },
-
     { category: "Preparation for Future Service", label: "Digital consultation rate (%)", kind: "pct", value: empty, bp: 50 },
     { label: "Digital (K)", indent: 1, kind: "num", value: empty },
     { label: "Call + Digital (K)", indent: 1, kind: "num", value: empty },
