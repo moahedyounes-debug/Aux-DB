@@ -657,7 +657,7 @@ function KpisPage() {
     { category: "Strengthen Basic competence", label: "Repair Q'ty (K)", kind: "num",
       value: (c) => { const v = monthVal(c, "completed"); return v === null ? null : v; } },
     { label: "Reclaim Total (%)", kind: "pct",
-      value: (c) => monthVal(c, "reclaim"), bp: 3.5 },
+      value: (c) => monthVal(c, "reclaim"), bp: 5 },
 
     { label: "RTAT (Day)", bold: true, kind: "days",
       value: (c) => monthVal(c, "rtat"), bp: 2 },
