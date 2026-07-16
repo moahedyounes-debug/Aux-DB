@@ -274,6 +274,32 @@ function KpisPage() {
     return map;
   }, [filteredRows]);
 
+  // Months actually present in the filtered dataset — used to drive both the
+  // scorecard columns and the year-total (YYYY TTL) aggregations.
+  const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const { MONTH_COLS, MONTHS_BY_YEAR } = useMemo(() => {
+    const byYear = new Map<string, string[]>();
+    for (const k of monthly.keys()) {
+      const [y] = k.split("-");
+      if (!byYear.has(y)) byYear.set(y, []);
+      byYear.get(y)!.push(k);
+    }
+    const years = Array.from(byYear.keys()).sort();
+    for (const y of years) byYear.get(y)!.sort();
+    const cols: Array<{ key: string; label: string; kind: "m" | "ttl" | "sep" }> = [];
+    for (const y of years) {
+      const yy = y.slice(2);
+      const months = byYear.get(y)!;
+      months.forEach((mk, i) => {
+        const monthIdx = parseInt(mk.split("-")[1], 10) - 1;
+        const name = MONTH_NAMES[monthIdx] ?? mk;
+        cols.push({ key: mk, label: i === 0 ? `${yy}' ${name}` : name, kind: "m" });
+      });
+      cols.push({ key: `${y}TTL`, label: `${yy} TTL`, kind: "ttl" });
+    }
+    return { MONTH_COLS: cols, MONTHS_BY_YEAR: byYear };
+  }, [monthly]);
+
   // Monthly RTAT per main city (Riyadh / Jeddah / Khobar) — average service
   // hours (converted to days) of closed tickets whose Location resolves to
   // that city.
