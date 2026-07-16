@@ -374,6 +374,39 @@ function DailyOpsPage() {
           </div>
         </ChartCard>
       </section>
+
+      <Dialog open={!!reqTarget} onOpenChange={(o) => { if (!o) setReqTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Request Spare Part</DialogTitle>
+          </DialogHeader>
+          {reqTarget && (
+            <div className="grid gap-3 text-sm">
+              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                <div><span className="block text-[10px] uppercase">Ticket</span><span className="font-mono text-foreground">{reqTarget.ticket}</span></div>
+                <div><span className="block text-[10px] uppercase">Branch</span><span className="text-foreground">{reqTarget.branch}</span></div>
+                <div><span className="block text-[10px] uppercase">Worker</span><span className="text-foreground">{reqTarget.worker}</span></div>
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="part-name">Part Name / Code</Label>
+                <Input id="part-name" value={partName} onChange={(e) => setPartName(e.target.value)} placeholder="e.g. Model: ASWH-24 · 12220030043971" />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="part-qty">Quantity</Label>
+                <Input id="part-qty" type="number" min={1} value={qty} onChange={(e) => setQty(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="part-notes">Notes</Label>
+                <Textarea id="part-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Optional" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReqTarget(null)} disabled={submitting}>Cancel</Button>
+            <Button onClick={submitRequest} disabled={submitting}>{submitting ? "Submitting…" : "Submit Request"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
@@ -382,10 +415,12 @@ function PendingTable({
   rows,
   emptyLabel,
   limit,
+  onRequestParts,
 }: {
   rows: import("@/lib/aux/sheets.functions").PendingTicket[];
   emptyLabel: string;
   limit?: number;
+  onRequestParts?: (t: import("@/lib/aux/sheets.functions").PendingTicket) => void;
 }) {
   const view = limit ? rows.slice(0, limit) : rows;
   if (view.length === 0) {
@@ -405,6 +440,7 @@ function PendingTable({
             <th className="py-2 pr-4 text-start">Date</th>
             <th className="py-2 pr-4 text-start">Remark</th>
             <th className="py-2 pr-4 text-start">Parts</th>
+            {onRequestParts && <th className="py-2 pr-4 text-end">Action</th>}
           </tr>
         </thead>
         <tbody>
@@ -437,6 +473,17 @@ function PendingTable({
               </td>
               <td className="py-2.5 pr-4 text-muted-foreground max-w-[220px] truncate">{t.remark}</td>
               <td className="py-2.5 pr-4 text-muted-foreground">{t.parts}</td>
+              {onRequestParts && (
+                <td className="py-2.5 pr-4 text-end">
+                  <button
+                    type="button"
+                    onClick={() => onRequestParts(t)}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+                  >
+                    <Package className="h-3.5 w-3.5" /> Request Parts
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
