@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { gwFetch } from "./gw-fetch";
 
 const SHEET_ID = "1x796CMZf8b3RUNkqsanO56F_Wmo75L2uLzIlgE65doY";
+const PARTS_SHEET_ID = "1jQvpH0ZA5V_JB0Y2uLBM-3_Bt9VurTbncAE4WDv4wUg";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
 const CACHE_MS = 5 * 60_000;
 
@@ -17,6 +18,23 @@ async function fetchRange(range: string): Promise<string[][]> {
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`Sheets fetch failed [${res.status}]: ${body.slice(0, 200)}`);
+  }
+  const json = (await res.json()) as { values?: string[][] };
+  return json.values ?? [];
+}
+
+async function fetchPartsRange(range: string): Promise<string[][]> {
+  const key = process.env.GOOGLE_SHEETS_API_KEY;
+  const lov = process.env.LOVABLE_API_KEY;
+  if (!key || !lov) throw new Error("Google Sheets connector not configured");
+  const url = `${GATEWAY}/spreadsheets/${PARTS_SHEET_ID}/values/${range}`;
+  const res = await gwFetch(url, {
+    headers: { Authorization: `Bearer ${lov}`, "X-Connection-Api-Key": key },
+    ttlMs: 5 * 60_000,
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Parts sheet fetch failed [${res.status}]: ${body.slice(0, 200)}`);
   }
   const json = (await res.json()) as { values?: string[][] };
   return json.values ?? [];
