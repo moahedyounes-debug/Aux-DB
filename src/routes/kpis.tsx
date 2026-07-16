@@ -556,19 +556,23 @@ function KpisPage() {
       : `${access.asc}${access.branch ? " · " + access.branch : ""}`
     : "—";
 
-  const monthVal = (key: string, field: "total" | "completed" | "pending" | "pending7d" | "rtat" | "rate24" | "rate48" | "rate72"): number | null => {
+  const monthVal = (key: string, field: "total" | "completed" | "pending" | "pending7d" | "rtat" | "rate24" | "rate48" | "rate72" | "reclaim"): number | null => {
     const collect = (ks: string[]) => {
       let total = 0, completed = 0, pending = 0, pending7d = 0, withHrs = 0, hrsSum = 0, pendingOver24 = 0;
       let u24 = 0, u48 = 0, u72 = 0;
+      let reclaims = 0, reclaimClosed = 0;
       let any = false;
       for (const k of ks) {
         const e = monthly.get(k);
-        if (!e) continue;
-        any = true;
-        total += e.total; completed += e.completed; pending += e.pending;
-        pending7d += e.pending7d; withHrs += e.withHrs; hrsSum += e.hrsSum;
-        pendingOver24 += e.pendingOver24;
-        u24 += e.u24; u48 += e.u48; u72 += e.u72;
+        if (e) {
+          any = true;
+          total += e.total; completed += e.completed; pending += e.pending;
+          pending7d += e.pending7d; withHrs += e.withHrs; hrsSum += e.hrsSum;
+          pendingOver24 += e.pendingOver24;
+          u24 += e.u24; u48 += e.u48; u72 += e.u72;
+        }
+        const rc = reclaimByMonth.get(k);
+        if (rc) { any = true; reclaims += rc.reclaims; reclaimClosed += rc.closed; }
       }
       if (!any) return null;
       if (field === "total") return total;
@@ -579,6 +583,7 @@ function KpisPage() {
       if (field === "rate24") return completed > 0 ? (u24 / completed) * 100 : null;
       if (field === "rate48") return completed > 0 ? (u48 / completed) * 100 : null;
       if (field === "rate72") return completed > 0 ? (u72 / completed) * 100 : null;
+      if (field === "reclaim") return reclaimClosed > 0 ? (reclaims / reclaimClosed) * 100 : null;
       return null;
     };
     const m = key.match(/^(\d{4})TTL$/);
