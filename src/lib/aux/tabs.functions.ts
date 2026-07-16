@@ -27,7 +27,7 @@ async function fetchPartsRange(range: string): Promise<string[][]> {
   const key = process.env.GOOGLE_SHEETS_API_KEY;
   const lov = process.env.LOVABLE_API_KEY;
   if (!key || !lov) throw new Error("Google Sheets connector not configured");
-  const url = `${GATEWAY}/spreadsheets/${PARTS_SHEET_ID}/values/${range}`;
+  const url = `${GATEWAY}/spreadsheets/${PARTS_SHEET_ID}/values/${range}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`;
   const res = await gwFetch(url, {
     headers: { Authorization: `Bearer ${lov}`, "X-Connection-Api-Key": key },
     ttlMs: 5 * 60_000,
@@ -36,8 +36,8 @@ async function fetchPartsRange(range: string): Promise<string[][]> {
     const body = await res.text();
     throw new Error(`Parts sheet fetch failed [${res.status}]: ${body.slice(0, 200)}`);
   }
-  const json = (await res.json()) as { values?: string[][] };
-  return json.values ?? [];
+  const json = (await res.json()) as { values?: (string | number | boolean | null)[][] };
+  return (json.values ?? []).map((row) => row.map((v) => (v == null ? "" : String(v))));
 }
 
 const cache = new Map<string, { at: number; data: unknown }>();
@@ -100,6 +100,10 @@ export interface PartRow {
   direction: string;         // Column U — "Delivery From Storage" / "Be Put In Storage"
   status: string;            // normalized from direction: "Out" / "In"
   warehouse: string;
+  company: string;
+  branchShort: string;
+  createdAt: string;         // ISO or blank
+  month: string;             // YYYY-MM or blank
 }
 export interface PartsBranchRow {
   branch: string;
@@ -116,6 +120,25 @@ export interface PartsTypeRow {
   type: string;
   count: number;
 }
+export interface StockRow {
+  location: string;   // branch or warehouse
+  part: string;
+  description: string;
+  model: string;
+  inQty: number;
+  outQty: number;
+  stock: number;
+}
+export interface MonthlyPartRow {
+  part: string;
+  description: string;
+  total: number;
+  months: { month: string; qty: number }[];
+}
+export interface CompanyGroup {
+  company: string;
+  branches: string[];
+}
 export interface PartsSummary {
   fetchedAt: string;
   total: number;
@@ -128,6 +151,13 @@ export interface PartsSummary {
   byType: PartsTypeRow[];
   topParts: { part: string; description: string; count: number; qty: number }[];
   recent: PartRow[];
+  branchStock: StockRow[];
+  warehouseStock: StockRow[];
+  mainWarehouses: string[];
+  monthlyConsumption: MonthlyPartRow[];
+  monthlyLabels: string[];
+  companies: CompanyGroup[];
+  allBranches: string[];
   error?: string;
 }
 
@@ -137,6 +167,42 @@ function normDirection(s: string): string {
   if (t.includes("delivery from storage") || t.includes("out")) return "Out (Delivered)";
   if (t.includes("be put in storage") || t.includes("in")) return "In (Received)";
   return s.trim();
+}
+
+function splitCompanyBranch(fullBranch: string): { company: string; branch: string } {
+  const s = (fullBranch ?? "").trim();
+  if (!s) return { company: "Unknown", branch: "Unknown" };
+  const dash = s.indexOf(" - ");
+  if (dash > 0) return { company: s.slice(0, dash).trim(), branch: s.slice(dash + 3).trim() };
+  const m = s.match(/^(.*?Company)[-\s]+(.+)$/i);
+  if (m) return { company: m[1].trim(), branch: m[2].trim() };
+  const idx = s.indexOf("-");
+  if (idx > 0) return { company: s.slice(0, idx).trim(), branch: s.slice(idx + 1).trim() };
+  return { company: s, branch: s };
+}
+
+function isMainWarehouse(w: string): boolean {
+  const s = (w ?? "").trim();
+  if (!s) return false;
+  return !/-\s*(New|Old)$/i.test(s);
+}
+
+function serialToDate(raw: string): Date | null {
+  if (!raw) return null;
+  const n = Number(raw);
+  if (Number.isFinite(n) && n > 20000 && n < 90000) {
+    // Google Sheets serial: days since 1899-12-30
+    return new Date(Math.round((n - 25569) * 86400 * 1000));
+  }
+  const d = new Date(raw);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// Order numbers embed the date: e.g. GD20260615355085 → 2026-06-15
+function monthFromOrder(order: string): string {
+  const m = order.match(/(\d{4})(\d{2})(\d{2})/);
+  if (!m) return "";
+  return `${m[1]}-${m[2]}`;
 }
 
 export const getPartsData = createServerFn({ method: "GET" }).handler(
@@ -150,25 +216,46 @@ export const getPartsData = createServerFn({ method: "GET" }).handler(
         const rows = await fetchPartsRange("Transaction!A2:AA");
         const parsed: PartRow[] = rows
           .filter((r) => r[0] || r[21])
-          .map((r) => ({
-            order: String(r[21] ?? "").trim(),
-            partNumber: String(r[10] ?? "").trim(),
-            description: String(r[12] ?? "").trim() || String(r[7] ?? "").trim(),
-            model: String(r[9] ?? "").trim(),
-            branch: String(r[17] ?? "").trim() || String(r[5] ?? "").trim() || "Unknown",
-            qty: Number(String(r[13] ?? "0").replace(/[^\d.-]/g, "")) || 0,
-            amount: Number(String(r[14] ?? "0").replace(/[^\d.-]/g, "")) || 0,
-            type: String(r[1] ?? "").trim() || "—",
-            transactionType: String(r[19] ?? "").trim() || "—",
-            direction: String(r[20] ?? "").trim(),
-            status: normDirection(String(r[20] ?? "")),
-            warehouse: String(r[18] ?? "").trim(),
-          }));
+          .map((r) => {
+            const fullBranch = String(r[17] ?? "").trim() || String(r[5] ?? "").trim() || "Unknown";
+            const { company, branch: branchShort } = splitCompanyBranch(fullBranch);
+            const orderNo = String(r[21] ?? "").trim();
+            const d = serialToDate(String(r[22] ?? "").trim());
+            const month = d
+              ? `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`
+              : monthFromOrder(orderNo);
+            return {
+              order: orderNo,
+              partNumber: String(r[10] ?? "").trim(),
+              description: String(r[12] ?? "").trim() || String(r[7] ?? "").trim(),
+              model: String(r[9] ?? "").trim(),
+              branch: fullBranch,
+              qty: Number(String(r[13] ?? "0").replace(/[^\d.-]/g, "")) || 0,
+              amount: Number(String(r[14] ?? "0").replace(/[^\d.-]/g, "")) || 0,
+              type: String(r[1] ?? "").trim() || "—",
+              transactionType: String(r[19] ?? "").trim() || "—",
+              direction: String(r[20] ?? "").trim(),
+              status: normDirection(String(r[20] ?? "")),
+              warehouse: String(r[18] ?? "").trim(),
+              company,
+              branchShort,
+              createdAt: d ? d.toISOString() : "",
+              month,
+            };
+          });
 
         const byBranch = new Map<string, PartsBranchRow>();
         const byStatus = new Map<string, number>();
         const byType = new Map<string, number>();
         const partCount = new Map<string, { desc: string; count: number; qty: number }>();
+        // Stock keyed by branch|part and warehouse|part
+        const branchStockMap = new Map<string, StockRow>();
+        const warehouseStockMap = new Map<string, StockRow>();
+        // Monthly Out consumption: part -> month -> qty
+        const monthlyMap = new Map<string, { desc: string; months: Map<string, number>; total: number }>();
+        const monthsSet = new Set<string>();
+        const companiesMap = new Map<string, Set<string>>();
+        const allBranchesSet = new Set<string>();
         let inCount = 0;
         let outCount = 0;
         let totalQty = 0;
@@ -189,7 +276,59 @@ export const getPartsData = createServerFn({ method: "GET" }).handler(
             pc.qty += p.qty;
             partCount.set(p.partNumber, pc);
           }
+          // Stock per branch × part (based on Service Provider Name)
+          if (p.branch && p.partNumber) {
+            const key = `${p.branch}||${p.partNumber}`;
+            const s = branchStockMap.get(key) ?? { location: p.branch, part: p.partNumber, description: p.description, model: p.model, inQty: 0, outQty: 0, stock: 0 };
+            if (p.status === "In (Received)") s.inQty += p.qty;
+            else if (p.status === "Out (Delivered)") s.outQty += p.qty;
+            s.stock = s.inQty - s.outQty;
+            branchStockMap.set(key, s);
+          }
+          // Stock per warehouse × part
+          if (p.warehouse && p.partNumber) {
+            const key = `${p.warehouse}||${p.partNumber}`;
+            const s = warehouseStockMap.get(key) ?? { location: p.warehouse, part: p.partNumber, description: p.description, model: p.model, inQty: 0, outQty: 0, stock: 0 };
+            if (p.status === "In (Received)") s.inQty += p.qty;
+            else if (p.status === "Out (Delivered)") s.outQty += p.qty;
+            s.stock = s.inQty - s.outQty;
+            warehouseStockMap.set(key, s);
+          }
+          // Monthly consumption (Out only)
+          if (p.status === "Out (Delivered)" && p.partNumber && p.month) {
+            monthsSet.add(p.month);
+            const m = monthlyMap.get(p.partNumber) ?? { desc: p.description, months: new Map<string, number>(), total: 0 };
+            m.months.set(p.month, (m.months.get(p.month) ?? 0) + p.qty);
+            m.total += p.qty;
+            monthlyMap.set(p.partNumber, m);
+          }
+          // Company → branches map
+          if (p.branch && p.branch !== "Unknown") {
+            allBranchesSet.add(p.branch);
+            const set = companiesMap.get(p.company) ?? new Set<string>();
+            set.add(p.branch);
+            companiesMap.set(p.company, set);
+          }
         }
+
+        const monthlyLabels = Array.from(monthsSet).sort().slice(-12);
+        const monthlyConsumption: MonthlyPartRow[] = Array.from(monthlyMap.entries())
+          .map(([part, v]) => ({
+            part,
+            description: v.desc,
+            total: v.total,
+            months: monthlyLabels.map((m) => ({ month: m, qty: v.months.get(m) ?? 0 })),
+          }))
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 10);
+
+        const branchStock = Array.from(branchStockMap.values()).sort((a, b) => b.stock - a.stock);
+        const warehouseStock = Array.from(warehouseStockMap.values()).sort((a, b) => b.stock - a.stock);
+        const mainWarehouses = Array.from(new Set(warehouseStock.map((r) => r.location).filter(isMainWarehouse))).sort();
+        const companies: CompanyGroup[] = Array.from(companiesMap.entries())
+          .map(([company, set]) => ({ company, branches: Array.from(set).sort() }))
+          .sort((a, b) => a.company.localeCompare(b.company));
+        const allBranches = Array.from(allBranchesSet).sort();
 
         return {
           fetchedAt: new Date().toISOString(),
@@ -203,6 +342,13 @@ export const getPartsData = createServerFn({ method: "GET" }).handler(
           byType: Array.from(byType.entries()).map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count),
           topParts: Array.from(partCount.entries()).map(([part, v]) => ({ part, description: v.desc, count: v.count, qty: v.qty })).sort((a, b) => b.count - a.count).slice(0, 15),
           recent: parsed.slice(-100).reverse(),
+          branchStock,
+          warehouseStock,
+          mainWarehouses,
+          monthlyConsumption,
+          monthlyLabels,
+          companies,
+          allBranches,
         };
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -210,6 +356,7 @@ export const getPartsData = createServerFn({ method: "GET" }).handler(
           fetchedAt: new Date().toISOString(),
           total: 0, inCount: 0, outCount: 0, totalQty: 0, uniqueParts: 0,
           byBranch: [], byStatus: [], byType: [], topParts: [], recent: [], error: msg,
+          branchStock: [], warehouseStock: [], mainWarehouses: [], monthlyConsumption: [], monthlyLabels: [], companies: [], allBranches: [],
         };
       }
     });

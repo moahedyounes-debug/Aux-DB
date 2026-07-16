@@ -23,7 +23,7 @@ const HEADERS = [
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
@@ -86,6 +86,24 @@ type Body = {
   quantity?: number | string;
   notes?: string;
   confirmed?: boolean;
+  status?: string;
+  dispatchDate?: string;
+  awb?: string;
+};
+
+type PatchBody = {
+  requestId: string;
+  status?: string;
+  awb?: string;
+  dispatchDate?: string;
+  receiveDate?: string;
+  partCode?: string;
+  model?: string;
+  quantity?: number | string;
+  branch?: string;
+  notes?: string;
+  worker?: string;
+  ticket?: string;
 };
 
 function fmtDate(d: Date) {
@@ -96,6 +114,86 @@ export const Route = createFileRoute("/api/public/spare-part-request")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
+      GET: async () => {
+        try {
+          await ensureTabWithHeaders();
+          const r = await fetch(
+            `${GATEWAY}/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(TAB)}!A2:O`,
+            { headers: gwHeaders() },
+          );
+          const d = (await r.json()) as { values?: string[][] };
+          const rows = (d.values ?? []).map((row, i) => ({
+            rowIndex: i + 2, // sheet row number (1-based, header on row 1)
+            requestId: row[0] ?? "",
+            date: row[1] ?? "",
+            ticket: row[2] ?? "",
+            branch: row[3] ?? "",
+            worker: row[4] ?? "",
+            partCode: row[5] ?? "",
+            quantity: row[6] ?? "",
+            notes: row[7] ?? "",
+            status: row[8] ?? "",
+            requestDate: row[9] ?? "",
+            dispatchDate: row[10] ?? "",
+            receiveDate: row[11] ?? "",
+            lastUpdated: row[12] ?? "",
+            awb: row[13] ?? "",
+            model: row[14] ?? "",
+          })).filter((r) => r.requestId);
+          return json({ ok: true, rows: rows.reverse() });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          return json({ ok: false, error: "list_failed", detail: msg }, 500);
+        }
+      },
+      PATCH: async ({ request }) => {
+        try {
+          const body = (await request.json()) as PatchBody;
+          const rid = String(body.requestId ?? "").trim();
+          if (!rid) return json({ ok: false, error: "missing_requestId" }, 400);
+          await ensureTabWithHeaders();
+          // Find the row
+          const list = await fetch(
+            `${GATEWAY}/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(TAB)}!A2:O`,
+            { headers: gwHeaders() },
+          );
+          const ld = (await list.json()) as { values?: string[][] };
+          const rows = ld.values ?? [];
+          const idx = rows.findIndex((r) => (r[0] ?? "") === rid);
+          if (idx < 0) return json({ ok: false, error: "not_found" }, 404);
+          const cur = rows[idx];
+          const merged = [
+            cur[0] ?? rid,
+            cur[1] ?? "",
+            body.ticket !== undefined ? String(body.ticket) : (cur[2] ?? ""),
+            body.branch !== undefined ? String(body.branch) : (cur[3] ?? ""),
+            body.worker !== undefined ? String(body.worker) : (cur[4] ?? ""),
+            body.partCode !== undefined ? String(body.partCode) : (cur[5] ?? ""),
+            body.quantity !== undefined ? String(body.quantity) : (cur[6] ?? ""),
+            body.notes !== undefined ? String(body.notes) : (cur[7] ?? ""),
+            body.status !== undefined ? String(body.status) : (cur[8] ?? ""),
+            cur[9] ?? "",
+            body.dispatchDate !== undefined ? String(body.dispatchDate) : (cur[10] ?? ""),
+            body.receiveDate !== undefined ? String(body.receiveDate) : (cur[11] ?? ""),
+            fmtDate(new Date()),
+            body.awb !== undefined ? String(body.awb) : (cur[13] ?? ""),
+            body.model !== undefined ? String(body.model) : (cur[14] ?? ""),
+          ];
+          const sheetRow = idx + 2;
+          const upd = await fetch(
+            `${GATEWAY}/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(TAB)}!A${sheetRow}:O${sheetRow}?valueInputOption=USER_ENTERED`,
+            { method: "PUT", headers: gwHeaders(), body: JSON.stringify({ values: [merged] }) },
+          );
+          if (!upd.ok) {
+            const t = await upd.text();
+            return json({ ok: false, error: "update_failed", detail: t, status: upd.status }, 502);
+          }
+          return json({ ok: true, requestId: rid });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          return json({ ok: false, error: "internal_error", detail: msg }, 500);
+        }
+      },
       POST: async ({ request }) => {
         try {
           const body = (await request.json()) as Body;
@@ -103,7 +201,6 @@ export const Route = createFileRoute("/api/public/spare-part-request")({
           const partCode = String(body.partCode ?? "").trim();
           const model = String(body.model ?? "").trim();
           const quantity = String(body.quantity ?? "").trim();
-          if (!ticket) return json({ ok: false, error: "missing_ticket" }, 400);
           if (!partCode && !model) return json({ ok: false, error: "missing_part" }, 400);
           if (!quantity) return json({ ok: false, error: "missing_quantity" }, 400);
 
@@ -121,12 +218,12 @@ export const Route = createFileRoute("/api/public/spare-part-request")({
             partCode,
             quantity,
             String(body.notes ?? "").trim(),
-            "New",
+            String(body.status ?? "Requested").trim(),
             dateStr,
-            "",
+            String(body.dispatchDate ?? "").trim(),
             "",
             dateStr,
-            "",
+            String(body.awb ?? "").trim(),
             model,
           ];
           const r = await fetch(
