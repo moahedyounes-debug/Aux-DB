@@ -15,7 +15,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ChartCard } from "@/components/dashboard/ChartCard";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
-import { useGlobalFilters, applyGlobalFilters, shortBranch } from "@/hooks/use-global-filters";
+import { useGlobalFilters, applyGlobalFilters, shortBranch, firstWord } from "@/hooks/use-global-filters";
 import { readTable } from "@/lib/sheets-client";
 import { cn } from "@/lib/utils";
 import { evaluateFormula, formatValue, parseKpiFormulaRow, type KpiFormulaDef } from "@/lib/aux/formula";
@@ -242,7 +242,7 @@ function KpisPage() {
     const now = Date.now();
     type M = {
       total: number; completed: number; pending: number;
-      withHrs: number; hrsSum: number; pending7d: number;
+      withHrs: number; hrsSum: number; pending7d: number; pendingOver24: number;
     };
     const map = new Map<string, M>();
     const key = (r: Row): string | null => {
@@ -255,14 +255,17 @@ function KpisPage() {
     for (const r of filteredRows) {
       const k = key(r);
       if (!k) continue;
-      const e = map.get(k) ?? { total: 0, completed: 0, pending: 0, withHrs: 0, hrsSum: 0, pending7d: 0 };
+      const e = map.get(k) ?? { total: 0, completed: 0, pending: 0, withHrs: 0, hrsSum: 0, pending7d: 0, pendingOver24: 0 };
       e.total++;
       const done = isCompleted(r);
       if (done) e.completed++;
       if (isPending(r)) {
         e.pending++;
         const age = pendingAgeDays(r, now);
-        if (Number.isFinite(age) && age > 7) e.pending7d++;
+        if (Number.isFinite(age)) {
+          if (age * 24 > 24) e.pendingOver24++;
+          if (age > 6) e.pending7d++;
+        }
       }
       const h = serviceHours(r);
       if (done && Number.isFinite(h)) {
@@ -270,6 +273,32 @@ function KpisPage() {
         e.hrsSum += h;
       }
       map.set(k, e);
+    }
+    return map;
+  }, [filteredRows]);
+
+  // Per-company monthly breakdown of pending tickets older than 6 days.
+  // Companies are derived from actual data (first word of Service Provider
+  // Name, excluding the "Authorized …" catch-all label used in the sheet).
+  const monthlyByCompany = useMemo(() => {
+    const map = new Map<string, Map<string, number>>();
+    const now = Date.now();
+    for (const r of filteredRows) {
+      if (!isPending(r)) continue;
+      const age = pendingAgeDays(r, now);
+      if (!(Number.isFinite(age) && age > 6)) continue;
+      const fw = firstWord(r[COL.asc] || "");
+      const fwU = fw.toUpperCase();
+      if (!fw || fwU === "AUTHORIZED") continue;
+      const company = fwU.startsWith("HMA") ? "HMA" : fw;
+      const raw = r[COL.createdAt];
+      if (!raw) continue;
+      const d = new Date(String(raw).replace(" ", "T"));
+      if (!Number.isFinite(d.getTime())) continue;
+      const mk = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+      if (!map.has(company)) map.set(company, new Map());
+      const inner = map.get(company)!;
+      inner.set(mk, (inner.get(mk) ?? 0) + 1);
     }
     return map;
   }, [filteredRows]);
@@ -452,7 +481,7 @@ function KpisPage() {
 
   const monthVal = (key: string, field: "total" | "completed" | "pending" | "pending7d" | "rtat"): number | null => {
     const collect = (ks: string[]) => {
-      let total = 0, completed = 0, pending = 0, pending7d = 0, withHrs = 0, hrsSum = 0;
+      let total = 0, completed = 0, pending = 0, pending7d = 0, withHrs = 0, hrsSum = 0, pendingOver24 = 0;
       let any = false;
       for (const k of ks) {
         const e = monthly.get(k);
@@ -460,11 +489,12 @@ function KpisPage() {
         any = true;
         total += e.total; completed += e.completed; pending += e.pending;
         pending7d += e.pending7d; withHrs += e.withHrs; hrsSum += e.hrsSum;
+        pendingOver24 += e.pendingOver24;
       }
       if (!any) return null;
       if (field === "total") return total;
       if (field === "completed") return completed;
-      if (field === "pending") return pending;
+      if (field === "pending") return pendingOver24;
       if (field === "pending7d") return pending7d;
       if (field === "rtat") return withHrs > 0 ? hrsSum / withHrs / 24 : null;
       return null;
@@ -473,6 +503,24 @@ function KpisPage() {
     if (m) return collect(MONTHS_BY_YEAR.get(m[1]) ?? []);
     return collect([key]);
   };
+
+  const companyPending7d = (company: string, colKey: string): number | null => {
+    const inner = monthlyByCompany.get(company);
+    if (!inner) return null;
+    const collect = (ks: string[]) => {
+      let sum = 0; let any = false;
+      for (const k of ks) { const v = inner.get(k); if (v !== undefined) { sum += v; any = true; } }
+      return any ? sum : null;
+    };
+    const m = colKey.match(/^(\d{4})TTL$/);
+    if (m) return collect(MONTHS_BY_YEAR.get(m[1]) ?? []);
+    return collect([colKey]);
+  };
+
+  const companies = useMemo(
+    () => Array.from(monthlyByCompany.keys()).sort(),
+    [monthlyByCompany],
+  );
 
   type RowKind = "num" | "pct" | "days" | "k" | "m";
   interface KRow {
@@ -512,8 +560,12 @@ function KpisPage() {
       value: (c) => monthVal(c, "pending"), bp: 1742 },
     { label: ">7D", indent: 1, kind: "num",
       value: (c) => monthVal(c, "pending7d"), bp: 997 },
-    { label: "Naghi", indent: 2, kind: "num", value: empty, bp: 600 },
-    { label: "Shaker", indent: 2, kind: "num", value: empty, bp: 397 },
+    ...companies.map((co) => ({
+      label: co,
+      indent: 2 as const,
+      kind: "num" as RowKind,
+      value: (c: string) => companyPending7d(co, c),
+    })),
     { label: "Pending T/O (days)", bold: true, kind: "days", value: empty, bp: 4.2 },
 
     { category: "Preparation for Future Service", label: "Digital consultation rate (%)", kind: "pct", value: empty, bp: 50 },
