@@ -45,7 +45,7 @@ export const Route = createFileRoute("/kpis")({
 const SLA_24 = 24;
 const SLA_48 = 48;
 const SLA_72 = 72;
-const TARGETS = { rate24h: 70, rate48h: 90, rate72h: 95, pendingRate: 10 };
+const TARGETS = { rate24h: 60, rate48h: 90, rate72h: 95, pendingRate: 10, rtatDays: 2 };
 
 // Column names in Sheet1 of the maintenance sheet
 const COL = {
@@ -710,7 +710,7 @@ function KpisPage() {
 
       <ChartCard
         title="Branch Scorecard"
-        subtitle={`Targets — 24h ≥ ${TARGETS.rate24h}% · 48h ≥ ${TARGETS.rate48h}% · 72h ≥ ${TARGETS.rate72h}%`}
+        subtitle={`Targets — 24h ≥ ${TARGETS.rate24h}% · 48h ≥ ${TARGETS.rate48h}% · 72h ≥ ${TARGETS.rate72h}% · RTAT ≤ ${TARGETS.rtatDays}d`}
       >
         {query.isLoading ? (
           <div className="py-12 text-center text-sm text-muted-foreground">
