@@ -3,7 +3,6 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Menu,
   ChevronsLeft,
-  Filter,
   Languages,
   UserCircle2,
   Pencil,
@@ -141,7 +140,7 @@ function ToolbarButton({
   icon: Icon,
   label,
 }: {
-  icon: typeof Filter;
+  icon: typeof Menu;
   label: string;
 }) {
   return (
