@@ -61,6 +61,7 @@ const COL = {
   completedAt: "Completion time",
   completionResult: "Completion Result",
   worker: "Worker Name",
+  location: "Location",
 } as const;
 
 const fmt = new Intl.NumberFormat("en-US");
@@ -110,6 +111,26 @@ function serviceHours(r: Row): number {
   const e = new Date(String(end).replace(" ", "T")).getTime();
   if (!Number.isFinite(s) || !Number.isFinite(e) || e < s) return NaN;
   return (e - s) / 3_600_000;
+}
+
+// Extract the city component from the free-text Location column.
+// Sheet format is typically "Region / City / District" (also supports commas,
+// vertical bars, or '>' as separators). Returns "" when the row has no city.
+function cityOf(r: Row): string {
+  const raw = String(r[COL.location] ?? "").trim();
+  if (!raw) return "";
+  const parts = raw.split(/[\/,>·|]/).map((p) => p.trim()).filter(Boolean);
+  return (parts[1] ?? parts[0] ?? "").trim();
+}
+
+// Fuzzy match for the 3 main cities across Arabic + English spellings.
+function mainCityKey(city: string): "Riyadh" | "Jeddah" | "Khobar" | "" {
+  const c = city.toLowerCase();
+  if (!c) return "";
+  if (c.includes("riyadh") || c.includes("الرياض") || c === "رياض") return "Riyadh";
+  if (c.includes("jeddah") || c.includes("jedda") || c.includes("جدة") || c.includes("جده")) return "Jeddah";
+  if (c.includes("khobar") || c.includes("khubar") || c.includes("الخبر") || c === "خبر") return "Khobar";
+  return "";
 }
 
 function Badge({ ok, children }: { ok: boolean; children: React.ReactNode }) {
