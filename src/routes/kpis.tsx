@@ -17,6 +17,8 @@ import { KpiCard } from "@/components/dashboard/KpiCard";
 import { useAccess, applyAccessFilter } from "@/hooks/use-access";
 import { readTable } from "@/lib/sheets-client";
 import { cn } from "@/lib/utils";
+import { evaluateFormula, formatValue, parseKpiFormulaRow, type KpiFormulaDef } from "@/lib/aux/formula";
+import { Calculator } from "lucide-react";
 
 export const Route = createFileRoute("/kpis")({
   head: () => ({
@@ -113,6 +115,28 @@ function KpisPage() {
     enabled: ready,
   });
 
+  const formulasQuery = useQuery<KpiFormulaDef[]>({
+    queryKey: ["kpi-formulas"],
+    enabled: ready && !!access?.email,
+    staleTime: 60_000,
+    queryFn: async () => {
+      try {
+        const r = await fetch("/api/public/sheet-write", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ actorEmail: access?.email, action: "list", tab: "KPIFormulas" }),
+        });
+        const d = (await r.json()) as { ok: boolean; rows?: string[][] };
+        if (!d.ok || !d.rows) return [];
+        return d.rows
+          .map((row, i) => parseKpiFormulaRow(row, i + 2))
+          .filter((f) => f.name && f.formula && !f.hidden);
+      } catch {
+        return [];
+      }
+    },
+  });
+
   const rows = useMemo(() => {
     if (!query.data) return [] as Row[];
     return applyAccessFilter(query.data.rows, access, {
@@ -140,8 +164,35 @@ function KpisPage() {
       total, completed, pending, rate48, rate72, avgHours, branches,
       pendingRate: pct(pending, total),
       completionRate: pct(completed, total),
+      u48: under48,
+      u72: under72,
+      withHrs: withHrs.length,
     };
   }, [rows]);
+
+  const formulaVars = useMemo<Record<string, number>>(() => ({
+    total: stats.total,
+    completed: stats.completed,
+    pending: stats.pending,
+    with_hrs: stats.withHrs,
+    u48: stats.u48,
+    u72: stats.u72,
+    avg_hours: stats.avgHours,
+    branches: stats.branches,
+  }), [stats]);
+
+  const customKpis = useMemo(() => {
+    const defs = formulasQuery.data ?? [];
+    return defs.map((d) => {
+      const res = evaluateFormula(d.formula, formulaVars);
+      return {
+        name: d.name,
+        formula: d.formula,
+        display: res.error ? "—" : formatValue(res.value, d.format),
+        error: res.error,
+      };
+    });
+  }, [formulasQuery.data, formulaVars]);
 
   const branchTable = useMemo(() => {
     const map = new Map<string, { total: number; completed: number; pending: number; u48: number; u72: number; withHrs: number }>();
@@ -245,6 +296,23 @@ function KpisPage() {
           tone="accent"
         />
       </div>
+
+      {customKpis.length > 0 && (
+        <ChartCard title="Custom KPI Formulas" subtitle="Defined in Data Editor · evaluated against the current scope">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {customKpis.map((k) => (
+              <KpiCard
+                key={k.name}
+                label={k.name}
+                value={k.display}
+                hint={k.error ? `Error: ${k.error}` : k.formula}
+                icon={Calculator}
+                tone={k.error ? "destructive" : "primary"}
+              />
+            ))}
+          </div>
+        </ChartCard>
+      )}
 
       <ChartCard
         title="Branch Scorecard"

@@ -25,6 +25,7 @@ import { Route as InstallationAnalysisRouteImport } from './routes/installation-
 import { Route as ExportCenterRouteImport } from './routes/export-center'
 import { Route as DistrictsMapRouteImport } from './routes/districts-map'
 import { Route as DeepInsightsRouteImport } from './routes/deep-insights'
+import { Route as DataEditorRouteImport } from './routes/data-editor'
 import { Route as DailyOperationsRouteImport } from './routes/daily-operations'
 import { Route as CustomDashboardRouteImport } from './routes/custom-dashboard'
 import { Route as CostsRouteImport } from './routes/costs'
@@ -121,6 +122,11 @@ const DistrictsMapRoute = DistrictsMapRouteImport.update({
 const DeepInsightsRoute = DeepInsightsRouteImport.update({
   id: '/deep-insights',
   path: '/deep-insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataEditorRoute = DataEditorRouteImport.update({
+  id: '/data-editor',
+  path: '/data-editor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DailyOperationsRoute = DailyOperationsRouteImport.update({
@@ -223,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
   '/daily-operations': typeof DailyOperationsRoute
+  '/data-editor': typeof DataEditorRoute
   '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
@@ -258,6 +265,7 @@ export interface FileRoutesByTo {
   '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
   '/daily-operations': typeof DailyOperationsRoute
+  '/data-editor': typeof DataEditorRoute
   '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
@@ -294,6 +302,7 @@ export interface FileRoutesById {
   '/costs': typeof CostsRoute
   '/custom-dashboard': typeof CustomDashboardRoute
   '/daily-operations': typeof DailyOperationsRoute
+  '/data-editor': typeof DataEditorRoute
   '/deep-insights': typeof DeepInsightsRoute
   '/districts-map': typeof DistrictsMapRoute
   '/export-center': typeof ExportCenterRoute
@@ -331,6 +340,7 @@ export interface FileRouteTypes {
     | '/costs'
     | '/custom-dashboard'
     | '/daily-operations'
+    | '/data-editor'
     | '/deep-insights'
     | '/districts-map'
     | '/export-center'
@@ -366,6 +376,7 @@ export interface FileRouteTypes {
     | '/costs'
     | '/custom-dashboard'
     | '/daily-operations'
+    | '/data-editor'
     | '/deep-insights'
     | '/districts-map'
     | '/export-center'
@@ -401,6 +412,7 @@ export interface FileRouteTypes {
     | '/costs'
     | '/custom-dashboard'
     | '/daily-operations'
+    | '/data-editor'
     | '/deep-insights'
     | '/districts-map'
     | '/export-center'
@@ -437,6 +449,7 @@ export interface RootRouteChildren {
   CostsRoute: typeof CostsRoute
   CustomDashboardRoute: typeof CustomDashboardRoute
   DailyOperationsRoute: typeof DailyOperationsRoute
+  DataEditorRoute: typeof DataEditorRoute
   DeepInsightsRoute: typeof DeepInsightsRoute
   DistrictsMapRoute: typeof DistrictsMapRoute
   ExportCenterRoute: typeof ExportCenterRoute
@@ -571,6 +584,13 @@ declare module '@tanstack/react-router' {
       path: '/deep-insights'
       fullPath: '/deep-insights'
       preLoaderRoute: typeof DeepInsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-editor': {
+      id: '/data-editor'
+      path: '/data-editor'
+      fullPath: '/data-editor'
+      preLoaderRoute: typeof DataEditorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/daily-operations': {
@@ -709,6 +729,7 @@ const rootRouteChildren: RootRouteChildren = {
   CostsRoute: CostsRoute,
   CustomDashboardRoute: CustomDashboardRoute,
   DailyOperationsRoute: DailyOperationsRoute,
+  DataEditorRoute: DataEditorRoute,
   DeepInsightsRoute: DeepInsightsRoute,
   DistrictsMapRoute: DistrictsMapRoute,
   ExportCenterRoute: ExportCenterRoute,
