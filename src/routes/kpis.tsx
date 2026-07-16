@@ -243,6 +243,7 @@ function KpisPage() {
     type M = {
       total: number; completed: number; pending: number;
       withHrs: number; hrsSum: number; pending7d: number; pendingOver24: number;
+      u24: number; u48: number; u72: number;
     };
     const map = new Map<string, M>();
     const key = (r: Row): string | null => {
@@ -255,7 +256,7 @@ function KpisPage() {
     for (const r of filteredRows) {
       const k = key(r);
       if (!k) continue;
-      const e = map.get(k) ?? { total: 0, completed: 0, pending: 0, withHrs: 0, hrsSum: 0, pending7d: 0, pendingOver24: 0 };
+      const e = map.get(k) ?? { total: 0, completed: 0, pending: 0, withHrs: 0, hrsSum: 0, pending7d: 0, pendingOver24: 0, u24: 0, u48: 0, u72: 0 };
       e.total++;
       const done = isCompleted(r);
       if (done) e.completed++;
@@ -271,6 +272,9 @@ function KpisPage() {
       if (done && Number.isFinite(h)) {
         e.withHrs++;
         e.hrsSum += h;
+        if (h <= SLA_24) e.u24++;
+        if (h <= SLA_48) e.u48++;
+        if (h <= SLA_72) e.u72++;
       }
       map.set(k, e);
     }
@@ -479,9 +483,10 @@ function KpisPage() {
       : `${access.asc}${access.branch ? " · " + access.branch : ""}`
     : "—";
 
-  const monthVal = (key: string, field: "total" | "completed" | "pending" | "pending7d" | "rtat"): number | null => {
+  const monthVal = (key: string, field: "total" | "completed" | "pending" | "pending7d" | "rtat" | "rate24" | "rate48" | "rate72"): number | null => {
     const collect = (ks: string[]) => {
       let total = 0, completed = 0, pending = 0, pending7d = 0, withHrs = 0, hrsSum = 0, pendingOver24 = 0;
+      let u24 = 0, u48 = 0, u72 = 0;
       let any = false;
       for (const k of ks) {
         const e = monthly.get(k);
@@ -490,6 +495,7 @@ function KpisPage() {
         total += e.total; completed += e.completed; pending += e.pending;
         pending7d += e.pending7d; withHrs += e.withHrs; hrsSum += e.hrsSum;
         pendingOver24 += e.pendingOver24;
+        u24 += e.u24; u48 += e.u48; u72 += e.u72;
       }
       if (!any) return null;
       if (field === "total") return total;
@@ -497,6 +503,9 @@ function KpisPage() {
       if (field === "pending") return pendingOver24;
       if (field === "pending7d") return pending7d;
       if (field === "rtat") return withHrs > 0 ? hrsSum / withHrs / 24 : null;
+      if (field === "rate24") return completed > 0 ? (u24 / completed) * 100 : null;
+      if (field === "rate48") return completed > 0 ? (u48 / completed) * 100 : null;
+      if (field === "rate72") return completed > 0 ? (u72 / completed) * 100 : null;
       return null;
     };
     const m = key.match(/^(\d{4})TTL$/);
@@ -537,8 +546,12 @@ function KpisPage() {
   const empty = (): number | null => null;
 
   const kpiRows: KRow[] = [
-    { category: "Sales", label: "Amount(M)", kind: "m", value: empty },
-    { label: "Q'ty(K)", kind: "k", value: empty },
+    { category: "SLA", label: "24hr (%)", kind: "pct",
+      value: (c) => monthVal(c, "rate24"), bp: 60 },
+    { label: "48hr (%)", kind: "pct",
+      value: (c) => monthVal(c, "rate48"), bp: 90 },
+    { label: "72hr (%)", kind: "pct",
+      value: (c) => monthVal(c, "rate72"), bp: 95 },
 
     { category: "Strengthen Basic competence", label: "Repair Q'ty (K)", kind: "num",
       value: (c) => { const v = monthVal(c, "completed"); return v === null ? null : v; } },
