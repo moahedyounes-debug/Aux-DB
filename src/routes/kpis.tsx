@@ -450,18 +450,6 @@ function KpisPage() {
       : `${access.asc}${access.branch ? " · " + access.branch : ""}`
     : "—";
 
-  // ---- Monthly scorecard layout (matches uploaded reference) ----
-  const MONTH_COLS: Array<{ key: string; label: string; kind: "m" | "ttl" | "sep" }> = [
-    { key: "2024-01", label: "24' Jan", kind: "m" },
-    { key: "2024-02", label: "Feb", kind: "m" },
-    { key: "2024-03", label: "Mar", kind: "m" },
-    { key: "24TTL", label: "24 TTL", kind: "ttl" },
-    { key: "2025-01", label: "25' Jan", kind: "m" },
-    { key: "2025-02", label: "Feb", kind: "m" },
-    { key: "2025-03", label: "Mar", kind: "m" },
-    { key: "25TTL", label: "25 TTL", kind: "ttl" },
-  ];
-
   const monthVal = (key: string, field: "total" | "completed" | "pending" | "pending7d" | "rtat"): number | null => {
     const collect = (ks: string[]) => {
       let total = 0, completed = 0, pending = 0, pending7d = 0, withHrs = 0, hrsSum = 0;
@@ -481,8 +469,8 @@ function KpisPage() {
       if (field === "rtat") return withHrs > 0 ? hrsSum / withHrs / 24 : null;
       return null;
     };
-    if (key === "24TTL") return collect(["2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12"]);
-    if (key === "25TTL") return collect(["2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"]);
+    const m = key.match(/^(\d{4})TTL$/);
+    if (m) return collect(MONTHS_BY_YEAR.get(m[1]) ?? []);
     return collect([key]);
   };
 
