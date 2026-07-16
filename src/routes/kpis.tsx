@@ -187,6 +187,43 @@ function KpisPage() {
     };
   }, [rows]);
 
+  // Monthly buckets — key = YYYY-MM
+  const monthly = useMemo(() => {
+    const now = Date.now();
+    type M = {
+      total: number; completed: number; pending: number;
+      withHrs: number; hrsSum: number; pending7d: number;
+    };
+    const map = new Map<string, M>();
+    const key = (r: Row): string | null => {
+      const raw = r[COL.createdAt];
+      if (!raw) return null;
+      const d = new Date(String(raw).replace(" ", "T"));
+      if (!Number.isFinite(d.getTime())) return null;
+      return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    };
+    for (const r of rows) {
+      const k = key(r);
+      if (!k) continue;
+      const e = map.get(k) ?? { total: 0, completed: 0, pending: 0, withHrs: 0, hrsSum: 0, pending7d: 0 };
+      e.total++;
+      const done = isCompleted(r);
+      if (done) e.completed++;
+      if (isPending(r)) {
+        e.pending++;
+        const age = pendingAgeDays(r, now);
+        if (Number.isFinite(age) && age > 7) e.pending7d++;
+      }
+      const h = hours(r);
+      if (done && Number.isFinite(h)) {
+        e.withHrs++;
+        e.hrsSum += h;
+      }
+      map.set(k, e);
+    }
+    return map;
+  }, [rows]);
+
   const formulaVars = useMemo<Record<string, number>>(() => ({
     total: stats.total,
     completed: stats.completed,
@@ -292,6 +329,115 @@ function KpisPage() {
       : `${access.asc}${access.branch ? " · " + access.branch : ""}`
     : "—";
 
+  // ---- Monthly scorecard layout (matches uploaded reference) ----
+  const MONTH_COLS: Array<{ key: string; label: string; kind: "m" | "ttl" | "sep" }> = [
+    { key: "2024-01", label: "24' Jan", kind: "m" },
+    { key: "2024-02", label: "Feb", kind: "m" },
+    { key: "2024-03", label: "Mar", kind: "m" },
+    { key: "24TTL", label: "24 TTL", kind: "ttl" },
+    { key: "2025-01", label: "25' Jan", kind: "m" },
+    { key: "2025-02", label: "Feb", kind: "m" },
+    { key: "2025-03", label: "Mar", kind: "m" },
+    { key: "25TTL", label: "25 TTL", kind: "ttl" },
+  ];
+
+  const monthVal = (key: string, field: "total" | "completed" | "pending" | "pending7d" | "rtat"): number | null => {
+    const collect = (ks: string[]) => {
+      let total = 0, completed = 0, pending = 0, pending7d = 0, withHrs = 0, hrsSum = 0;
+      let any = false;
+      for (const k of ks) {
+        const e = monthly.get(k);
+        if (!e) continue;
+        any = true;
+        total += e.total; completed += e.completed; pending += e.pending;
+        pending7d += e.pending7d; withHrs += e.withHrs; hrsSum += e.hrsSum;
+      }
+      if (!any) return null;
+      if (field === "total") return total;
+      if (field === "completed") return completed;
+      if (field === "pending") return pending;
+      if (field === "pending7d") return pending7d;
+      if (field === "rtat") return withHrs > 0 ? hrsSum / withHrs / 24 : null;
+      return null;
+    };
+    if (key === "24TTL") return collect(["2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12"]);
+    if (key === "25TTL") return collect(["2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12"]);
+    return collect([key]);
+  };
+
+  type RowKind = "num" | "pct" | "days" | "k" | "m";
+  interface KRow {
+    category?: string;
+    label: string;
+    indent?: number;
+    bold?: boolean;
+    kind: RowKind;
+    // returns raw number or null when not computable
+    value: (colKey: string) => number | null;
+    bp?: number | null;
+  }
+
+  const empty = (): number | null => null;
+
+  const kpiRows: KRow[] = [
+    { category: "Sales", label: "Amount(M)", kind: "m", value: empty },
+    { label: "Q'ty(K)", kind: "k", value: empty },
+
+    { category: "Strengthen Basic competence", label: "Repair Q'ty (K)", kind: "num",
+      value: (c) => { const v = monthVal(c, "completed"); return v === null ? null : v; } },
+    { label: "Reclaim Total (%)", kind: "pct", value: empty, bp: 3.5 },
+    { label: "H&A TTL", indent: 1, bold: true, kind: "pct", value: empty },
+    { label: "WM", indent: 2, kind: "pct", value: empty },
+    { label: "REF", indent: 2, kind: "pct", value: empty },
+    { label: "RAC", indent: 2, kind: "pct", value: empty },
+    { label: "HE TTL", indent: 1, bold: true, kind: "pct", value: empty },
+    { label: "OLED", indent: 2, kind: "pct", value: empty },
+
+    { label: "RTAT (Day)", bold: true, kind: "days",
+      value: (c) => monthVal(c, "rtat"), bp: 3.6 },
+    { label: "RTAT (3D Main City)", indent: 1, kind: "days", value: empty },
+    { label: "Riyadh", indent: 2, kind: "days", value: empty },
+    { label: "Jeddah", indent: 2, kind: "days", value: empty },
+    { label: "Khobar", indent: 2, kind: "days", value: empty },
+
+    { label: "TTL Pending Q'ty", bold: true, kind: "num",
+      value: (c) => monthVal(c, "pending"), bp: 1742 },
+    { label: ">7D", indent: 1, kind: "num",
+      value: (c) => monthVal(c, "pending7d"), bp: 997 },
+    { label: "Naghi", indent: 2, kind: "num", value: empty, bp: 600 },
+    { label: "Shaker", indent: 2, kind: "num", value: empty, bp: 397 },
+    { label: "Pending T/O (days)", bold: true, kind: "days", value: empty, bp: 4.2 },
+
+    { category: "Preparation for Future Service", label: "Digital consultation rate (%)", kind: "pct", value: empty, bp: 50 },
+    { label: "Digital (K)", indent: 1, kind: "num", value: empty },
+    { label: "Call + Digital (K)", indent: 1, kind: "num", value: empty },
+
+    { category: "CIC", label: "Consultation Satisfaction (Point)", kind: "num", value: empty, bp: 4.5 },
+    { label: "Consultation resolution (%)", kind: "pct", value: empty },
+
+    { category: "NPS", label: "CIC T NPS", kind: "pct", value: empty },
+    { label: "Repair T NPS", kind: "pct", value: empty },
+
+    { category: "VOC", label: "TTL", bold: true, kind: "num", value: empty },
+    { label: "Marketing", indent: 1, kind: "num", value: empty },
+    { label: "OBS", indent: 1, kind: "num", value: empty },
+    { label: "Factory", indent: 1, kind: "num", value: empty },
+    { label: "Service", indent: 1, kind: "num", value: empty },
+
+    { category: "Business", label: "Net SVC Cost (M USD)", kind: "num", value: empty, bp: 0.2 },
+    { label: "Net SVC Cost rate (%)", kind: "pct", value: empty, bp: 0.49 },
+  ];
+
+  const fmtCell = (v: number | null, kind: RowKind): string => {
+    if (v === null || !Number.isFinite(v)) return "—";
+    if (kind === "pct") return `${v.toFixed(1)}%`;
+    if (kind === "days") return v.toFixed(1);
+    if (kind === "num") return fmt.format(Math.round(v));
+    if (kind === "k") return fmt.format(Math.round(v));
+    if (kind === "m") return fmt.format(Math.round(v));
+    return String(v);
+  };
+
   return (
     <DashboardLayout
       title="KPIs"
@@ -387,64 +533,81 @@ function KpisPage() {
           <div className="py-12 text-center text-sm text-muted-foreground">
             Loading live maintenance data…
           </div>
-        ) : branchTable.length === 0 ? (
+        ) : rows.length === 0 ? (
           <div className="py-12 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
             <BarChart3 className="h-8 w-8 opacity-40" />
             No tickets in your access scope yet.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <table className="min-w-full text-xs border border-border">
               <thead>
-                <tr className="text-xs uppercase tracking-wider text-muted-foreground border-b-2 border-border">
-                  <th className="py-2 pr-4 text-start">KPIs</th>
-                  <th className="py-2 pr-4 text-end">Value</th>
-                  <th className="py-2 pr-4 text-end">Target</th>
-                  <th className="py-2 pr-4 text-end">Status</th>
+                <tr className="bg-muted/40 text-muted-foreground">
+                  <th rowSpan={2} className="py-2 px-3 text-start font-semibold border border-border" colSpan={2}>Category</th>
+                  <th rowSpan={2} className="py-2 px-2 text-center font-semibold border border-border">vs PY</th>
+                  <th colSpan={4} className="py-2 px-2 text-center font-semibold border border-border">2024</th>
+                  <th colSpan={4} className="py-2 px-2 text-center font-semibold border border-border">2025</th>
+                  <th colSpan={3} className="py-2 px-2 text-center font-semibold border border-border bg-muted/70">Target</th>
+                </tr>
+                <tr className="bg-muted/30 text-muted-foreground">
+                  {MONTH_COLS.map((c) => (
+                    <th key={c.key} className={cn("py-1.5 px-2 text-center font-medium border border-border", c.kind === "ttl" && "bg-accent/40")}>
+                      {c.label}
+                    </th>
+                  ))}
+                  <th className="py-1.5 px-2 text-center font-medium border border-border">vs BP</th>
+                  <th className="py-1.5 px-2 text-center font-medium border border-border">BP</th>
+                  <th className="py-1.5 px-2 text-center font-medium border border-border">vs BP</th>
                 </tr>
               </thead>
               <tbody>
                 {(() => {
-                  const totals = branchTable.reduce(
-                    (a, b) => ({
-                      u24: a.u24 + b.u24, u48: a.u48 + b.u48, u72: a.u72 + b.u72,
-                      withHrs: a.withHrs + b.withHrs, hrsSum: a.hrsSum + b.hrsSum,
-                      pending3d: a.pending3d + b.pending3d, pending7d: a.pending7d + b.pending7d,
-                      wtyQty: a.wtyQty + b.wtyQty, wtyAmount: a.wtyAmount + b.wtyAmount,
-                      csatSum: a.csatSum + (b.csat > 0 ? b.csat : 0),
-                      csatN: a.csatN + (b.csat > 0 ? 1 : 0),
-                    }),
-                    { u24: 0, u48: 0, u72: 0, withHrs: 0, hrsSum: 0, pending3d: 0, pending7d: 0, wtyQty: 0, wtyAmount: 0, csatSum: 0, csatN: 0 },
-                  );
-                  const r24 = pct(totals.u24, totals.withHrs);
-                  const r48 = pct(totals.u48, totals.withHrs);
-                  const r72 = pct(totals.u72, totals.withHrs);
-                  const rtat = totals.withHrs > 0 ? totals.hrsSum / totals.withHrs : 0;
-                  const csatAvg = totals.csatN > 0 ? totals.csatSum / totals.csatN : 0;
-                  const kpis: Array<{ label: string; value: string; target: string; ok: boolean | null; group?: string }> = [
-                    { label: "24Hr Rate", value: totals.withHrs > 0 ? `${r24.toFixed(1)}%` : "—", target: `≥ ${TARGETS.rate24h}%`, ok: totals.withHrs > 0 ? r24 >= TARGETS.rate24h : null },
-                    { label: "48Hr Rate", value: totals.withHrs > 0 ? `${r48.toFixed(1)}%` : "—", target: `≥ ${TARGETS.rate48h}%`, ok: totals.withHrs > 0 ? r48 >= TARGETS.rate48h : null },
-                    { label: "72Hr Rate", value: totals.withHrs > 0 ? `${r72.toFixed(1)}%` : "—", target: `≥ ${TARGETS.rate72h}%`, ok: totals.withHrs > 0 ? r72 >= TARGETS.rate72h : null },
-                    { label: "RTAT", value: totals.withHrs > 0 ? `${rtat.toFixed(1)}h` : "—", target: `≤ ${SLA_48}h`, ok: totals.withHrs > 0 ? rtat <= SLA_48 : null },
-                    { label: "Pending Q'ty > 3 Day", value: fmt.format(totals.pending3d), target: "0", ok: totals.pending3d === 0, group: "Pending Order Q'ty (closed over)" },
-                    { label: "Pending Q'ty > 7 Day", value: fmt.format(totals.pending7d), target: "0", ok: totals.pending7d === 0 },
-                    { label: "CSAT", value: csatAvg > 0 ? csatAvg.toFixed(2) : "—", target: "≥ 4.5", ok: csatAvg > 0 ? csatAvg >= 4.5 : null },
-                    { label: "W'ty Q'ty", value: fmt.format(totals.wtyQty), target: "—", ok: null, group: "Warranty" },
-                    { label: "W'ty Amount", value: totals.wtyAmount > 0 ? sar.format(totals.wtyAmount) : "—", target: "—", ok: null },
-                  ];
-                  return kpis.map((k, i) => (
-                    <tr key={k.label} className={cn("border-b border-border/60 last:border-0", k.group && i > 0 && "border-t-2 border-t-border/80")}>
-                      <td className="py-2.5 pr-4 font-medium text-foreground">
-                        {k.group && <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">{k.group}</div>}
-                        {k.label}
-                      </td>
-                      <td className="py-2.5 pr-4 text-end tabular-nums font-semibold">{k.value}</td>
-                      <td className="py-2.5 pr-4 text-end text-xs text-muted-foreground tabular-nums">{k.target}</td>
-                      <td className="py-2.5 pr-4 text-end">
-                        {k.ok === null ? <span className="text-xs text-muted-foreground">—</span> : <Badge ok={k.ok}>{k.ok ? "On Target" : "Off Target"}</Badge>}
-                      </td>
-                    </tr>
-                  ));
+                  // compute row spans for categories
+                  const catCounts = new Map<string, number>();
+                  let currentCat = "";
+                  for (const r of kpiRows) {
+                    if (r.category) currentCat = r.category;
+                    catCounts.set(currentCat, (catCounts.get(currentCat) ?? 0) + 1);
+                  }
+                  const seenCat = new Set<string>();
+                  let lastCat = "";
+                  return kpiRows.map((r, idx) => {
+                    if (r.category) lastCat = r.category;
+                    const showCat = r.category && !seenCat.has(r.category);
+                    if (showCat) seenCat.add(r.category!);
+                    const ttl25 = r.value("25TTL");
+                    const vsBP = r.bp != null && ttl25 != null && r.bp !== 0 ? (ttl25 / r.bp) * 100 : null;
+                    return (
+                      <tr key={idx} className="border border-border hover:bg-muted/20">
+                        {showCat && (
+                          <td rowSpan={catCounts.get(lastCat)} className="py-2 px-3 font-semibold text-foreground bg-muted/20 border border-border align-middle text-center">
+                            {lastCat}
+                          </td>
+                        )}
+                        <td className={cn("py-1.5 px-3 border border-border whitespace-nowrap", r.bold && "font-semibold", r.indent === 1 && "pl-6", r.indent === 2 && "pl-10 text-muted-foreground")}>
+                          {r.label}
+                        </td>
+                        <td className="py-1.5 px-2 text-center tabular-nums border border-border text-muted-foreground">—</td>
+                        {MONTH_COLS.map((c) => {
+                          const v = r.value(c.key);
+                          return (
+                            <td key={c.key} className={cn("py-1.5 px-2 text-center tabular-nums border border-border", c.kind === "ttl" && "bg-accent/20 font-semibold")}>
+                              {fmtCell(v, r.kind)}
+                            </td>
+                          );
+                        })}
+                        <td className="py-1.5 px-2 text-center tabular-nums border border-border">
+                          {vsBP != null ? <span className={cn("inline-block rounded px-1.5 py-0.5", vsBP >= 100 ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive")}>{vsBP.toFixed(0)}%</span> : "—"}
+                        </td>
+                        <td className="py-1.5 px-2 text-center tabular-nums border border-border text-muted-foreground">
+                          {r.bp != null ? r.bp : "—"}
+                        </td>
+                        <td className="py-1.5 px-2 text-center tabular-nums border border-border">
+                          {vsBP != null ? <span className={cn("inline-block rounded px-1.5 py-0.5", vsBP >= 100 ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive")}>{vsBP.toFixed(0)}%</span> : "—"}
+                        </td>
+                      </tr>
+                    );
+                  });
                 })()}
               </tbody>
             </table>
