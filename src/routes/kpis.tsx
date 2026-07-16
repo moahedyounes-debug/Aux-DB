@@ -275,6 +275,10 @@ function KpisPage() {
         if (h <= SLA_24) e.u24++;
         if (h <= SLA_48) e.u48++;
         if (h <= SLA_72) e.u72++;
+        // Closed tickets that took longer than 24h also count as pending for the month.
+        if (h > SLA_24) e.pendingOver24++;
+        // Closed tickets that took longer than 6 days count as >7D pending for the month.
+        if (h / 24 > 6) e.pending7d++;
       }
       map.set(k, e);
     }
@@ -288,9 +292,15 @@ function KpisPage() {
     const map = new Map<string, Map<string, number>>();
     const now = Date.now();
     for (const r of filteredRows) {
-      if (!isPending(r)) continue;
-      const age = pendingAgeDays(r, now);
-      if (!(Number.isFinite(age) && age > 6)) continue;
+      let qualifies = false;
+      if (isPending(r)) {
+        const age = pendingAgeDays(r, now);
+        if (Number.isFinite(age) && age > 6) qualifies = true;
+      } else if (isCompleted(r)) {
+        const h = serviceHours(r);
+        if (Number.isFinite(h) && h / 24 > 6) qualifies = true;
+      }
+      if (!qualifies) continue;
       const fw = firstWord(r[COL.asc] || "");
       const fwU = fw.toUpperCase();
       if (!fw || fwU === "AUTHORIZED") continue;
