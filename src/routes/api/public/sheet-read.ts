@@ -35,6 +35,27 @@ function gatewayHeaders() {
   };
 }
 
+// Retry transient upstream failures (429 / 5xx) so a one-off Google Sheets
+// gateway hiccup doesn't propagate as a 502 and blank the dashboard.
+async function gwFetchRetry(
+  url: string,
+  init: Parameters<typeof gwFetch>[1],
+  attempts = 3,
+): Promise<Response> {
+  let last: Response | null = null;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const r = await gwFetch(url, init);
+      if (r.ok || (r.status < 500 && r.status !== 429)) return r;
+      last = r;
+    } catch (e) {
+      if (i === attempts - 1) throw e;
+    }
+    await new Promise((res) => setTimeout(res, 300 * (i + 1)));
+  }
+  return last as Response;
+}
+
 export const Route = createFileRoute("/api/public/sheet-read")({
   server: {
     handlers: {
@@ -53,7 +74,7 @@ export const Route = createFileRoute("/api/public/sheet-read")({
 
           if (mode === "meta" || mode === "tabs") {
             const metaUrl = `${GATEWAY}/spreadsheets/${spreadsheetId}?fields=properties.title,sheets.properties(title,sheetId,gridProperties)`;
-            const r = await gwFetch(metaUrl, { headers, ttlMs: 5 * 60_000 });
+            const r = await gwFetchRetry(metaUrl, { headers, ttlMs: 5 * 60_000 });
             if (!r.ok) {
               return json({ ok: false, error: "gateway_error", status: r.status, body: await r.text() }, 502);
             }
@@ -74,7 +95,7 @@ export const Route = createFileRoute("/api/public/sheet-read")({
           }
 
           if (ranges.length === 1) {
-            const r = await gwFetch(
+            const r = await gwFetchRetry(
               `${GATEWAY}/spreadsheets/${spreadsheetId}/values/${ranges[0]}`,
               { headers, ttlMs: 60_000 },
             );
@@ -86,7 +107,7 @@ export const Route = createFileRoute("/api/public/sheet-read")({
           }
 
           const qs = ranges.map((rn) => `ranges=${encodeURIComponent(rn)}`).join("&");
-          const r = await gwFetch(
+          const r = await gwFetchRetry(
             `${GATEWAY}/spreadsheets/${spreadsheetId}/values:batchGet?${qs}`,
             { headers, ttlMs: 60_000 },
           );
