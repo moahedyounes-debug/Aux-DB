@@ -185,7 +185,9 @@ function KpisPage() {
       withHrs.length > 0
         ? withHrs.reduce((s, r) => s + hours(r), 0) / withHrs.length
         : 0;
-    const branches = new Set(filteredRows.map((r) => r[COL.branch]).filter(Boolean)).size;
+    const branches = new Set(
+      filteredRows.map((r) => shortBranch(r[COL.branch])).filter(Boolean),
+    ).size;
     return {
       total, completed, pending, rate24, rate48, rate72, avgHours, branches,
       pendingRate: pct(pending, total),
@@ -268,7 +270,7 @@ function KpisPage() {
     };
     const map = new Map<string, Row2>();
     for (const r of filteredRows) {
-      const key = r[COL.branch] || "—";
+      const key = shortBranch(r[COL.branch]) || "—";
       const e = map.get(key) ?? {
         total: 0, completed: 0, pending: 0,
         withHrs: 0, u24: 0, u48: 0, u72: 0,
