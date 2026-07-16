@@ -98,6 +98,20 @@ function pendingAgeDays(r: Row, now: number): number {
   return (now - t) / 86_400_000;
 }
 
+// Derive service hours from completion - creation when the "Service hours(H)"
+// column is blank, so SLA rates are not skewed by missing entries.
+function serviceHours(r: Row): number {
+  const explicit = parseFloat(r[COL.hours] || "");
+  if (Number.isFinite(explicit)) return explicit;
+  const start = r[COL.createdAt];
+  const end = r[COL.completedAt];
+  if (!start || !end) return NaN;
+  const s = new Date(String(start).replace(" ", "T")).getTime();
+  const e = new Date(String(end).replace(" ", "T")).getTime();
+  if (!Number.isFinite(s) || !Number.isFinite(e) || e < s) return NaN;
+  return (e - s) / 3_600_000;
+}
+
 function Badge({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
     <span
@@ -166,23 +180,34 @@ function KpisPage() {
     const completed = filteredRows.filter(isCompleted).length;
     const pending = filteredRows.filter(isPending).length;
     const completedRows = filteredRows.filter(isCompleted);
-    const withHrs = completedRows.filter((r) => Number.isFinite(hours(r)));
-    const under24 = withHrs.filter((r) => hours(r) <= SLA_24).length;
-    const under48 = withHrs.filter((r) => hours(r) <= SLA_48).length;
-    const under72 = withHrs.filter((r) => hours(r) <= SLA_72).length;
-    const rate24 = pct(under24, withHrs.length);
-    const rate48 = pct(under48, withHrs.length);
-    const rate72 = pct(under72, withHrs.length);
+    const withHrs = completedRows.filter((r) => Number.isFinite(serviceHours(r)));
+    const under24 = withHrs.filter((r) => serviceHours(r) <= SLA_24).length;
+    const under48 = withHrs.filter((r) => serviceHours(r) <= SLA_48).length;
+    const under72 = withHrs.filter((r) => serviceHours(r) <= SLA_72).length;
+    // Spec: 48h % = closed within 48h / total closed (same scope).
+    //       72h % = closed within 72h / total closed (same scope).
+    const rate24 = pct(under24, completed);
+    const rate48 = pct(under48, completed);
+    const rate72 = pct(under72, completed);
     const avgHours =
       withHrs.length > 0
-        ? withHrs.reduce((s, r) => s + hours(r), 0) / withHrs.length
+        ? withHrs.reduce((s, r) => s + serviceHours(r), 0) / withHrs.length
         : 0;
     const branches = new Set(
       filteredRows.map((r) => shortBranch(r[COL.branch])).filter(Boolean),
     ).size;
+    // Spec: Pending rate = tickets created in the period with no completion
+    // result yet AND already older than 24h, over total created.
+    const now = Date.now();
+    const pendingOver24 = filteredRows.filter((r) => {
+      if (!isPending(r)) return false;
+      const age = pendingAgeDays(r, now);
+      return Number.isFinite(age) && age * 24 > 24;
+    }).length;
     return {
       total, completed, pending, rate24, rate48, rate72, avgHours, branches,
-      pendingRate: pct(pending, total),
+      pendingRate: pct(pendingOver24, total),
+      pendingOver24,
       completionRate: pct(completed, total),
       u24: under24,
       u48: under48,
@@ -218,7 +243,7 @@ function KpisPage() {
         const age = pendingAgeDays(r, now);
         if (Number.isFinite(age) && age > 7) e.pending7d++;
       }
-      const h = hours(r);
+      const h = serviceHours(r);
       if (done && Number.isFinite(h)) {
         e.withHrs++;
         e.hrsSum += h;
@@ -280,7 +305,7 @@ function KpisPage() {
           if (age > 7) e.pending7d++;
         }
       }
-      const h = hours(r);
+      const h = serviceHours(r);
       if (done && Number.isFinite(h)) {
         e.withHrs++;
         e.hrsSum += h;
@@ -316,9 +341,9 @@ function KpisPage() {
       .map(([branch, s]) => ({
         branch,
         ...s,
-        rate24: pct(s.u24, s.withHrs),
-        rate48: pct(s.u48, s.withHrs),
-        rate72: pct(s.u72, s.withHrs),
+        rate24: pct(s.u24, s.completed),
+        rate48: pct(s.u48, s.completed),
+        rate72: pct(s.u72, s.completed),
         rtat: s.withHrs > 0 ? s.hrsSum / s.withHrs : 0,
         csat: findKey(csatByBranch, branch) ?? 0,
         wtyQty: findKey(wtyQtyByBranch, branch) ?? s.completed,
