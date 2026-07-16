@@ -10,7 +10,7 @@ import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
 
 export const Route = createFileRoute("/obm-analysis")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "OBM Analysis — AUX ASC Dashboard" },
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/obm-analysis")({
 const num = new Intl.NumberFormat("en-US");
 
 function OBMPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useSuspenseQuery(kpiQueryOptions());
   const branches = data.branches;
 
   // OBM composite score: 60% SLA72h + 40% completion rate

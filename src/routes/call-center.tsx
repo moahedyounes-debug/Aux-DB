@@ -18,7 +18,7 @@ import { kpiQueryOptions } from "@/lib/aux/queries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/call-center")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "Call Center — AUX ASC Dashboard" },
@@ -40,7 +40,7 @@ export const Route = createFileRoute("/call-center")({
 const fmt = new Intl.NumberFormat("en-US");
 
 function CallCenterPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useSuspenseQuery(kpiQueryOptions());
   const cc = data.callCenter;
 
   const tooltipStyle = {

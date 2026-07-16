@@ -30,7 +30,7 @@ import { useGlobalFilters, applyGlobalFilters } from "@/hooks/use-global-filters
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/deep-insights")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "Deep Insights — AUX ASC Dashboard" },
@@ -83,7 +83,7 @@ function hrs(r: Row): number {
 }
 
 function DeepInsightsPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useSuspenseQuery(kpiQueryOptions());
   const { access, ready } = useAccess();
   const { filters: gFilters } = useGlobalFilters();
   const maint = useQuery({

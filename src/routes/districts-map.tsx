@@ -18,7 +18,7 @@ import { kpiQueryOptions } from "@/lib/aux/queries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/districts-map")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "Districts Map — AUX ASC Dashboard" },
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/districts-map")({
 const num = new Intl.NumberFormat("en-US");
 
 function DistrictsPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useSuspenseQuery(kpiQueryOptions());
   const cities = data.cities;
 
   const regionMap = new Map<string, { total: number; completed: number; pending: number; cities: number; sla48Sum: number; sla72Sum: number }>();

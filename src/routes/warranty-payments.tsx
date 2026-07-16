@@ -23,7 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/warranty-payments")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "Warranty Payments — AUX ASC Dashboard" },
@@ -50,7 +50,7 @@ const sar = new Intl.NumberFormat("en-US", {
 const num = new Intl.NumberFormat("en-US");
 
 function WarrantyPaymentsPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useSuspenseQuery(kpiQueryOptions());
   const w = data.warranty;
 
   const tooltipStyle = {

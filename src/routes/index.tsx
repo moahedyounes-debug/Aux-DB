@@ -31,7 +31,7 @@ import { kpiQueryOptions } from "@/lib/aux/queries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "KPI Overview — AUX ASC Dashboard" },
@@ -62,7 +62,7 @@ function fmtPct(n: number) {
 }
 
 function Index() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useSuspenseQuery(kpiQueryOptions());
   const snap = data.snapshot;
   const MONTHLY = data.monthly;
   const PENDING_BY_REASON = data.pendingByReason;

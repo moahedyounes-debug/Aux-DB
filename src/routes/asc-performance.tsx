@@ -20,7 +20,7 @@ import { kpiQueryOptions } from "@/lib/aux/queries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/asc-performance")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "ASC Performance — AUX ASC Dashboard" },
@@ -67,7 +67,7 @@ function Badge({
 }
 
 function AscPerformancePage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useSuspenseQuery(kpiQueryOptions());
   const branches = data.branches;
 
   const ranked = [...branches].sort((a, b) => b.rate48h - a.rate48h);

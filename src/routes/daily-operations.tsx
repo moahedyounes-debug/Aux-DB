@@ -18,7 +18,7 @@ import { kpiQueryOptions } from "@/lib/aux/queries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/daily-operations")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "Daily Operations — AUX ASC Dashboard" },
@@ -99,7 +99,7 @@ function AgingBadge({ bucket }: { bucket: string }) {
 }
 
 function DailyOpsPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useSuspenseQuery(kpiQueryOptions());
   const p = data.pending;
   const maxAging = Math.max(1, ...p.aging.map((a) => a.count));
 

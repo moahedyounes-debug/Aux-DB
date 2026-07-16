@@ -17,7 +17,7 @@ import { kpiQueryOptions } from "@/lib/aux/queries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/installation-analysis")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "Installation Analysis — AUX ASC Dashboard" },
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/installation-analysis")({
 const fmt = new Intl.NumberFormat("en-US");
 
 function InstallationPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useSuspenseQuery(kpiQueryOptions());
   const inst = data.installation;
 
   const tooltipStyle = {

@@ -17,7 +17,7 @@ import { KpiCard } from "@/components/dashboard/KpiCard";
 import { kpiQueryOptions } from "@/lib/aux/queries";
 
 export const Route = createFileRoute("/pending-analysis")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions),
+  loader: ({ context }) => context.queryClient.ensureQueryData(kpiQueryOptions()),
   head: () => ({
     meta: [
       { title: "Pending Analysis — AUX ASC Dashboard" },
@@ -47,7 +47,7 @@ const AGING_COLORS = [
 ];
 
 function PendingAnalysisPage() {
-  const { data } = useSuspenseQuery(kpiQueryOptions);
+  const { data } = useSuspenseQuery(kpiQueryOptions());
   const snap = data.snapshot;
   const PENDING_AGING = data.pendingAging;
   const PENDING_BY_BRANCH = data.pendingByBranch;
