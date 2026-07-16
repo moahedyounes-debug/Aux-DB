@@ -389,7 +389,7 @@ function isTruthy(v: string | undefined): boolean {
   return s !== "" && s !== "0" && s !== "no" && s !== "false" && s !== "not rescheduled";
 }
 
-import { isClosedResult, isCancelledResult } from "./completion";
+import { isClosedResult, isCancelledResult, isPendingResult } from "./completion";
 
 /**
  * A ticket is "completed" (closed) ONLY when its Completion Result is one of
@@ -855,7 +855,9 @@ function aggregate(rows: string[][]): KpiData {
     }
 
     if (done) completed++;
-    else {
+    // Only tickets with a truly blank Completion Result count as pending
+    // for the Daily Operations queue. Rejected / cancelled / closed are excluded.
+    else if (isPendingResult(row[COL.completionResult])) {
       pending++;
       const statusLower = status.toLowerCase();
       const workerBlank = !String(row[COL.workerName] ?? "").trim();
