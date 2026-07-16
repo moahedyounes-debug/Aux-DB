@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const SPREADSHEET_ID = "1x796CMZf8b3RUNkqsanO56F_Wmo75L2uLzIlgE65doY";
 const GATEWAY = "https://connector-gateway.lovable.dev/google_sheets/v4";
+import { invalidateGwCache } from "@/lib/aux/gw-fetch";
 const SUPERUSER_ALIASES = new Set(["moahedyounes@gmail.com"]);
 const ACCESS_RANGE = "Access!A2:H400";
 
