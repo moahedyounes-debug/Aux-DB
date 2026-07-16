@@ -473,7 +473,22 @@ async function fetchSheetRows(): Promise<string[][]> {
     throw new Error(`Sheets fetch failed [${res.status}]: ${body.slice(0, 200)}`);
   }
   const json = (await res.json()) as { values?: string[][] };
-  return json.values ?? [];
+  const raw = json.values ?? [];
+  // Global company normalization:
+  //  - Drop rows whose Service Provider Name starts with "AUTHORIZED".
+  //  - Unify "HMA-" variants into "HMA" (first-word normalization).
+  const out: string[][] = [];
+  for (const row of raw) {
+    const spn = row[COL.serviceProvider] || "";
+    const fw = firstWord(spn).toUpperCase();
+    if (fw === "AUTHORIZED") continue;
+    if (fw.startsWith("HMA")) {
+      const rest = spn.trim().slice(firstWord(spn).length);
+      row[COL.serviceProvider] = `HMA${rest}`;
+    }
+    out.push(row);
+  }
+  return out;
 }
 
 function aggregate(rows: string[][]): KpiData {
